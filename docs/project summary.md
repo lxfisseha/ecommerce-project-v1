@@ -1,4 +1,4 @@
-# Project Summary for AI Developer Agent
+# Project Summary
 
 ## Project Name
 Ethiopia Single-Seller E-Commerce Platform (v1)

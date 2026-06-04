@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+
+{% block title %}Seller Login - AleMart{% endblock %}
+
+{% block content %}
+<div class="px-4 py-12 md:py-24 flex flex-col items-center w-full">
+    <!-- Logo Branding -->
+    <div class="text-center mb-8 md:mb-12">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-[#00685f] rounded-xl shadow-sm mb-4">
+            <svg width="34" height="30" viewBox="0 0 34 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17 0L33.4545 29.25H0.545517L17 0Z" fill="white"/>
+            </svg>
+        </div>
+        <h1 class="text-[#00685f] text-2xl md:text-[32px] font-semibold tracking-tight">AleMart</h1>
+        <p class="text-[#3d4947] text-sm md:text-base mt-1">Merchant Solution Center</p>
+    </div>
+
+    <!-- Auth Container -->
+    <div class="w-full max-w-[440px] bg-white rounded-xl border border-[#bcc9c6] shadow-sm p-6 md:p-8">
+        <div class="mb-6">
+            <h2 class="text-[#191c1d] text-lg md:text-2xl font-semibold">Seller Login</h2>
+            <p class="text-[#3d4947] text-sm md:text-base mt-2">Enter your registered mobile number to continue.</p>
+        </div>
+
+        <!-- Login Form -->
+        <form hx-post="/auth/login" hx-swap="outerHTML" class="space-y-6">
+            {% if csrf_token %}
+                <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            {% endif %}
+            
+            <div>
+                <label for="phone" class="block text-[#3d4947] text-sm font-medium mb-2">Phone Number</label>
+                <div class="flex">
+                    <span class="inline-flex items-center px-4 rounded-l-lg border border-r-0 border-[#bcc9c6] bg-[#f3f4f5] text-[#3d4947] text-base">
+                        +251
+                    </span>
+                    <input type="tel" 
+                           name="phone" 
+                           id="phone" 
+                           placeholder="912345678"
+                           required
+                           class="flex-1 block w-full px-4 py-3 rounded-none rounded-r-lg border border-[#bcc9c6] bg-[#f8f9fa] text-[#191c1d] text-base placeholder-[#6b7280] focus:ring-2 focus:ring-[#00685f] focus:border-[#00685f] outline-none transition-all">
+                </div>
+            </div>
+
+            <button type="submit" 
+                    class="w-full bg-[#00685f] hover:bg-[#005a52] text-white font-medium py-3 px-4 rounded-lg shadow-sm flex items-center justify-center gap-2 transition-colors">
+                <span>Send OTP</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path>
+                </svg>
+            </button>
+        </form>
+
+        <!-- Footer Link -->
+        <div class="mt-8 pt-6 border-t border-[#bcc9c6] text-center">
+            <p class="text-[#3d4947] text-sm md:text-base">
+                Don't have a seller account? 
+                <a href="/auth/register" class="text-[#00685f] font-medium hover:underline ml-1">Register Now</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Trust Badges -->
+    <div class="mt-8 flex flex-wrap justify-center gap-6 text-[#191c1d]">
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path></svg>
+            <span class="text-sm md:text-base">Secure AES Encryption</span>
+        </div>
+        <div class="flex items-center gap-2">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20"><path d="M10.394 2.08a1 1 0 00-.788 0l-7 3a1 1 0 000 1.84L5.25 8.051a.999.999 0 01.356-.257l4-1.588a1 1 0 01.788 0l4 1.588c.124.05.238.132.34.239l2.406-.918a1 1 0 000-1.84l-7-3zM2 9.135V16.33a2 2 0 001.233 1.84l5 2.25a1 1 0 00.767 0l5-2.25a2 2 0 001.233-1.84V9.135l-5 2.25a1 1 0 01-.767 0l-5-2.25z"></path></svg>
+            <span class="text-sm md:text-base">Official Seller Hub</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
