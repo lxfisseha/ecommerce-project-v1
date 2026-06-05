@@ -4,7 +4,12 @@ from sqlmodel import SQLModel
 from .config import settings
 
 # Create async engine
-engine = create_async_engine(settings.DATABASE_URL, echo=True, future=True)
+engine = create_async_engine(
+    settings.DATABASE_URL, 
+    echo=True, 
+    future=True, 
+    connect_args={"statement_cache_size": 0}
+)
 
 # Create session factory
 async_session_maker = sessionmaker(

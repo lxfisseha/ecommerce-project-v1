@@ -18,17 +18,27 @@
         body { font-family: 'Inter', sans-serif; }
         .blur-decoration { pointer-events: none; z-index: -1; }
         [hx-headers] { cursor: pointer; }
+        
+        /* Specific weights from Figma */
+        .font-semibold { font-weight: 600; }
+        .font-medium { font-weight: 500; }
+        .font-regular { font-weight: 400; }
+
+        /* HTMX Indicator Helpers */
+        .htmx-request .htmx-hide-on-request {
+            display: none !important;
+        }
     </style>
     {% block head %}{% endblock %}
 </head>
 <body class="bg-[#f8f9fa] min-h-screen relative overflow-x-hidden flex flex-col">
 
     <!-- Global Background Decorations -->
-    <div class="blur-decoration absolute -top-24 -left-32 w-[512px] h-[410px] bg-[#00685f0d] rounded-full blur-[100px]"></div>
-    <div class="blur-decoration absolute bottom-0 -right-32 w-[512px] h-[410px] bg-[#0058be0d] rounded-full blur-[100px]"></div>
+    <div class="blur-decoration absolute -top-[102px] -left-[128px] w-[512px] h-[410px] bg-[#00685f0d] rounded-full blur-[100px]"></div>
+    <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-[#0058be0d] rounded-full blur-[100px]"></div>
 
     <!-- Main Content Area -->
-    <main class="flex-grow flex flex-col items-center justify-center">
+    <main class="flex-grow flex flex-col items-center justify-center py-20 px-6">
         {% block content %}{% endblock %}
     </main>
 
@@ -47,6 +57,20 @@
         </div>
     </footer>
 
-    {% block scripts %}{% endblock %}
+    {% block scripts %}
+    <script>
+        document.body.addEventListener('htmx:configRequest', (event) => {
+            event.detail.headers['X-CSRF-Token'] = '{{ csrf_token }}';
+        });
+
+        // Handle error status codes (400, 422, 500 etc) to show validation messages
+        document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
+            if (evt.detail.xhr.status >= 400) {
+                evt.detail.shouldSwap = true;
+                evt.detail.target = htmx.find("#auth-container") || evt.detail.target;
+            }
+        });
+    </script>
+    {% endblock %}
 </body>
 </html>

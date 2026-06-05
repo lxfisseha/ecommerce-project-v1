@@ -20,4 +20,5 @@ class OtpCode(SQLModel, table=True):
     code: str = Field(max_length=6)
     expires_at: datetime = Field(index=True)
     used: bool = Field(default=False)
+    attempts: int = Field(default=0)
     created_at: datetime = Field(default_factory=datetime.utcnow)

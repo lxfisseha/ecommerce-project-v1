@@ -1,0 +1,92 @@
+<div id="auth-container" class="animate-in fade-in duration-300">
+    <div class="mb-6">
+        <button type="button" 
+                hx-get="/auth/login" 
+                hx-target="#auth-container" 
+                hx-swap="outerHTML"
+                class="inline-flex items-center gap-2 text-[#00685f] text-sm font-medium hover:underline mb-4">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M7.5 9L4.5 6L7.5 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Back</span>
+        </button>
+        <h2 class="text-[#191c1d] text-[18px] font-semibold leading-6">Verify Number</h2>
+        <p class="text-[#3d4947] text-sm leading-5 mt-2">We've sent a 6-digit code to <strong>+251 {{ phone }}</strong></p>
+    </div>
+
+    <!-- OTP Form -->
+    <form hx-post="/auth/verify-otp" hx-target="#auth-container" hx-swap="outerHTML" class="space-y-8">
+        {% if csrf_token %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% endif %}
+        <input type="hidden" name="phone" value="{{ phone }}">
+        
+        <div class="flex justify-between gap-2" id="otp-inputs">
+            {% for i in range(6) %}
+            <input type="text" 
+                   name="otp_{{ i }}" 
+                   maxlength="1" 
+                   required
+                   pattern="\d"
+                   class="w-11 h-14 text-center text-[29px] font-medium bg-[#f8f9fa] border border-[#bcc9c6] rounded-lg focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none transition-all">
+            {% endfor %}
+            <!-- Hidden combined input for the backend -->
+            <input type="hidden" name="code" id="otp-code">
+        </div>
+
+        {% if error %}
+            <p class="text-red-600 text-sm mt-1 font-medium">{{ error }}</p>
+        {% endif %}
+
+        <button type="submit" 
+                class="w-full bg-[#00685f] hover:bg-[#005a52] text-white text-sm font-medium h-12 rounded-lg shadow-sm flex items-center justify-center transition-colors relative disabled:opacity-70 disabled:cursor-not-allowed"
+                hx-indicator="#loading-spinner-otp">
+            <span class="htmx-hide-on-request">Verify & Login</span>
+            <!-- Loading Spinner -->
+            <div id="loading-spinner-otp" class="htmx-indicator absolute inset-0 flex items-center justify-center">
+                <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </button>
+    </form>
+
+    <script>
+        (function() {
+            const container = document.getElementById('otp-inputs');
+            const inputs = container.querySelectorAll('input[type="text"]');
+            const hiddenInput = document.getElementById('otp-code');
+
+            inputs.forEach((input, index) => {
+                input.addEventListener('input', (e) => {
+                    if (e.target.value.length === 1 && index < inputs.length - 1) {
+                        inputs[index + 1].focus();
+                    }
+                    updateHidden();
+                });
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                        inputs[index - 1].focus();
+                    }
+                });
+
+                input.addEventListener('paste', (e) => {
+                    e.preventDefault();
+                    const pasteData = e.clipboardData.getData('text').slice(0, 6).split('');
+                    pasteData.forEach((char, i) => {
+                        if (inputs[i]) inputs[i].value = char;
+                    });
+                    if (inputs[pasteData.length]) inputs[pasteData.length].focus();
+                    else inputs[5].focus();
+                    updateHidden();
+                });
+            });
+
+            function updateHidden() {
+                hiddenInput.value = Array.from(inputs).map(i => i.value).join('');
+            }
+        })();
+    </script>
+</div>
