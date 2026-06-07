@@ -18,6 +18,8 @@ async def add_sample_seller():
             return
 
         seller = Seller(
+            first_name="Fanuel",
+            last_name="Alemu",
             store_name="AleMart Demo Store",
             store_prefix="DEMO",
             phone=encrypted_phone

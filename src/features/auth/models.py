@@ -6,6 +6,8 @@ class Seller(SQLModel, table=True):
     __tablename__ = "sellers"
     
     id: Optional[int] = Field(default=None, primary_key=True)
+    first_name: str = Field(max_length=50)
+    last_name: str = Field(max_length=50)
     store_name: str = Field(index=True, unique=True, max_length=100)
     store_prefix: str = Field(max_length=10, unique=True)  # Required for ET-[store prefix]-... format
     phone: str = Field(index=True, unique=True, max_length=15)

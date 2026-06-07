@@ -8,6 +8,7 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.database import get_session
+from src.utils.crypto import encrypt_phone
 
 # Setup async sqlite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -18,27 +19,31 @@ async def override_get_session():
     async with async_session_maker() as session:
         yield session
 
-app.dependency_overrides[get_session] = override_get_session
-
 client = TestClient(app)
-
-from src.utils.crypto import encrypt_phone
 
 @pytest_asyncio.fixture(autouse=True)
 async def setup_db():
+    app.dependency_overrides[get_session] = override_get_session
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
     
     async with async_session_maker() as session:
         phone_raw = "912345678"
         phone_enc = encrypt_phone(phone_raw)
-        seller = Seller(store_name="Test Store", store_prefix="TEST", phone=phone_enc)
+        seller = Seller(
+            first_name="Test",
+            last_name="User",
+            store_name="Test Store",
+            store_prefix="TEST",
+            phone=phone_enc
+        )
         session.add(seller)
         await session.commit()
         print(f"DEBUG_TEST: Created seller with phone: {phone_raw}, Encrypted: {phone_enc}")
     
     yield
     
+    app.dependency_overrides.clear()
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
 

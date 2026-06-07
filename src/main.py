@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from src.middleware.csrf import CustomCSRFMiddleware
 from src.features.auth.routes import router as auth_router
+from src.features.dashboard.routes import router as dashboard_router
 from src.templates_config import templates
 from src.config import settings
 import os
@@ -19,6 +20,7 @@ app.add_middleware(
 
 # Include routers
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 
 @app.get("/")
 async def root(request: Request):
