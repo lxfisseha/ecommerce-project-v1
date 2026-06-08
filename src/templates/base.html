@@ -38,11 +38,12 @@
     <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-[#0058be0d] rounded-full blur-[100px]"></div>
 
     <!-- Main Content Area -->
-    <main class="flex-grow flex flex-col items-center justify-center py-20 px-6">
+    <main class="flex-grow flex flex-col">
         {% block content %}{% endblock %}
     </main>
 
     <!-- Global Footer -->
+    {% block footer %}
     <footer class="bg-[#e1e3e4] border-t border-[#bcc9c6] py-8 px-6 mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
@@ -56,6 +57,7 @@
             </div>
         </div>
     </footer>
+    {% endblock %}
 
     {% block scripts %}
     <script>

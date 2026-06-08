@@ -10,14 +10,14 @@ class Product(SQLModel, table=True):
     seller_id: int = Field(foreign_key="sellers.id", index=True)
     name: str = Field(max_length=200)
     description: Optional[str] = Field(default=None)
-    price: Decimal = Field(default=0.0, decimal_places=2)
+    price: Decimal = Field(default=0.0, decimal_places=2, gt=0)
     in_stock: bool = Field(default=True, index=True)
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 
     # Relationships
-    images: List["ProductImage"] = Relationship(back_populates="product", cascade_delete=True)
-    attributes: List["ProductAttribute"] = Relationship(back_populates="product", cascade_delete=True)
+    images: List["ProductImage"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    attributes: List["ProductAttribute"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 
 class ProductImage(SQLModel, table=True):
     __tablename__ = "product_images"

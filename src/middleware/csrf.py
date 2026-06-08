@@ -24,9 +24,16 @@ class CustomCSRFMiddleware(BaseHTTPMiddleware):
         request.scope["csrf_token"] = csrf_token
 
         if request.method not in self.safe_methods:
-            header_token = request.headers.get(self.header_name)
-            
-            # Simple comparison for now, can be improved with HMAC if needed
+            # Parse form data once and cache it
+            try:
+                form = await request.form()
+                request.state.form_data = form
+                header_token = request.headers.get(self.header_name) or form.get("csrf_token")
+            except:
+                form = None
+                header_token = None
+
+            # Simple comparison
             if not header_token or not csrf_token or header_token != csrf_token:
                 return JSONResponse(
                     status_code=403,
