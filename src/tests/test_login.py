@@ -8,7 +8,7 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.database import get_session
-from src.utils.crypto import encrypt_phone
+from src.utils.crypto import encrypt_phone, hash_phone
 
 # Setup async sqlite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -29,17 +29,16 @@ async def setup_db():
     
     async with async_session_maker() as session:
         phone_raw = "912345678"
-        phone_enc = encrypt_phone(phone_raw)
         seller = Seller(
             first_name="Test",
             last_name="User",
             store_name="Test Store",
             store_prefix="TEST",
-            phone=phone_enc
+            phone=encrypt_phone(phone_raw),
+            phone_hash=hash_phone(phone_raw)
         )
         session.add(seller)
         await session.commit()
-        print(f"DEBUG_TEST: Created seller with phone: {phone_raw}, Encrypted: {phone_enc}")
     
     yield
     
@@ -75,8 +74,8 @@ async def test_login_success_and_otp_verify():
     
     # Check DB for OTP
     async with async_session_maker() as session:
-        # We need to query using the encrypted phone
-        statement = select(OtpCode).where(OtpCode.phone == encrypt_phone("912345678")).order_by(OtpCode.created_at.desc())
+        # We need to query using the hashed phone
+        statement = select(OtpCode).where(OtpCode.phone_hash == hash_phone("912345678")).order_by(OtpCode.created_at.desc())
         result = await session.execute(statement)
         otp = result.scalar_one_or_none()
         assert otp is not None

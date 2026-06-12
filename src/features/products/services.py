@@ -1,10 +1,38 @@
 from typing import List, Optional
-from sqlmodel import select
+from sqlmodel import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from .models import Product, ProductImage, ProductAttribute
 
 class ProductService:
+    @staticmethod
+    async def update_product_attributes(
+        db: AsyncSession,
+        product_id: int,
+        attributes: List[dict] # List of {"type": "Color", "value": "Red"}
+    ):
+        """
+        Clears existing attributes and adds new ones.
+        """
+        product = await ProductService.get_product_by_id(db, product_id)
+        if not product:
+            return
+
+        # Clear existing attributes - cascade="all, delete-orphan" will handle deletion
+        product.attributes.clear()
+
+        # Add new
+        for attr_data in attributes:
+            new_attr = ProductAttribute(
+                product_id=product_id,
+                attribute_type=attr_data["type"],
+                attribute_value=attr_data["value"]
+            )
+            product.attributes.append(new_attr)
+        
+        db.add(product)
+        await db.flush()
+
     @staticmethod
     async def get_seller_products(db: AsyncSession, seller_id: int) -> List[Product]:
         statement = (

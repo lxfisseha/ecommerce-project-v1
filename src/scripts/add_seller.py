@@ -8,10 +8,11 @@ async def add_sample_seller():
     async with async_session_maker() as session:
         # Phone to add
         phone_raw = "912345678"
-        encrypted_phone = encrypt_phone(phone_raw)
+        from src.utils.crypto import hash_phone, encrypt_phone
+        phone_h = hash_phone(phone_raw)
         
         # Check if already exists
-        statement = select(Seller).where(Seller.phone == encrypted_phone)
+        statement = select(Seller).where(Seller.phone_hash == phone_h)
         result = await session.execute(statement)
         if result.scalar_one_or_none():
             print("Seller with this phone number already exists.")
@@ -22,7 +23,8 @@ async def add_sample_seller():
             last_name="Alemu",
             store_name="AleMart Demo Store",
             store_prefix="DEMO",
-            phone=encrypted_phone
+            phone=encrypt_phone(phone_raw),
+            phone_hash=phone_h
         )
         session.add(seller)
         await session.commit()

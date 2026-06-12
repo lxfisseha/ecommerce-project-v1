@@ -199,9 +199,18 @@
                     <div class="space-y-2">
                         <span class="text-sm font-medium text-[#191c1d]">Available Sizes</span>
                         <div class="flex flex-wrap gap-2">
+                            {% set existing_sizes = [] %}
+                            {% if product %}
+                                {% for attr in product.attributes %}
+                                    {% if attr.attribute_type == 'Size' %}
+                                        {% set _ = existing_sizes.append(attr.attribute_value) %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            
                             {% for size in ['S', 'M', 'L', 'XL'] %}
                             <label class="flex items-center gap-2 px-4 py-2 bg-[#edeeef] rounded-lg cursor-pointer hover:bg-[#e1e3e4] transition-colors">
-                                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#00685f] focus:ring-[#00685f]">
+                                <input type="checkbox" name="attributes_Size" value="{{ size }}" class="w-4 h-4 rounded border-gray-300 text-[#00685f] focus:ring-[#00685f]" {% if size in existing_sizes %}checked{% endif %}>
                                 <span class="text-base text-[#191c1d]">{{ size }}</span>
                             </label>
                             {% endfor %}
@@ -211,9 +220,18 @@
                     <div class="space-y-2 pt-4">
                         <span class="text-sm font-medium text-[#191c1d]">Color Variants</span>
                         <div class="flex flex-wrap gap-2">
+                            {% set existing_colors = [] %}
+                            {% if product %}
+                                {% for attr in product.attributes %}
+                                    {% if attr.attribute_type == 'Color' %}
+                                        {% set _ = existing_colors.append(attr.attribute_value) %}
+                                    {% endif %}
+                                {% endfor %}
+                            {% endif %}
+                            
                             {% for color, hex in [('Red', '#dc2626'), ('Blue', '#2563eb'), ('Black', '#000000'), ('White', '#ffffff')] %}
                             <label class="flex items-center gap-2 px-4 py-2 bg-[#edeeef] rounded-lg cursor-pointer hover:bg-[#e1e3e4] transition-colors">
-                                <input type="checkbox" class="w-4 h-4 rounded border-gray-300 text-[#00685f] focus:ring-[#00685f]">
+                                <input type="checkbox" name="attributes_Color" value="{{ color }}" class="w-4 h-4 rounded border-gray-300 text-[#00685f] focus:ring-[#00685f]" {% if color in existing_colors %}checked{% endif %}>
                                 <div class="w-4 h-4 rounded-full border border-black/10" style="background-color: {{ hex }};"></div>
                                 <span class="text-base text-[#191c1d]">{{ color }}</span>
                             </label>

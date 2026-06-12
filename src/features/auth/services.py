@@ -5,7 +5,8 @@ import secrets
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from .models import Seller, OtpCode
-from src.utils.crypto import encrypt_phone, decrypt_phone
+from src.utils.crypto import encrypt_phone, hash_phone
+from src.utils.datetime import utc_now
 
 def validate_ethiopian_phone(phone: str) -> bool:
     """
@@ -18,14 +19,11 @@ def validate_ethiopian_phone(phone: str) -> bool:
 class AuthService:
     @staticmethod
     async def get_seller_by_phone(db: AsyncSession, phone: str) -> Optional[Seller]:
-        # Encrypt the input phone to match the stored encrypted value
-        encrypted_phone = encrypt_phone(phone)
-        print(f"DEBUG: Searching for phone: {phone}, Encrypted: {encrypted_phone}")
-        statement = select(Seller).where(Seller.phone == encrypted_phone)
+        # Use deterministic hash for lookup
+        phone_h = hash_phone(phone)
+        statement = select(Seller).where(Seller.phone_hash == phone_h)
         result = await db.execute(statement)
-        seller = result.scalar_one_or_none()
-        print(f"DEBUG: Seller found: {seller is not None}")
-        return seller
+        return result.scalar_one_or_none()
 
     @staticmethod
     async def generate_otp(db: AsyncSession, phone: str) -> str:
@@ -33,10 +31,11 @@ class AuthService:
         code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
         
         # Set expiry to 5 minutes from now
-        expires_at = datetime.utcnow() + timedelta(minutes=5)
+        expires_at = utc_now() + timedelta(minutes=5)
         
         otp = OtpCode(
-            phone=encrypt_phone(phone), # Encrypt phone in OTP storage
+            phone=encrypt_phone(phone), # Encrypt phone for retrieval
+            phone_hash=hash_phone(phone), # Store hash for lookup
             code=code,
             expires_at=expires_at
         )
@@ -50,12 +49,13 @@ class AuthService:
 
     @staticmethod
     async def verify_otp(db: AsyncSession, phone: str, code: str) -> dict:
-        encrypted_phone = encrypt_phone(phone)
+        phone_h = hash_phone(phone)
+        now = utc_now()
         statement = (
             select(OtpCode)
-            .where(OtpCode.phone == encrypted_phone)
+            .where(OtpCode.phone_hash == phone_h)
             .where(OtpCode.used == False)
-            .where(OtpCode.expires_at > datetime.utcnow())
+            .where(OtpCode.expires_at > now)
             .order_by(OtpCode.created_at.desc())
         )
         result = await db.execute(statement)

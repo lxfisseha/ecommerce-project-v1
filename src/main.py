@@ -9,6 +9,12 @@ from src.features.auth.routes import router as auth_router
 from src.features.dashboard.routes import router as dashboard_router
 from src.features.products.routes import router as products_router
 from src.features.buyer.routes import router as buyer_router # New import
+from sqlalchemy.exc import SQLAlchemyError
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 app = FastAPI(title="AleMart Merchant Solution Center")
 
@@ -22,10 +28,18 @@ app.add_middleware(
 # Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    error_msg = "An unexpected error occurred. Please try again later."
+    
+    if isinstance(exc, SQLAlchemyError):
+        logger.error(f"Database error: {exc}")
+        error_msg = "We're having trouble connecting to our services. Please refresh the page in a moment."
+    else:
+        logger.error(f"System error: {exc}")
+
     return templates.TemplateResponse(
         request,
         "error.html",
-        {"request": request, "error_message": str(exc)},
+        {"request": request, "error_message": error_msg},
         status_code=500
     )
 

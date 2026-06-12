@@ -154,6 +154,19 @@ async def add_product(
         product = await ProductService.create_product(
             db, seller_id, name, description, float(price), in_stock
         )
+        
+        # Process and save attributes
+        attributes_to_save = []
+        for key in form.keys():
+            if key.startswith("attributes_"):
+                attr_type = key.replace("attributes_", "")
+                values = form.getlist(key)
+                for val in values:
+                    attributes_to_save.append({"type": attr_type, "value": val})
+        
+        if attributes_to_save:
+            await ProductService.update_product_attributes(db, product.id, attributes_to_save)
+
     except Exception as e:
         await db.rollback()
         # Fetch seller for sidebar context
@@ -255,9 +268,8 @@ async def edit_product(
     # 2. Handle New Image Uploads (if any)
     MAX_SIZE = 5 * 1024 * 1024
     if valid_images:
-        # For now, let's clear existing images and add new ones if new images are uploaded
-        for img in product.images:
-            await db.delete(img)
+        # Clear existing images - cascade="all, delete-orphan" handles deletion
+        product.images.clear()
             
         for i, img in enumerate(valid_images):
             content = await img.read()
@@ -276,7 +288,19 @@ async def edit_product(
             tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
             from .models import ProductImage
             new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
-            db.add(new_image)
+            product.images.append(new_image)
+
+    # 3. Process and save attributes
+    attributes_to_save = []
+    for key in form.keys():
+        if key.startswith("attributes_"):
+            attr_type = key.replace("attributes_", "")
+            values = form.getlist(key)
+            for val in values:
+                attributes_to_save.append({"type": attr_type, "value": val})
+    
+    if attributes_to_save:
+        await ProductService.update_product_attributes(db, product.id, attributes_to_save)
 
     await ProductService.update_product(
         db, product_id, name=name, description=description, price=float(price), in_stock=in_stock

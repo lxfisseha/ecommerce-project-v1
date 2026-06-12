@@ -9,7 +9,7 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.database import get_session
-from src.utils.crypto import encrypt_phone
+from src.utils.crypto import encrypt_phone, hash_phone
 from unittest.mock import patch
 
 # Setup async sqlite for testing
@@ -28,22 +28,23 @@ async def setup_db():
     app.dependency_overrides[get_session] = override_get_session
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.create_all)
-    
+
     async with async_session_maker() as session:
-        phone_enc = encrypt_phone("912345678")
+        phone_raw = "912345678"
         seller = Seller(
             id=1,
             first_name="Test",
             last_name="User",
             store_name="Test Store",
             store_prefix="TEST",
-            phone=phone_enc
+            phone=encrypt_phone(phone_raw),
+            phone_hash=hash_phone(phone_raw)
         )
         session.add(seller)
         await session.commit()
-    
+
     yield
-    
+
     app.dependency_overrides.clear()
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
@@ -58,22 +59,29 @@ async def get_csrf_context(client):
 @pytest.mark.asyncio
 async def test_add_product_negative_price():
     token, csrf_cookie = await get_csrf_context(client)
-    
+
+    # Need to send an image because it's validated first
+    from io import BytesIO
+    file = {"image": ("test.jpg", BytesIO(b"fake"), "image/jpeg")}
+
     data = {
         "name": "Negative Price Product",
         "price": "-10.00",
+        "image_tag_0": "main",
         "csrf_token": token
     }
-    
+
     from src.features.products.routes import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
-    
+
     response = client.post(
         "/dashboard/products/add",
         data=data,
+        files=file,
         cookies={"csrftoken": csrf_cookie},
         headers={"X-CSRF-Token": token}
     )
-    
+
     assert response.status_code == 200
-    assert "Failed to create product" in response.text
+    # The route raises ValueError("Price must be greater than zero.") which is caught and returned as 'error'
+    assert "Price must be greater than zero." in response.text

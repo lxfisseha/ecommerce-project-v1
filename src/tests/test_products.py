@@ -9,7 +9,7 @@ from sqlmodel import SQLModel, select
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.database import get_session
-from src.utils.crypto import encrypt_phone
+from src.utils.crypto import encrypt_phone, hash_phone
 from unittest.mock import patch, MagicMock
 
 # Setup async sqlite for testing
@@ -30,14 +30,15 @@ async def setup_db():
         await conn.run_sync(SQLModel.metadata.create_all)
     
     async with async_session_maker() as session:
-        phone_enc = encrypt_phone("912345678")
+        phone_raw = "912345678"
         seller = Seller(
             id=1,
             first_name="Test",
             last_name="User",
             store_name="Test Store",
             store_prefix="TEST",
-            phone=phone_enc
+            phone=encrypt_phone(phone_raw),
+            phone_hash=hash_phone(phone_raw)
         )
         session.add(seller)
         await session.commit()
@@ -81,6 +82,7 @@ async def test_add_product_success():
             "description": "Product Description",
             "price": "100.50",
             "in_stock": "on",
+            "image_tag_0": "main",
             "csrf_token": token
         }
         
