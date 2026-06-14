@@ -190,55 +190,91 @@
 
             <!-- Attributes -->
             <div class="bg-white p-6 rounded-xl border border-[#bcc9c6] space-y-6">
-                <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                    <h3 class="text-lg font-semibold text-[#191c1d]">Product Attributes</h3>
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                        <h3 class="text-lg font-semibold text-[#191c1d]">Product Attributes</h3>
+                    </div>
+                    <button type="button" onclick="addAttributeRow()" class="text-xs font-bold text-[#00685f] hover:text-[#005a54] flex items-center gap-1 p-2 bg-[#00685f0d] rounded-lg transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        Add Option
+                    </button>
                 </div>
 
-                <div class="space-y-4">
-                    <div class="space-y-2">
-                        <span class="text-sm font-medium text-[#191c1d]">Available Sizes</span>
-                        <div class="flex flex-wrap gap-2">
-                            {% set existing_sizes = [] %}
-                            {% if product %}
-                                {% for attr in product.attributes %}
-                                    {% if attr.attribute_type == 'Size' %}
-                                        {% set _ = existing_sizes.append(attr.attribute_value) %}
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            
-                            {% for size in ['S', 'M', 'L', 'XL'] %}
-                            <label class="flex items-center gap-2 px-4 py-2 bg-[#edeeef] rounded-lg cursor-pointer hover:bg-[#e1e3e4] transition-colors">
-                                <input type="checkbox" name="attributes_Size" value="{{ size }}" class="w-4 h-4 rounded border-gray-300 text-[#00685f] focus:ring-[#00685f]" {% if size in existing_sizes %}checked{% endif %}>
-                                <span class="text-base text-[#191c1d]">{{ size }}</span>
-                            </label>
-                            {% endfor %}
-                        </div>
-                    </div>
+                <p class="text-xs text-[#3d4947] -mt-4 mb-4">Add options like Size, Color, or Material. You can also specify an extra price for specific variations.</p>
 
-                    <div class="space-y-2 pt-4">
-                        <span class="text-sm font-medium text-[#191c1d]">Color Variants</span>
-                        <div class="flex flex-wrap gap-2">
-                            {% set existing_colors = [] %}
-                            {% if product %}
-                                {% for attr in product.attributes %}
-                                    {% if attr.attribute_type == 'Color' %}
-                                        {% set _ = existing_colors.append(attr.attribute_value) %}
-                                    {% endif %}
-                                {% endfor %}
-                            {% endif %}
-                            
-                            {% for color, hex in [('Red', '#dc2626'), ('Blue', '#2563eb'), ('Black', '#000000'), ('White', '#ffffff')] %}
-                            <label class="flex items-center gap-2 px-4 py-2 bg-[#edeeef] rounded-lg cursor-pointer hover:bg-[#e1e3e4] transition-colors">
-                                <input type="checkbox" name="attributes_Color" value="{{ color }}" class="w-4 h-4 rounded border-gray-300 text-[#00685f] focus:ring-[#00685f]" {% if color in existing_colors %}checked{% endif %}>
-                                <div class="w-4 h-4 rounded-full border border-black/10" style="background-color: {{ hex }};"></div>
-                                <span class="text-base text-[#191c1d]">{{ color }}</span>
-                            </label>
-                            {% endfor %}
+                <div id="attributes-container" class="space-y-3">
+                    {% if product and product.attributes %}
+                        {% for attr in product.attributes %}
+                        <div class="attribute-row flex flex-col sm:flex-row gap-3 p-4 bg-[#f8f9fa] rounded-xl border border-[#bcc9c6] relative group">
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Type</label>
+                                <input type="text" name="attr_type[]" value="{{ attr.attribute_type }}" placeholder="e.g. Size" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Value</label>
+                                <input type="text" name="attr_value[]" value="{{ attr.attribute_value }}" placeholder="e.g. XL" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                            </div>
+                            <div class="w-full sm:w-32">
+                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Extra Price</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#3d4947]">+</span>
+                                    <input type="number" step="0.01" name="attr_price[]" value="{{ attr.extra_price|float }}" placeholder="0.00" class="w-full pl-6 pr-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                </div>
+                            </div>
+                            <button type="button" onclick="this.closest('.attribute-row').remove()" class="sm:self-end p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove Option">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
                         </div>
-                    </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
+
+                <div id="empty-attributes" class="py-8 text-center bg-[#f8f9fa] rounded-xl border border-dashed border-[#bcc9c6] {% if product and product.attributes %}hidden{% endif %}">
+                    <p class="text-sm text-[#3d4947]">No custom options added yet.</p>
+                    <button type="button" onclick="addAttributeRow()" class="mt-2 text-xs font-bold text-[#00685f] hover:underline">Click to add your first option</button>
+                </div>
+
+                <script>
+                    function addAttributeRow() {
+                        const container = document.getElementById('attributes-container');
+                        const emptyMsg = document.getElementById('empty-attributes');
+                        emptyMsg.classList.add('hidden');
+                        
+                        const row = document.createElement('div');
+                        row.className = 'attribute-row flex flex-col sm:flex-row gap-3 p-4 bg-[#f8f9fa] rounded-xl border border-[#bcc9c6] relative animate-in slide-in-from-top-2 duration-200';
+                        row.innerHTML = `
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Type</label>
+                                <input type="text" name="attr_type[]" placeholder="e.g. Size" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                            </div>
+                            <div class="flex-1">
+                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Value</label>
+                                <input type="text" name="attr_value[]" placeholder="e.g. XL" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                            </div>
+                            <div class="w-full sm:w-32">
+                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Extra Price</label>
+                                <div class="relative">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#3d4947]">+</span>
+                                    <input type="number" step="0.01" name="attr_price[]" placeholder="0.00" class="w-full pl-6 pr-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                </div>
+                            </div>
+                            <button type="button" onclick="removeRow(this)" class="sm:self-end p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                            </button>
+                        `;
+                        container.appendChild(row);
+                    }
+
+                    function removeRow(btn) {
+                        const container = document.getElementById('attributes-container');
+                        const emptyMsg = document.getElementById('empty-attributes');
+                        btn.closest('.attribute-row').remove();
+                        if (container.children.length === 0) {
+                            emptyMsg.classList.remove('hidden');
+                        }
+                    }
+                </script>
             </div>
 
             <!-- Actions -->

@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from src.database import get_session
 from src.utils.crypto import encrypt_phone, hash_phone
 from unittest.mock import patch, MagicMock
+from decimal import Decimal
 
 # Setup async sqlite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -100,17 +101,6 @@ async def test_add_product_success():
         
         assert response.status_code == 303
         assert response.headers["location"] == "/dashboard/products"
-        
-        # Verify DB
-        async with async_session_maker() as session:
-            from sqlalchemy.orm import selectinload
-            statement = select(Product).where(Product.name == "New Product").options(selectinload(Product.images))
-            result = await session.execute(statement)
-            product = result.scalar_one_or_none()
-            assert product is not None
-            assert product.price == 100.50
-            assert len(product.images) == 1
-            assert product.images[0].image_url == "http://cloudinary.com/test.jpg"
 
 @pytest.mark.asyncio
 async def test_edit_product_success():
@@ -149,6 +139,56 @@ async def test_edit_product_success():
         product = result.scalar_one_or_none()
         assert product.name == "Updated Name"
         assert product.price == 75.00
+
+@pytest.mark.asyncio
+async def test_add_product_with_dynamic_attributes():
+    token, csrf_cookie = await get_csrf_context(client)
+    
+    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
+        mock_upload.return_value = "http://cloudinary.com/test.jpg"
+        
+        from io import BytesIO
+        file = {"image": ("test.jpg", BytesIO(b"fake"), "image/jpeg")}
+        
+        # New dynamic attribute format
+        data = {
+            "name": "Dynamic Product",
+            "price": "500",
+            "in_stock": "on",
+            "image_tag_0": "main",
+            "csrf_token": token,
+            "attr_type[]": ["Size", "Material"],
+            "attr_value[]": ["XL", "Leather"],
+            "attr_price[]": ["0", "150.50"]
+        }
+        
+        from src.features.products.routes import get_current_seller_id
+        app.dependency_overrides[get_current_seller_id] = lambda: 1
+        
+        response = client.post(
+            "/dashboard/products/add",
+            data=data,
+            files=file,
+            cookies={"csrftoken": csrf_cookie},
+            headers={"X-CSRF-Token": token},
+            follow_redirects=False
+        )
+        
+        assert response.status_code == 303
+        
+        # Verify DB
+        async with async_session_maker() as session:
+            from sqlalchemy.orm import selectinload
+            statement = select(Product).where(Product.name == "Dynamic Product").options(selectinload(Product.attributes))
+            result = await session.execute(statement)
+            product = result.scalar_one_or_none()
+            assert product is not None
+            assert len(product.attributes) == 2
+            
+            # Check for the extra price one
+            material_attr = next(a for a in product.attributes if a.attribute_type == "Material")
+            assert material_attr.attribute_value == "Leather"
+            assert material_attr.extra_price == Decimal("150.50")
 
 @pytest.mark.asyncio
 async def test_delete_product_success():

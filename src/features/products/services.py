@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlmodel import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+from decimal import Decimal
 from .models import Product, ProductImage, ProductAttribute
 
 class ProductService:
@@ -9,7 +10,7 @@ class ProductService:
     async def update_product_attributes(
         db: AsyncSession,
         product_id: int,
-        attributes: List[dict] # List of {"type": "Color", "value": "Red"}
+        attributes: List[dict] # List of {"type": "Color", "value": "Red", "extra_price": 0.0}
     ):
         """
         Clears existing attributes and adds new ones.
@@ -26,7 +27,8 @@ class ProductService:
             new_attr = ProductAttribute(
                 product_id=product_id,
                 attribute_type=attr_data["type"],
-                attribute_value=attr_data["value"]
+                attribute_value=attr_data["value"],
+                extra_price=Decimal(str(attr_data.get("extra_price", 0.0)))
             )
             product.attributes.append(new_attr)
         

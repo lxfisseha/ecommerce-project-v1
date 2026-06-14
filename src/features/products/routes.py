@@ -155,14 +155,19 @@ async def add_product(
             db, seller_id, name, description, float(price), in_stock
         )
         
-        # Process and save attributes
+        # Process and save dynamic attributes
+        attr_types = form.getlist("attr_type[]")
+        attr_values = form.getlist("attr_value[]")
+        attr_prices = form.getlist("attr_price[]")
+        
         attributes_to_save = []
-        for key in form.keys():
-            if key.startswith("attributes_"):
-                attr_type = key.replace("attributes_", "")
-                values = form.getlist(key)
-                for val in values:
-                    attributes_to_save.append({"type": attr_type, "value": val})
+        for i in range(len(attr_types)):
+            if attr_types[i] and attr_values[i]:
+                attributes_to_save.append({
+                    "type": attr_types[i],
+                    "value": attr_values[i],
+                    "extra_price": float(attr_prices[i]) if attr_prices[i] else 0.0
+                })
         
         if attributes_to_save:
             await ProductService.update_product_attributes(db, product.id, attributes_to_save)
@@ -291,16 +296,25 @@ async def edit_product(
             product.images.append(new_image)
 
     # 3. Process and save attributes
+    attr_types = form.getlist("attr_type[]")
+    attr_values = form.getlist("attr_value[]")
+    attr_prices = form.getlist("attr_price[]")
+    
     attributes_to_save = []
-    for key in form.keys():
-        if key.startswith("attributes_"):
-            attr_type = key.replace("attributes_", "")
-            values = form.getlist(key)
-            for val in values:
-                attributes_to_save.append({"type": attr_type, "value": val})
+    for i in range(len(attr_types)):
+        if attr_types[i] and attr_values[i]:
+            attributes_to_save.append({
+                "type": attr_types[i],
+                "value": attr_values[i],
+                "extra_price": float(attr_prices[i]) if attr_prices[i] else 0.0
+            })
     
     if attributes_to_save:
         await ProductService.update_product_attributes(db, product.id, attributes_to_save)
+    else:
+        # If no attributes in form, clear existing ones
+        product.attributes.clear()
+        db.add(product)
 
     await ProductService.update_product(
         db, product_id, name=name, description=description, price=float(price), in_stock=in_stock
