@@ -1,28 +1,60 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import RedirectResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
-
+from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
 from src.templates_config import templates
 from src.features.auth.models import Seller
-from sqlmodel import select
+from src.features.orders.models import Order
+from src.features.orders.services import OrderService
+from src.features.products.models import Product
+from src.utils.crypto import decrypt_data
+from sqlmodel import select, func, desc
+from decimal import Decimal
 
 router = APIRouter()
 
+async def get_current_seller(request: Request, db: AsyncSession):
+    seller_id = request.session.get("seller_id")
+    if not seller_id:
+        return None
+    result = await db.execute(select(Seller).where(Seller.id == int(seller_id)))
+    return result.scalar_one_or_none()
 
 @router.get("/")
 async def get_dashboard(request: Request, db: AsyncSession = Depends(get_session)):
-    seller_id = request.session.get("seller_id")
-    if not seller_id:
-        return RedirectResponse(url="/auth/login")
-    # Lookup seller to show friendly name
-    result = await db.execute(select(Seller).where(Seller.id == int(seller_id)))
-    seller = result.scalar_one_or_none()
+    seller = await get_current_seller(request, db)
     if not seller:
-        # If seller not found, redirect to login
         return RedirectResponse(url="/auth/login")
+
+    # Calculate Stats
+    # 1. Total Orders
+    total_orders_stmt = select(func.count(Order.id)).where(Order.seller_id == seller.id)
+    total_orders = (await db.execute(total_orders_stmt)).scalar() or 0
+
+    # 2. Total Sales (Completed only)
+    total_sales_stmt = select(func.sum(Order.total_amount)).where(
+        Order.seller_id == seller.id, 
+        Order.status == "completed"
+    )
+    total_sales = (await db.execute(total_sales_stmt)).scalar() or Decimal("0.0")
+
+    # 3. Pending Orders
+    pending_orders_stmt = select(func.count(Order.id)).where(
+        Order.seller_id == seller.id, 
+        Order.status == "pending"
+    )
+    pending_orders = (await db.execute(pending_orders_stmt)).scalar() or 0
+
+    # 4. Active Products (Items currently marked as in stock)
+    active_products_stmt = select(func.count(Product.id)).where(
+        Product.seller_id == seller.id,
+        Product.in_stock == True
+    )
+    active_products_count = (await db.execute(active_products_stmt)).scalar() or 0
+
+    # Recent Orders
+    recent_orders_stmt = select(Order).where(Order.seller_id == seller.id).order_by(desc(Order.created_at)).limit(5)
+    recent_orders = (await db.execute(recent_orders_stmt)).scalars().all()
 
     return templates.TemplateResponse(
         request,
@@ -31,5 +63,100 @@ async def get_dashboard(request: Request, db: AsyncSession = Depends(get_session
             "request": request,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name,
+            "total_orders": total_orders,
+            "total_sales": total_sales,
+            "pending_orders": pending_orders,
+            "active_products_count": active_products_count,
+            "recent_orders": recent_orders
         },
     )
+
+@router.get("/orders", response_class=HTMLResponse)
+async def list_orders(
+    request: Request, 
+    status: str | None = None,
+    db: AsyncSession = Depends(get_session)
+):
+    seller = await get_current_seller(request, db)
+    if not seller:
+        return RedirectResponse(url="/auth/login")
+    
+    statement = select(Order).where(Order.seller_id == seller.id)
+    if status:
+        statement = statement.where(Order.status == status)
+    
+    statement = statement.order_by(desc(Order.created_at))
+    result = await db.execute(statement)
+    orders = result.scalars().all()
+
+    return templates.TemplateResponse(
+        request,
+        "dashboard/orders_list.html",
+        {
+            "request": request,
+            "orders": orders,
+            "current_status": status,
+            "seller_name": f"{seller.first_name} {seller.last_name}",
+            "store_name": seller.store_name
+        }
+    )
+
+@router.get("/orders/{order_id}", response_class=HTMLResponse)
+async def order_detail(
+    order_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    seller = await get_current_seller(request, db)
+    if not seller:
+        return RedirectResponse(url="/auth/login")
+    
+    order = await db.get(Order, order_id)
+    if not order or order.seller_id != seller.id:
+        raise HTTPException(status_code=404, detail="Order not found")
+    
+    # Decrypt sensitive data for display
+    order.buyer_phone = decrypt_data(order.buyer_phone)
+    order.delivery_address = decrypt_data(order.delivery_address)
+    
+    return templates.TemplateResponse(
+        request,
+        "dashboard/order_detail.html",
+        {
+            "request": request,
+            "order": order,
+            "seller_name": f"{seller.first_name} {seller.last_name}",
+            "store_name": seller.store_name
+        }
+    )
+
+@router.post("/orders/{order_id}/status")
+async def update_order_status(
+    order_id: int,
+    request: Request,
+    new_status: str = Form(...),
+    db: AsyncSession = Depends(get_session)
+):
+    seller = await get_current_seller(request, db)
+    if not seller:
+        raise HTTPException(status_code=401)
+    
+    try:
+        await OrderService.update_order_status(db, order_id, new_status, changed_by="seller")
+        return RedirectResponse(url=f"/dashboard/orders/{order_id}", status_code=303)
+    except ValueError as e:
+        # Handle invalid transitions
+        order = await db.get(Order, order_id)
+        order.buyer_phone = decrypt_data(order.buyer_phone)
+        order.delivery_address = decrypt_data(order.delivery_address)
+        return templates.TemplateResponse(
+            request,
+            "dashboard/order_detail.html",
+            {
+                "request": request,
+                "order": order,
+                "error": str(e),
+                "seller_name": f"{seller.first_name} {seller.last_name}",
+                "store_name": seller.store_name
+            }
+        )
