@@ -30,10 +30,15 @@
 
                 <div>
                     <label for="buyer_phone" class="block text-xs font-medium text-[#3d4947] mb-1.5">Phone Number</label>
-                    <input type="tel" id="buyer_phone" name="buyer_phone" required 
-                           placeholder="0912345678"
-                           class="w-full bg-[#f8f9fa] border border-[#bcc9c6] rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none transition-all">
-                    <p class="mt-1.5 text-[10px] text-[#6d7a77] font-medium">Must be 10 digits starting with 09 or 07</p>
+                    <div class="relative flex items-center">
+                        <span class="absolute left-3 text-[#3d4947] text-sm font-medium">
+                            +251
+                        </span>
+                        <input type="tel" id="buyer_phone" name="buyer_phone" required 
+                               placeholder="912345678"
+                               class="w-full bg-[#f8f9fa] border border-[#bcc9c6] rounded-lg pl-12 pr-3 py-2.5 text-sm focus:ring-2 focus:ring-[#0d9488] focus:border-transparent outline-none transition-all">
+                    </div>
+                    <p class="mt-1.5 text-[10px] text-[#6d7a77] font-medium">Enter 9 digits (e.g., 912345678)</p>
                 </div>
 
                 <div>
