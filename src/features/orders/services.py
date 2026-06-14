@@ -64,6 +64,10 @@ class OrderService:
         """
         order_id = await OrderService.generate_order_id(db, product.seller_id)
         
+        # Normalize phone number to 9-digit format
+        from src.utils.phone import normalize_phone
+        buyer_phone = normalize_phone(buyer_phone)
+        
         # Calculate subtotal and total (v1: 150 ETB fixed delivery fee)
         delivery_fee = Decimal("150.0")
         subtotal = product.price * quantity

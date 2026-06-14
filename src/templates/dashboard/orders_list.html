@@ -1,0 +1,91 @@
+{% extends "seller_base.html" %}
+
+{% block title %}Manage Orders - AleMart{% endblock %}
+
+{% block seller_content %}
+<div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div>
+        <h1 class="text-2xl font-bold text-[#191c1d]">Order Management</h1>
+        <p class="text-[#3d4947] text-sm">View and process your store's orders.</p>
+    </div>
+    
+    <div class="flex bg-[#f3f4f5] p-1 rounded-xl border border-[#bcc9c6]">
+        <a href="/dashboard/orders" class="px-4 py-2 text-xs font-bold rounded-lg transition-all {% if not current_status %}bg-white shadow-sm text-[#00685f]{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">All</a>
+        <a href="/dashboard/orders?status=pending" class="px-4 py-2 text-xs font-bold rounded-lg transition-all {% if current_status == 'pending' %}bg-white shadow-sm text-[#00685f]{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">Pending</a>
+        <a href="/dashboard/orders?status=shipped" class="px-4 py-2 text-xs font-bold rounded-lg transition-all {% if current_status == 'shipped' %}bg-white shadow-sm text-[#00685f]{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">Shipped</a>
+        <a href="/dashboard/orders?status=completed" class="px-4 py-2 text-xs font-bold rounded-lg transition-all {% if current_status == 'completed' %}bg-white shadow-sm text-[#00685f]{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">Completed</a>
+    </div>
+</div>
+
+<div class="bg-white border border-[#bcc9c6] rounded-2xl overflow-hidden shadow-sm">
+    <div class="overflow-x-auto">
+        <table class="w-full text-left">
+            <thead class="bg-[#f3f4f5] text-[10px] font-bold text-[#3d4947] uppercase tracking-widest">
+                <tr>
+                    <th class="px-6 py-4">Order ID</th>
+                    <th class="px-6 py-4">Date</th>
+                    <th class="px-6 py-4">Buyer</th>
+                    <th class="px-6 py-4">Product</th>
+                    <th class="px-6 py-4 text-right">Amount</th>
+                    <th class="px-6 py-4 text-center">Status</th>
+                    <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#bcc9c6]">
+                {% for order in orders %}
+                <tr class="hover:bg-[#f8f9fa] transition-colors group">
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-bold text-[#191c1d]">{{ order.order_id }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs text-[#191c1d]">{{ order.created_at.strftime('%Y-%m-%d') }}</span>
+                        <span class="block text-[10px] text-[#3d4947]">{{ order.created_at.strftime('%H:%M') }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-medium text-[#191c1d]">{{ order.buyer_name }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="max-w-[200px] truncate text-sm text-[#191c1d] font-medium">{{ order.product_name }}</div>
+                        <p class="text-[10px] text-[#3d4947]">
+                            {% if order.attributes_selected %}{{ order.attributes_selected }} • {% endif %}
+                            Qty: {{ order.quantity }}
+                        </p>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <span class="text-sm font-bold text-[#191c1d]">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
+                    </td>
+                    <td class="px-6 py-4 text-center">
+                        {% if order.status == 'pending' %}
+                        <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-[10px] font-bold rounded-full border border-yellow-100 uppercase">Pending</span>
+                        {% elif order.status == 'shipped' %}
+                        <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-full border border-blue-100 uppercase">Shipped</span>
+                        {% elif order.status == 'completed' %}
+                        <span class="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded-full border border-green-100 uppercase">Completed</span>
+                        {% else %}
+                        <span class="px-2 py-0.5 bg-red-50 text-red-700 text-[10px] font-bold rounded-full border border-red-100 uppercase">{{ order.status }}</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="/dashboard/orders/{{ order.id }}" class="text-[#00685f] hover:text-[#005a54] p-2 rounded-lg hover:bg-[#00685f0d] transition-all inline-flex items-center gap-1">
+                            <span class="text-xs font-bold">Details</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+                        </a>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="7" class="px-6 py-20 text-center">
+                        <div class="flex flex-col items-center gap-3">
+                            <div class="p-4 bg-[#f3f4f5] rounded-full text-[#bcc9c6]">
+                                <svg class="w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                            </div>
+                            <p class="text-[#3d4947] text-sm font-medium">No orders found matching your criteria.</p>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

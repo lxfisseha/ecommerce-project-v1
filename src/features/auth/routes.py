@@ -3,7 +3,8 @@ from fastapi.responses import HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.templates_config import templates
 from src.database import get_session
-from .services import AuthService, validate_ethiopian_phone
+from .services import AuthService
+from src.utils.phone import validate_ethiopian_phone
 
 router = APIRouter()
 

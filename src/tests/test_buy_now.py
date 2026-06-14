@@ -109,8 +109,8 @@ async def test_order_creation_service_encryption():
         assert order.buyer_phone != raw_phone
         assert order.delivery_address != raw_address
         
-        # Check decryption
-        assert decrypt_data(order.buyer_phone) == raw_phone
+        # Check decryption - should be normalized to 9 digits
+        assert decrypt_data(order.buyer_phone) == "911223344"
         assert decrypt_data(order.delivery_address) == raw_address
         
         assert order.buyer_name == "Abebe"
@@ -163,12 +163,13 @@ async def test_process_checkout_success():
         order = result.scalar_one_or_none()
         assert order is not None
         assert order.buyer_phone != raw_phone
-        assert decrypt_data(order.buyer_phone) == raw_phone
+        assert decrypt_data(order.buyer_phone) == "911234567"
 
 @pytest.mark.asyncio
 async def test_order_confirmation_decryption():
     # 1. Create order with encrypted data
     raw_phone = "0911111111"
+    normalized_phone = "911111111"
     raw_address = "Addis Ababa"
     
     async with async_session_maker() as session:
@@ -176,8 +177,8 @@ async def test_order_confirmation_decryption():
             order_id="ET-DECRYPT-20240101-0001",
             seller_id=1,
             buyer_name="Abebe", 
-            buyer_phone=encrypt_data(raw_phone), 
-            buyer_phone_hash=hash_data(raw_phone),
+            buyer_phone=encrypt_data(normalized_phone), 
+            buyer_phone_hash=hash_data(normalized_phone),
             delivery_address=encrypt_data(raw_address),
             delivery_address_hash=hash_data(raw_address),
             product_id=1, product_name="Test Product", product_price=1000, quantity=1,
@@ -193,7 +194,7 @@ async def test_order_confirmation_decryption():
     assert response.status_code == 200
     assert "Order Confirmed" in response.text
     # Should be decrypted in HTML
-    assert raw_phone in response.text
+    assert normalized_phone in response.text
     assert raw_address in response.text
 
 @pytest.mark.asyncio

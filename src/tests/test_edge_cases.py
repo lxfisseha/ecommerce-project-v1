@@ -236,6 +236,6 @@ async def test_encryption_integrity_in_db():
         assert db_phone != raw_phone
         assert db_address != raw_address
         
-        # Verify it's decryptable to the original
-        assert decrypt_data(db_phone) == raw_phone
+        # Verify it's decryptable to the original (normalized)
+        assert decrypt_data(db_phone) == "911111111"
         assert decrypt_data(db_address) == raw_address

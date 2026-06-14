@@ -8,17 +8,13 @@ from .models import Seller, OtpCode
 from src.utils.crypto import encrypt_phone, hash_phone
 from src.utils.datetime import utc_now
 
-def validate_ethiopian_phone(phone: str) -> bool:
-    """
-    Validates Ethiopian phone numbers (without leading 0).
-    Must start with 9 or 7 and be exactly 9 digits.
-    """
-    pattern = r"^[97]\d{8}$"
-    return bool(re.match(pattern, phone))
+from src.utils.phone import validate_ethiopian_phone, normalize_phone
 
 class AuthService:
     @staticmethod
     async def get_seller_by_phone(db: AsyncSession, phone: str) -> Optional[Seller]:
+        # Normalize input to ensure consistency
+        phone = normalize_phone(phone)
         # Use deterministic hash for lookup
         phone_h = hash_phone(phone)
         statement = select(Seller).where(Seller.phone_hash == phone_h)
@@ -27,6 +23,8 @@ class AuthService:
 
     @staticmethod
     async def generate_otp(db: AsyncSession, phone: str) -> str:
+        # Normalize input
+        phone = normalize_phone(phone)
         # Generate a 6-digit code
         code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
         
@@ -49,6 +47,8 @@ class AuthService:
 
     @staticmethod
     async def verify_otp(db: AsyncSession, phone: str, code: str) -> dict:
+        # Normalize input
+        phone = normalize_phone(phone)
         phone_h = hash_phone(phone)
         now = utc_now()
         statement = (

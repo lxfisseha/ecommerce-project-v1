@@ -69,9 +69,8 @@ async def process_checkout(
         raise HTTPException(status_code=404, detail="Product not found")
     
     # Validation: Phone Number
-    if not re.match(r"^(09|07)\d{8}$", buyer_phone):
-        # In a real app, we'd return the form with errors. 
-        # For v1, we'll raise an exception or handle it simply.
+    from src.utils.phone import validate_ethiopian_phone, normalize_phone
+    if not validate_ethiopian_phone(buyer_phone):
         return templates.TemplateResponse(
             request, 
             "buyer_checkout.html", 
@@ -80,18 +79,21 @@ async def process_checkout(
                 "product": product,
                 "quantity": quantity,
                 "attributes": attributes,
-                "error": "Phone number must be 10 digits starting with 09 or 07",
+                "error": "Phone number must be a valid Ethiopian number (e.g., 0912345678 or 912345678)",
                 "subtotal": product.price * quantity,
                 "delivery_fee": 150,
                 "total": (product.price * quantity) + 150
             }
         )
     
+    # Normalize phone to 9-digit format before saving
+    normalized_phone = normalize_phone(buyer_phone)
+    
     order = await OrderService.create_order(
         db,
         product=product,
         buyer_name=buyer_name,
-        buyer_phone=buyer_phone,
+        buyer_phone=normalized_phone,
         delivery_address=delivery_address,
         quantity=quantity,
         attributes_selected=attributes
