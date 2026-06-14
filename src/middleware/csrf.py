@@ -38,24 +38,27 @@ class CustomCSRFMiddleware:
         # 2. Handle Validation for Unsafe Methods
         if request.method not in self.safe_methods:
             header_token = request.headers.get(self.header_name)
+            # Fallback: check query parameters
+            if not header_token:
+                header_token = request.query_params.get("csrf_token")
 
             if not header_token or header_token != csrf_cookie_token:
                 # Need to check form data
                 content_type = request.headers.get("Content-Type", "")
-                if "application/x-www-form-urlencoded" in content_type or "multipart/form-data" in content_type:
+                if "application/x-www-form-urlencoded" in content_type:
                     # Read the body to check for token
                     body = await request.body()
-
-                    # Try to find token in body (basic parse for urlencoded)
-                    if "application/x-www-form-urlencoded" in content_type:
-                        params = parse_qs(body.decode())
-                        header_token = header_token or params.get("csrf_token", [None])[0]
+                    params = parse_qs(body.decode())
+                    header_token = header_token or params.get("csrf_token", [None])[0]
 
                     # IMPORTANT: Wrap receive so downstream can read the body again
                     async def receive_with_body() -> dict:
                         return {"type": "http.request", "body": body, "more_body": False}
 
                     receive = receive_with_body
+                
+                # Note: multipart/form-data body parsing is complex and not fully implemented
+                # for CSRF here. Relying on header/query param fallback.
 
             if not header_token or header_token != csrf_cookie_token:
                 response = JSONResponse(

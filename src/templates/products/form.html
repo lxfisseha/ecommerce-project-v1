@@ -19,8 +19,8 @@
             {% endif %}
         </div>
 
-        <form method="POST" enctype="multipart/form-data" class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
-        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <form method="POST" enctype="multipart/form-data" action="{% if product %}/dashboard/products/edit/{{ product.id }}{% else %}/dashboard/products/add{% endif %}?csrf_token={{ request.scope.csrf_token }}" class="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
+        <input type="hidden" name="csrf_token" value="{{ request.scope.csrf_token }}">
         <input type="hidden" name="existing_image_count" value="{{ product.images | length if product else 0 }}">
         
         <!-- Left Column: Media -->
