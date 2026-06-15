@@ -163,7 +163,9 @@
                     </div>
                     <div class="pb-4">
                         <p class="text-[#191c1d] font-bold">{{ log.new_status | capitalize }}</p>
-                        <p class="text-[#3d4947]">By {{ log.changed_by }} on {{ log.changed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        <p class="text-[#3d4947]">
+                            By {% if log.changed_by == 'seller' %}{{ seller_name }}{% else %}System{% endif %} on {{ log.changed_at.strftime('%Y-%m-%d %H:%M') }}
+                        </p>
                         {% if log.context %}<p class="text-[#6b7280] italic mt-1">"{{ log.context }}"</p>{% endif %}
                     </div>
                 </div>
