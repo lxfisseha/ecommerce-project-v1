@@ -13,6 +13,10 @@ class Seller(SQLModel, table=True):
     store_prefix: str = Field(max_length=10, unique=True)  # Required for ET-[store prefix]-... format
     phone: str = Field(max_length=512) # AES-256 Encrypted
     phone_hash: str = Field(index=True, unique=True, max_length=256) # HMAC-SHA256 for lookup
+    business_email: Optional[str] = Field(default=None, max_length=255)
+    business_address: Optional[str] = Field(default=None, max_length=255)
+    telegram_username: Optional[str] = Field(default=None, max_length=100)
+    business_contact_number: Optional[str] = Field(default=None, max_length=10)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 

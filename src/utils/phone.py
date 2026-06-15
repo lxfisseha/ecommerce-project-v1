@@ -25,13 +25,20 @@ def normalize_phone(phone: str) -> str:
 def validate_ethiopian_phone(phone: str) -> bool:
     """
     Validates Ethiopian phone numbers.
-    Accepts 9 digits starting with 9 or 7,
-    OR 10 digits starting with 09 or 07.
+    Accepts:
+    - 9 digits starting with 9 or 7 (e.g., 912345678)
+    - 10 digits starting with 09 or 07 (e.g., 0912345678)
+    - 12 digits starting with 2519 or 2517 (e.g., 251912345678)
     """
     if not phone:
         return False
     
-    # Normalize first to check core digits
-    normalized = normalize_phone(phone)
-    pattern = r"^[97]\d{8}$"
-    return bool(re.match(pattern, normalized))
+    # Remove all non-digits
+    digits = re.sub(r"\D", "", phone)
+    
+    # Pattern: 
+    # ^[97]\d{8}$              -> 9 digits starting with 9 or 7
+    # ^0[97]\d{8}$             -> 10 digits starting with 09 or 07
+    # ^251[97]\d{8}$           -> 12 digits starting with 2519 or 2517
+    pattern = r"^([97]\d{8}|0[97]\d{8}|251[97]\d{8})$"
+    return bool(re.match(pattern, digits))

@@ -8,6 +8,8 @@ from src.features.orders.models import Order
 from src.features.orders.services import OrderService
 from src.features.products.models import Product
 from src.utils.crypto import decrypt_data
+from src.utils.datetime import utc_now
+from src.utils.phone import validate_ethiopian_phone, normalize_phone
 from sqlmodel import select, func, desc
 from decimal import Decimal
 
@@ -160,3 +162,107 @@ async def update_order_status(
                 "store_name": seller.store_name
             }
         )
+
+@router.get("/profile", response_class=HTMLResponse)
+async def get_profile(
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    seller = await get_current_seller(request, db)
+    if not seller:
+        return RedirectResponse(url="/auth/login")
+    
+    # Decrypt phone number for display
+    seller.phone = f"+251{decrypt_data(seller.phone)}"
+    
+    return templates.TemplateResponse(
+        request,
+        "dashboard/profile.html",
+        {
+            "request": request,
+            "seller": seller,
+            "seller_name": f"{seller.first_name} {seller.last_name}",
+            "store_name": seller.store_name
+        }
+    )
+
+@router.post("/profile")
+async def update_profile(
+    request: Request,
+    first_name: str = Form(...),
+    last_name: str = Form(...),
+    store_name: str = Form(...),
+    business_email: str = Form(None),
+    business_address: str = Form(None),
+    telegram_username: str = Form(None),
+    business_contact_number: str = Form(None),
+    db: AsyncSession = Depends(get_session)
+):
+    seller = await get_current_seller(request, db)
+    if not seller:
+        raise HTTPException(status_code=401)
+    
+    # Validate business contact number if provided
+    normalized_contact = None
+    if business_contact_number:
+        if not validate_ethiopian_phone(business_contact_number):
+            seller.phone = f"+251{decrypt_data(seller.phone)}"
+            return templates.TemplateResponse(
+                request,
+                "dashboard/profile.html",
+                {
+                    "request": request,
+                    "seller": seller,
+                    "seller_name": f"{seller.first_name} {seller.last_name}",
+                    "store_name": seller.store_name,
+                    "error": "Invalid business phone number format."
+                }
+            )
+        normalized_contact = normalize_phone(business_contact_number)
+
+    # Check store name uniqueness if it changed
+    if store_name != seller.store_name:
+        existing_seller = await db.execute(select(Seller).where(Seller.store_name == store_name))
+        if existing_seller.scalar_one_or_none():
+            # Error handling in template (re-displaying)
+            seller.phone = f"+251{decrypt_data(seller.phone)}"
+            return templates.TemplateResponse(
+                request,
+                "dashboard/profile.html",
+                {
+                    "request": request,
+                    "seller": seller,
+                    "seller_name": f"{seller.first_name} {seller.last_name}",
+                    "store_name": seller.store_name,
+                    "error": "Store name already exists."
+                }
+            )
+
+    seller.first_name = first_name
+    seller.last_name = last_name
+    seller.store_name = store_name
+    seller.business_email = business_email
+    seller.business_address = business_address
+    seller.telegram_username = telegram_username
+    seller.business_contact_number = normalized_contact
+    seller.updated_at = utc_now()
+    
+    db.add(seller)
+    await db.commit()
+    await db.refresh(seller)
+    
+    # Prepare decrypted phone for re-display
+    seller.phone = f"+251{decrypt_data(seller.phone)}"
+    # Do NOT prepend 251 to business_contact_number; it is already normalized and the UI handles the label.
+    
+    return templates.TemplateResponse(
+        request,
+        "dashboard/profile.html",
+        {
+            "request": request,
+            "seller": seller,
+            "seller_name": f"{seller.first_name} {seller.last_name}",
+            "store_name": seller.store_name,
+            "message": "Profile updated successfully!"
+        }
+    )

@@ -23,8 +23,8 @@
                 <a href="/dashboard/orders" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium {% if '/orders' in request.url.path %}bg-[#00685f] text-white{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">
                     <span>Orders</span>
                 </a>
-                <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium text-[#3d4947] hover:bg-[#e1e3e4]">
-                    <span>Settings</span>
+                <a href="/dashboard/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium {% if '/profile' in request.url.path %}bg-[#00685f] text-white{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">
+                    <span>Profile</span>
                 </a>
             </nav>
         </div>
