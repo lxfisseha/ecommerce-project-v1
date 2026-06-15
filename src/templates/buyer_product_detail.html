@@ -144,8 +144,32 @@
     <!-- Details Section (Figma 2:456) -->
     <div class="mt-16 lg:mt-4 border-t border-[#bcc9c6] pt-12">
         <div class="flex gap-6 border-b border-[#bcc9c6] mb-8 overflow-x-auto scrollbar-hide">
-            <button class="pb-4 border-b-2 border-[#00685f] text-[#00685f] font-bold text-sm whitespace-nowrap">Seller Information</button>
+            <button class="pb-4 border-b-2 border-[#00685f] text-[#00685f] font-bold text-sm whitespace-nowrap">Terms And Conditions</button>
+            <button class="pb-4 border-b-2 border-transparent text-[#3d4947] font-medium text-sm opacity-50 whitespace-nowrap">Seller Information</button>
         </div>
+        
+        <!-- Terms and Conditions Content -->
+        <div class="max-w-3xl space-y-6 text-[#191c1d] leading-relaxed break-words mb-12">
+            <p>
+                Experience unparalleled quality with our premium collection. Each item is carefully selected and verified for the best customer experience in Ethiopia. 
+            </p>
+            <ul class="space-y-4">
+                <li class="flex gap-4">
+                    <div class="w-6 h-6 rounded-full bg-[#00685f1a] flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <span class="break-words">Sustainable local materials sourced in Addis Ababa</span>
+                </li>
+                <li class="flex gap-4">
+                    <div class="w-6 h-6 rounded-full bg-[#00685f1a] flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <span class="break-words">Hand-assembled with attention to detail</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Seller Information Content -->
         <div class="max-w-3xl space-y-6 text-[#191c1d] leading-relaxed break-words">
             <h3 class="text-lg font-bold text-[#191c1d]">{{ product.seller.store_name }}</h3>
             <div class="space-y-3">
