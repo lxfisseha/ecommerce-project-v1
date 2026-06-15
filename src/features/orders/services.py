@@ -107,7 +107,8 @@ class OrderService:
         log = OrderStatusLog(
             order_id=order.id,
             new_status="pending",
-            changed_by="system"
+            changed_by="system",
+            context="Order created"
         )
         db.add(log)
         
@@ -125,7 +126,8 @@ class OrderService:
         db: AsyncSession,
         order_id: int,
         new_status: str,
-        changed_by: str = "seller"
+        changed_by: str = "seller",
+        context: Optional[str] = None
     ) -> Order:
         """
         FR17/FR18: State machine workflow and terminal state locks.
@@ -138,8 +140,7 @@ class OrderService:
         if order.status in ["completed", "cancelled"]:
             raise ValueError(f"Cannot update order in terminal state '{order.status}'")
         
-        # FR17: Workflow validation (Optional: v1 might allow any forward move)
-        # But PRD says pending -> shipped -> completed
+        # FR17: Workflow validation
         valid_transitions = {
             "pending": ["shipped", "cancelled"],
             "shipped": ["completed", "cancelled"],
@@ -157,7 +158,8 @@ class OrderService:
             order_id=order.id,
             old_status=old_status,
             new_status=new_status,
-            changed_by=changed_by
+            changed_by=changed_by,
+            context=context
         )
         db.add(log)
         db.add(order)

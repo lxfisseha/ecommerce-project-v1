@@ -121,12 +121,17 @@ async def order_detail(
     order.buyer_phone = decrypt_data(order.buyer_phone)
     order.delivery_address = decrypt_data(order.delivery_address)
     
+    # Fetch audit logs
+    logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at)
+    logs = (await db.execute(logs_stmt)).scalars().all()
+    
     return templates.TemplateResponse(
         request,
         "dashboard/order_detail.html",
         {
             "request": request,
             "order": order,
+            "logs": logs,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name
         }
@@ -137,6 +142,7 @@ async def update_order_status(
     order_id: int,
     request: Request,
     new_status: str = Form(...),
+    context: str = Form(None),
     db: AsyncSession = Depends(get_session)
 ):
     seller = await get_current_seller(request, db)
@@ -144,19 +150,25 @@ async def update_order_status(
         raise HTTPException(status_code=401)
     
     try:
-        await OrderService.update_order_status(db, order_id, new_status, changed_by="seller")
+        await OrderService.update_order_status(db, order_id, new_status, changed_by="seller", context=context)
         return RedirectResponse(url=f"/dashboard/orders/{order_id}", status_code=303)
     except ValueError as e:
         # Handle invalid transitions
         order = await db.get(Order, order_id)
         order.buyer_phone = decrypt_data(order.buyer_phone)
         order.delivery_address = decrypt_data(order.delivery_address)
+        
+        # Fetch audit logs
+        logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at)
+        logs = (await db.execute(logs_stmt)).scalars().all()
+        
         return templates.TemplateResponse(
             request,
             "dashboard/order_detail.html",
             {
                 "request": request,
                 "order": order,
+                "logs": logs,
                 "error": str(e),
                 "seller_name": f"{seller.first_name} {seller.last_name}",
                 "store_name": seller.store_name

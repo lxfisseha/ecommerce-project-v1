@@ -39,3 +39,4 @@ class OrderStatusLog(SQLModel, table=True):
     new_status: str = Field(max_length=20)
     changed_by: str = Field(max_length=50) # e.g., 'seller' or 'system'
     changed_at: datetime = Field(default_factory=utc_now, index=True)
+    context: Optional[str] = Field(default=None, max_length=500) # Additional details

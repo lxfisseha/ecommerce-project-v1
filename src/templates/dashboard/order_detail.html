@@ -150,6 +150,26 @@
                 Contact the buyer at <span class="font-bold">+251 {{ order.buyer_phone }}</span> before shipping to confirm their availability.
             </p>
         </div>
+
+        <!-- Audit Trail -->
+        <div class="bg-white border border-[#bcc9c6] rounded-2xl p-6 shadow-sm">
+            <h3 class="text-base font-bold text-[#191c1d] mb-4">Audit Trail</h3>
+            <div class="space-y-4">
+                {% for log in logs %}
+                <div class="flex gap-3 text-xs">
+                    <div class="flex flex-col items-center">
+                        <div class="w-2 h-2 rounded-full bg-[#bcc9c6]"></div>
+                        {% if not loop.last %}<div class="w-px h-full bg-[#bcc9c6] my-1"></div>{% endif %}
+                    </div>
+                    <div class="pb-4">
+                        <p class="text-[#191c1d] font-bold">{{ log.new_status | capitalize }}</p>
+                        <p class="text-[#3d4947]">By {{ log.changed_by }} on {{ log.changed_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                        {% if log.context %}<p class="text-[#6b7280] italic mt-1">"{{ log.context }}"</p>{% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
