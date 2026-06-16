@@ -3,15 +3,18 @@
 {% block content %}
 <!-- Top Navigation (Header) -->
 <header class="h-16 bg-[#f8f9fa] border-b border-[#bcc9c6] px-4 sm:px-8 flex items-center justify-between sticky top-0 z-50">
-    <div class="flex items-center gap-4 sm:gap-6">
-        <!-- Logo & Navigation (Combined) -->
+    <!-- Left: Logo -->
+    <div class="flex-1">
         <a href="/" class="text-lg sm:text-2xl font-bold text-[#00685f] whitespace-nowrap">AleMart</a>
+    </div>
+
+    <!-- Center: Navigation -->
+    <div class="flex-1 flex justify-center">
         <a href="/" class="text-[#3d4947] hover:text-[#00685f] text-sm font-medium transition-colors">Shop</a>
     </div>
 
-    <!-- Right Side Actions -->
-    <div class="flex items-center gap-2 sm:gap-4">
-        
+    <!-- Right: Actions -->
+    <div class="flex-1 flex justify-end items-center gap-2 sm:gap-4">
         <!-- Seller Login Button -->
         <a href="/auth/login" class="px-4 py-2 bg-[#00685f] text-white rounded-lg text-sm font-medium hover:bg-[#005a54] transition-colors">
             Seller Hub
