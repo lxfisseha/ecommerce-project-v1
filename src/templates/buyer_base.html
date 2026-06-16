@@ -10,7 +10,10 @@
 
     <!-- Center: Navigation -->
     <div class="flex-1 flex justify-center">
-        <a href="/" class="text-[#3d4947] hover:text-[#00685f] text-sm font-medium transition-colors">Shop</a>
+        <nav class="hidden md:flex items-center gap-6 text-[#3d4947] text-sm font-medium">
+            <a href="/" class="text-[#00685f] border-b-2 border-[#00685f] pb-1">Shop</a>
+            <a href="/support" class="hover:text-[#00685f]">Support</a>
+        </nav>
     </div>
 
     <!-- Right: Actions -->
@@ -29,18 +32,18 @@
 
 <!-- Mobile Menu Overlay -->
 <div id="mobile-menu" class="fixed inset-0 z-40 hidden md:hidden">
-    <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="toggleMobileMenu()"></div>
-    <div class="absolute top-16 right-4 left-4 bg-white rounded-2xl border border-[#bcc9c6] shadow-xl p-6 animate-in slide-in-from-top-4">
-        <nav class="flex flex-col gap-4">
-            <a href="/" class="text-[#00685f] font-semibold text-lg">Shop</a>
-            <hr class="border-t border-[#bcc9c6]">
-            <a href="/auth/login" class="flex items-center justify-center py-3 bg-[#f3f4f5] text-[#191c1d] font-bold rounded-xl border border-[#bcc9c6]">
-                Merchant Access
-            </a>
-        </nav>
-    </div>
+<div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="toggleMobileMenu()"></div>
+<div class="absolute top-16 right-4 left-4 bg-white rounded-2xl border border-[#bcc9c6] shadow-xl p-6 animate-in slide-in-from-top-4">
+<nav class="flex flex-col gap-4">
+    <a href="/" class="text-[#00685f] font-semibold text-lg">Shop</a>
+    <a href="/support" class="text-[#3d4947] font-medium text-lg">Support</a>
+    <hr class="border-t border-[#bcc9c6]">
+    <a href="/auth/login" class="flex items-center justify-center py-3 bg-[#f3f4f5] text-[#191c1d] font-bold rounded-xl border border-[#bcc9c6]">
+        Merchant Access
+    </a>
+</nav>
 </div>
-
+</div>
 <!-- Main Buyer Content -->
 <div class="flex-grow">
     {% block buyer_content %}{% endblock %}
