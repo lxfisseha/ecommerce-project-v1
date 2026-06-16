@@ -11,8 +11,8 @@
     <!-- Center: Navigation -->
     <div class="flex-1 flex justify-center">
         <nav class="hidden md:flex items-center gap-6 text-[#3d4947] text-sm font-medium">
-            <a href="/" class="text-[#00685f] border-b-2 border-[#00685f] pb-1">Shop</a>
-            <a href="/support" class="hover:text-[#00685f]">Support</a>
+            <a href="/" class="{% if request.url.path == '/' %}text-[#00685f] border-b-2 border-[#00685f] pb-1{% else %}hover:text-[#00685f]{% endif %}">Shop</a>
+            <a href="/support" class="{% if request.url.path == '/support' %}text-[#00685f] border-b-2 border-[#00685f] pb-1{% else %}hover:text-[#00685f]{% endif %}">Support</a>
         </nav>
     </div>
 
