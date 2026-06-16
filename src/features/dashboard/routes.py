@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
 from src.templates_config import templates
 from src.features.auth.models import Seller
-from src.features.orders.models import Order
+from src.features.orders.models import Order, OrderStatusLog
 from src.features.orders.services import OrderService
 from src.features.products.models import Product
 from src.utils.crypto import decrypt_data

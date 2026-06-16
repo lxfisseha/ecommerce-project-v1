@@ -17,6 +17,7 @@ class Product(SQLModel, table=True):
     updated_at: datetime = Field(default_factory=utc_now)
 
     # Relationships
+    seller: "Seller" = Relationship()
     images: List["ProductImage"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     attributes: List["ProductAttribute"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
 

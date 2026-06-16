@@ -15,6 +15,10 @@ async def homepage(request: Request, db: AsyncSession = Depends(get_session)):
     products = await BuyerProductService.get_all_active_products(db)
     return templates.TemplateResponse(request, "buyer_product_list.html", {"request": request, "products": products})
 
+@router.get("/support", response_class=HTMLResponse)
+async def support_page(request: Request):
+    return templates.TemplateResponse(request, "support.html", {"request": request})
+
 @router.get("/product/{product_id}", response_class=HTMLResponse)
 async def product_detail(request: Request, product_id: int, db: AsyncSession = Depends(get_session)):
     product = await BuyerProductService.get_product_by_id(db, product_id)

@@ -26,12 +26,16 @@ class BuyerProductService:
     async def get_product_by_id(db: AsyncSession, product_id: int) -> Optional[Product]:
         """
         Retrieves a single product by ID, ensuring it is active and in-stock.
-        Eagerly loads images and attributes.
+        Eagerly loads images, attributes, and seller.
         """
         statement = (
             select(Product)
             .where(Product.id == product_id, Product.in_stock == True)
-            .options(selectinload(Product.images), selectinload(Product.attributes))
+            .options(
+                selectinload(Product.images), 
+                selectinload(Product.attributes),
+                selectinload(Product.seller)
+            )
         )
         result = await db.execute(statement)
         return result.scalar_one_or_none()
