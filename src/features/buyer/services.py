@@ -6,10 +6,10 @@ from src.features.products.models import Product
 
 class BuyerProductService:
     @staticmethod
-    async def get_all_active_products(db: AsyncSession, limit: int = 10, offset: int = 0) -> List[Product]:
+    async def get_all_active_products(db: AsyncSession, search: Optional[str] = None, limit: int = 100, offset: int = 0) -> List[Product]:
         """
         Retrieves all active and in-stock products for buyers.
-        Eagerly loads images and attributes.
+        Eagerly loads images and attributes. Supports searching by name or description.
         """
         statement = (
             select(Product)
@@ -19,6 +19,14 @@ class BuyerProductService:
             .limit(limit)
             .order_by(Product.created_at.desc())
         )
+
+        if search:
+            search_filter = f"%{search}%"
+            statement = statement.where(
+                (Product.name.ilike(search_filter)) | 
+                (Product.description.ilike(search_filter))
+            )
+
         result = await db.execute(statement)
         return result.scalars().unique().all()
 

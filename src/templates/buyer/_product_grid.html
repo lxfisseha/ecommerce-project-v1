@@ -1,0 +1,59 @@
+<div id="product-grid" class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+    {% for product in products %}
+    <a href="/product/{{ product.id }}" class="bg-white rounded-xl border border-[#bcc9c6] overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group relative">
+        <!-- Product Image Area -->
+        <div class="aspect-square bg-[#e1e3e4] relative overflow-hidden">
+            {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | map(attribute="image_url") | first %}
+            {% if not display_image %}
+                {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | map(attribute="image_url") | first %}
+            {% endif %}
+            {% if not display_image and product.images %}
+                {% set display_image = product.images | map(attribute="image_url") | first %}
+            {% endif %}
+
+            {% if display_image %}
+            <img src="{{ display_image }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            {% else %}
+            <div class="w-full h-full flex items-center justify-center">
+                <svg class="w-10 h-10 text-[#bcc9c6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            </div>
+            {% endif %}
+
+            <!-- In-Stock Badge -->
+            <div class="absolute top-2 right-2 z-10">
+                {% if product.in_stock %}
+                    <span class="px-2 py-0.5 bg-[#008378] text-[#f4fffc] text-[9px] sm:text-xs font-bold rounded-full shadow-sm">In Stock</span>
+                {% else %}
+                    <span class="px-2 py-0.5 bg-[#ba1a1a] text-white text-[9px] sm:text-xs font-bold rounded-full shadow-sm">Sold Out</span>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Product Details -->
+        <div class="p-2 sm:p-4 flex flex-col flex-grow">
+            <h3 class="text-base sm:text-xl font-semibold text-[#191c1d] leading-tight line-clamp-2">{{ product.name }}</h3>
+            
+            <div class="mt-auto pt-1 flex flex-col gap-2">
+                <span class="text-sm sm:text-xl font-bold text-[#00685f]">{{ "{:,.0f}".format(product.price) }} <span class="text-[10px] sm:text-xs font-medium">ETB</span></span>
+                <div class="flex gap-2 items-center">
+                    <button class="px-2 py-2 bg-[#e0f2f1] text-[#00685f] rounded-lg hover:bg-[#b2dfdb] transition-colors shadow-sm active:scale-95 flex items-center justify-center">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    </button>
+                    <button class="flex-1 px-3 py-2 bg-[#00685f] text-white text-xs sm:text-sm font-bold rounded-lg hover:bg-[#005a54] transition-colors shadow-sm active:scale-95">
+                        Buy Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+    {% if not products %}
+    <div class="col-span-full py-20 text-center">
+        <svg class="w-16 h-16 text-[#bcc9c6] mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <h3 class="text-lg font-medium text-[#191c1d]">No products found</h3>
+        <p class="text-[#3d4947]">Try adjusting your search or filters</p>
+    </div>
+    {% endif %}
+</div>

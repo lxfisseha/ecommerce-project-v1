@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="overflow-x-hidden">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -17,7 +17,7 @@
     <style>
         *, *::before, *::after { box-sizing: border-box; }
         body { font-family: 'Inter', sans-serif; }
-        .blur-decoration { pointer-events: none; z-index: -1; }
+        .blur-decoration { pointer-events: none; }
         [hx-headers] { cursor: pointer; }
         
         /* Specific weights from Figma */
@@ -35,8 +35,10 @@
 <body class="bg-[#f8f9fa] min-h-screen relative overflow-x-hidden flex flex-col">
 
     <!-- Global Background Decorations -->
-    <div class="blur-decoration absolute -top-[102px] -left-[128px] w-[512px] h-[410px] bg-[#00685f0d] rounded-full blur-[100px]"></div>
-    <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-[#0058be0d] rounded-full blur-[100px]"></div>
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-[-1]">
+        <div class="blur-decoration absolute -top-[102px] -left-[128px] w-[512px] h-[410px] bg-[#00685f0d] rounded-full blur-[100px]"></div>
+        <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-[#0058be0d] rounded-full blur-[100px]"></div>
+    </div>
 
     <!-- Main Content Area -->
     <main class="flex-grow flex flex-col">

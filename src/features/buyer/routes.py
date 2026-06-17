@@ -11,9 +11,25 @@ import re
 router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
-async def homepage(request: Request, db: AsyncSession = Depends(get_session)):
-    products = await BuyerProductService.get_all_active_products(db)
-    return templates.TemplateResponse(request, "buyer_product_list.html", {"request": request, "products": products})
+async def homepage(
+    request: Request, 
+    q: Optional[str] = Query(None),
+    db: AsyncSession = Depends(get_session)
+):
+    products = await BuyerProductService.get_all_active_products(db, search=q)
+    
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(
+            request, 
+            "buyer/_product_grid.html", 
+            {"request": request, "products": products}
+        )
+        
+    return templates.TemplateResponse(
+        request, 
+        "buyer_product_list.html", 
+        {"request": request, "products": products}
+    )
 
 @router.get("/support", response_class=HTMLResponse)
 async def support_page(request: Request):

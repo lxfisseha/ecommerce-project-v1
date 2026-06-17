@@ -39,53 +39,47 @@
         </div>
     </div>
 
-    <!-- Product Grid -->
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-6">
-        {% for product in products %}
-        <a href="/product/{{ product.id }}" class="bg-white rounded-xl border border-[#bcc9c6] overflow-hidden flex flex-col hover:shadow-lg transition-all duration-300 group relative">
-            <!-- Product Image Area -->
-            <div class="aspect-square bg-[#e1e3e4] relative overflow-hidden">
-                {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | map(attribute="image_url") | first %}
-                {% if not display_image %}
-                    {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | map(attribute="image_url") | first %}
-                {% endif %}
-                {% if not display_image and product.images %}
-                    {% set display_image = product.images | map(attribute="image_url") | first %}
-                {% endif %}
-
-                {% if display_image %}
-                <img src="{{ display_image }}" alt="{{ product.name }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center">
-                    <svg class="w-10 h-10 text-[#bcc9c6]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </div>
-                {% endif %}
-
-                <!-- In-Stock Badge -->
-                <div class="absolute top-2 right-2 z-10">
-                    {% if product.in_stock %}
-                        <span class="px-2 py-0.5 bg-[#008378] text-[#f4fffc] text-[9px] sm:text-xs font-bold rounded-full shadow-sm">In Stock</span>
-                    {% else %}
-                        <span class="px-2 py-0.5 bg-[#ba1a1a] text-white text-[9px] sm:text-xs font-bold rounded-full shadow-sm">Sold Out</span>
-                    {% endif %}
-                </div>
-            </div>
-
-            <!-- Product Details -->
-            <div class="p-2 sm:p-4 flex flex-col flex-grow">
-                <h3 class="text-xs sm:text-base font-semibold text-[#191c1d] leading-tight line-clamp-2 min-h-[2.5rem]">{{ product.name }}</h3>
-                <p class="text-[10px] sm:text-sm text-[#3d4947] line-clamp-1 mt-1 opacity-75">{{ product.description | default('') }}</p>
-                
-                <div class="mt-auto pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                    <span class="text-sm sm:text-xl font-bold text-[#00685f]">{{ "{:,.0f}".format(product.price) }} <span class="text-[10px] sm:text-xs font-medium">ETB</span></span>
-                    <button class="w-full sm:w-auto px-3 py-1.5 bg-[#00685f] text-white text-[10px] sm:text-xs font-bold rounded-lg hover:bg-[#005a54] transition-colors shadow-sm active:scale-95">
-                        Buy Now
-                    </button>
-                </div>
-            </div>
-        </a>
-        {% endfor %}
+    <!-- Visual Separator -->
+    <div class="flex items-center gap-4 my-8 md:my-12">
+        <div class="flex-1 h-px bg-gradient-to-r from-transparent via-[#bcc9c6] to-transparent"></div>
+        <span class="text-sm font-medium text-[#3d4947] uppercase tracking-wide">Products Collection</span>
+        <div class="flex-1 h-px bg-gradient-to-r from-transparent via-[#bcc9c6] to-transparent"></div>
     </div>
+
+    <!-- Search and Sort Bar -->
+    <div class="flex flex-col sm:flex-row gap-3 mb-6">
+        <!-- Search Input -->
+        <div class="flex-1 relative">
+            <input type="text" 
+                   name="q"
+                   placeholder="Search products..." 
+                   class="w-full pl-10 pr-3 py-2 border border-[#bcc9c6] rounded-lg text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-[#00685f] focus:border-transparent"
+                   hx-get="/"
+                   hx-trigger="keyup changed delay:500ms, search"
+                   hx-target="#product-grid"
+                   hx-swap="outerHTML"
+                   hx-indicator="#search-indicator">
+            <div class="absolute left-3 top-1/2 -translate-y-1/2 text-[#3d4947]">
+                <svg id="search-icon" class="w-4 h-4 htmx-hide-on-request" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                <svg id="search-indicator" class="w-4 h-4 animate-spin hidden htmx-indicator" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+            </div>
+        </div>
+        
+        <!-- Sort Dropdown -->
+        <select class="px-3 py-2 border border-[#bcc9c6] rounded-lg text-xs sm:text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#00685f] focus:border-transparent">
+            <option value="">Sort By</option>
+            <option value="newest">Newest</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="popular">Most Popular</option>
+        </select>
+    </div>
+
+    <!-- Product Grid Container -->
+    {% include "buyer/_product_grid.html" %}
 
     <!-- Pagination (from Figma 4:4242) -->
     <div class="flex justify-center mt-12 space-x-2">

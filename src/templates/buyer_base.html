@@ -19,7 +19,7 @@
     <!-- Right: Actions -->
     <div class="flex-1 flex justify-end items-center gap-2 sm:gap-4">
         <!-- Seller Login Button -->
-        <a href="/auth/login" class="px-4 py-2 bg-[#00685f] text-white rounded-lg text-sm font-medium hover:bg-[#005a54] transition-colors">
+        <a href="/auth/login" class="px-3 sm:px-4 py-2 bg-[#00685f] text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-[#005a54] transition-colors whitespace-nowrap">
             Seller Hub
         </a>
 
@@ -33,12 +33,12 @@
 <!-- Mobile Menu Overlay -->
 <div id="mobile-menu" class="fixed inset-0 z-40 hidden md:hidden">
 <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="toggleMobileMenu()"></div>
-<div class="absolute top-16 right-4 left-4 bg-white rounded-2xl border border-[#bcc9c6] shadow-xl p-6 animate-in slide-in-from-top-4">
-<nav class="flex flex-col gap-4">
-    <a href="/" class="text-[#00685f] font-semibold text-lg">Shop</a>
-    <a href="/support" class="text-[#3d4947] font-medium text-lg">Support</a>
+<div class="absolute top-16 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white rounded-2xl border border-[#bcc9c6] shadow-xl p-6 animate-in slide-in-from-top-4 box-border max-h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden">
+<nav class="flex flex-col gap-4 w-full">
+    <a href="/" class="text-[#00685f] font-semibold text-lg break-words">Shop</a>
+    <a href="/support" class="text-[#3d4947] font-medium text-lg break-words">Support</a>
     <hr class="border-t border-[#bcc9c6]">
-    <a href="/auth/login" class="flex items-center justify-center py-3 bg-[#f3f4f5] text-[#191c1d] font-bold rounded-xl border border-[#bcc9c6]">
+    <a href="/auth/login" class="w-full flex items-center justify-center py-3 px-2 bg-[#f3f4f5] text-[#191c1d] font-bold rounded-xl border border-[#bcc9c6] text-center break-words">
         Merchant Access
     </a>
 </nav>
