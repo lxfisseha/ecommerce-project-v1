@@ -44,8 +44,8 @@
                 <!-- Status Overlay (if sold out) -->
                 <div id="product-overlay-{{ product.id }}" class="absolute inset-0 pointer-events-none">
                     {% if not product.in_stock %}
-                    <div class="absolute inset-0 bg-[#191c1d66] flex items-center justify-center">
-                        <span class="bg-[#f8f9fa] text-[#191c1d] px-4 py-2 rounded-lg text-sm font-bold">Sold Out</span>
+                    <div class="absolute top-4 left-4">
+                        <span class="bg-[#ba1a1a] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Sold Out</span>
                     </div>
                     {% endif %}
                 </div>
