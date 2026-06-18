@@ -26,6 +26,15 @@
         .font-regular { font-weight: 400; }
 
         /* HTMX Indicator Helpers */
+        .htmx-indicator {
+            display: none !important;
+        }
+        .htmx-request .htmx-indicator {
+            display: flex !important;
+        }
+        .htmx-request.htmx-indicator {
+            display: flex !important;
+        }
         .htmx-request .htmx-hide-on-request {
             display: none !important;
         }
