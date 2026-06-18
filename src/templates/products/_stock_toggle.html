@@ -1,23 +1,22 @@
 <div id="stock-toggle-{{ product.id }}" 
-     class="flex items-center gap-2 cursor-pointer relative group" 
+     class="flex items-center justify-end min-w-[100px] h-6 cursor-pointer relative group" 
      hx-post="/dashboard/products/{{ product.id }}/toggle-stock" 
      hx-target="#stock-toggle-{{ product.id }}" 
-     hx-swap="outerHTML"
-     hx-indicator="#stock-indicator-{{ product.id }}">
+     hx-swap="outerHTML">
     
-    <span class="text-xs font-medium text-[#3d4947]">
-        {% if product.in_stock %}In Stock{% else %}Sold Out{% endif %}
-    </span>
-    
-    <div class="relative">
+    <!-- Content hidden during request -->
+    <div class="flex items-center gap-2 htmx-hide-on-request">
+        <span class="text-xs font-medium text-[#3d4947]">
+            {% if product.in_stock %}In Stock{% else %}Sold Out{% endif %}
+        </span>
         <div class="w-11 h-6 rounded-full p-1 transition-colors {% if product.in_stock %}bg-[#008378]{% else %}bg-[#e1e3e4]{% endif %}">
             <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform {% if product.in_stock %}translate-x-5{% endif %}"></div>
         </div>
-        
-        <!-- Loading Indicator -->
-        <div id="stock-indicator-{{ product.id }}" class="htmx-indicator absolute inset-0 flex items-center justify-center bg-white/50 rounded-full">
-            <div class="w-4 h-4 border-2 border-[#00685f] border-t-transparent rounded-full animate-spin"></div>
-        </div>
+    </div>
+    
+    <!-- Loading Indicator shown only during request -->
+    <div class="htmx-indicator absolute inset-0 flex items-center justify-end pr-3">
+        <div class="w-5 h-5 border-2 border-[#00685f] border-t-transparent rounded-full animate-spin"></div>
     </div>
 </div>
 
