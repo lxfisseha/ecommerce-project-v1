@@ -11,25 +11,47 @@ import re
 router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
-async def homepage(
-    request: Request, 
-    q: Optional[str] = Query(None),
-    db: AsyncSession = Depends(get_session)
-):
-    products = await BuyerProductService.get_all_active_products(db, search=q)
-    
-    if request.headers.get("HX-Request"):
-        return templates.TemplateResponse(
-            request, 
-            "buyer/_product_grid.html", 
-            {"request": request, "products": products}
-        )
-        
+async def home_page(request: Request, db: AsyncSession = Depends(get_session)):
+    # Fetch only latest 8 products for home page
+    products, _ = await BuyerProductService.get_all_active_products(db, limit=8)
     return templates.TemplateResponse(
         request, 
-        "buyer_product_list.html", 
+        "buyer_home.html", 
         {"request": request, "products": products}
     )
+
+@router.get("/shop", response_class=HTMLResponse)
+async def shop_page(
+    request: Request, 
+    q: Optional[str] = Query(None),
+    sort_by: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    db: AsyncSession = Depends(get_session)
+):
+    per_page = 12
+    offset = (page - 1) * per_page
+    
+    products, total_count = await BuyerProductService.get_all_active_products(
+        db, search=q, sort_by=sort_by, limit=per_page, offset=offset
+    )
+    
+    import math
+    total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
+    
+    context = {
+        "request": request, 
+        "products": products, 
+        "search_query": q, 
+        "current_sort": sort_by,
+        "current_page": page,
+        "total_pages": total_pages,
+        "total_count": total_count
+    }
+    
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(request, "buyer/_shop_content.html", context)
+        
+    return templates.TemplateResponse(request, "buyer_shop.html", context)
 
 @router.get("/support", response_class=HTMLResponse)
 async def support_page(request: Request):

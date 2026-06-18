@@ -45,44 +45,53 @@ async def setup_db():
         await conn.run_sync(SQLModel.metadata.drop_all)
 
 @pytest.mark.asyncio
+async def test_home_page_latest_products():
+    # Home page should show latest products
+    response = client.get("/")
+    assert response.status_code == 200
+    assert "Latest Collections" in response.text
+    assert "Leather Wallet" in response.text
+    assert "View All Products" in response.text
+
+@pytest.mark.asyncio
 async def test_search_products_full_page():
-    # Regular request
-    response = client.get("/?q=Leather")
+    # Regular request to shop page
+    response = client.get("/shop?q=Leather")
     assert response.status_code == 200
     assert "Leather Wallet" in response.text
     assert "Leather Belt" in response.text
     assert "Cotton T-Shirt" not in response.text
-    assert "Shop Now" in response.text  # Check if full page (hero section) is present
+    assert "The Full Collection" in response.text
 
 @pytest.mark.asyncio
 async def test_search_products_htmx_partial():
-    # HTMX request
-    response = client.get("/?q=Leather", headers={"HX-Request": "true"})
+    # HTMX request to shop page
+    response = client.get("/shop?q=Leather", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Leather Wallet" in response.text
     assert "Leather Belt" in response.text
     assert "Cotton T-Shirt" not in response.text
-    assert "Shop Now" not in response.text  # Hero section should NOT be in partial
-    assert 'id="product-grid"' in response.text
+    assert "Shop All Products" not in response.text  # Header should NOT be in partial
+    assert 'id="product-grid-container"' in response.text
 
 @pytest.mark.asyncio
 async def test_search_no_results():
-    response = client.get("/?q=Nonexistent", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=Nonexistent", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "No products found" in response.text
     assert "Leather Wallet" not in response.text
 
 @pytest.mark.asyncio
 async def test_search_description():
-    response = client.get("/?q=cotton", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=cotton", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Cotton T-Shirt" in response.text
     assert "Leather Wallet" not in response.text
 
 @pytest.mark.asyncio
 async def test_search_empty_query():
-    # Empty query should return all active products
-    response = client.get("/?q=", headers={"HX-Request": "true"})
+    # Empty query on shop should return all active products
+    response = client.get("/shop?q=", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Leather Wallet" in response.text
     assert "Cotton T-Shirt" in response.text
@@ -92,18 +101,18 @@ async def test_search_empty_query():
 @pytest.mark.asyncio
 async def test_search_case_insensitivity():
     # Test different casing
-    response = client.get("/?q=LEATHER", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=LEATHER", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Leather Wallet" in response.text
     
-    response = client.get("/?q=t-shirt", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=t-shirt", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Cotton T-Shirt" in response.text
 
 @pytest.mark.asyncio
 async def test_search_out_of_stock_never_shown():
     # Even if searching for "Sold Out", it shouldn't show because get_all_active_products filters by in_stock=True
-    response = client.get("/?q=Sold", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=Sold", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Sold Out Item" not in response.text
     assert "No products found" in response.text
@@ -111,14 +120,14 @@ async def test_search_out_of_stock_never_shown():
 @pytest.mark.asyncio
 async def test_search_partial_match():
     # Search for "Wal" should find "Wallet"
-    response = client.get("/?q=Wal", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=Wal", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "Leather Wallet" in response.text
 
 @pytest.mark.asyncio
 async def test_search_render_details():
     # Check if image and price are rendered in the partial
-    response = client.get("/?q=Wallet", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=Wallet", headers={"HX-Request": "true"})
     assert response.status_code == 200
     assert "http://example.com/wallet.jpg" in response.text
     assert "500" in response.text
@@ -128,10 +137,10 @@ async def test_search_render_details():
 @pytest.mark.asyncio
 async def test_search_special_characters():
     # Ensure it doesn't crash with special characters
-    response = client.get("/?q=%", headers={"HX-Request": "true"})
+    response = client.get("/shop?q=%", headers={"HX-Request": "true"})
     assert response.status_code == 200
     
-    response = client.get("/?q='", headers={"HX-Request": "true"})
+    response = client.get("/shop?q='", headers={"HX-Request": "true"})
     assert response.status_code == 200
 
 @pytest.mark.asyncio
@@ -143,11 +152,9 @@ async def test_limit_respect():
             session.add(p)
         await session.commit()
     
-    # Default limit is 100 in my service implementation
-    response = client.get("/", headers={"HX-Request": "true"})
+    # Check limit on home page
+    response = client.get("/")
     assert response.status_code == 200
-    # Should find about 100 products (plus the 3 initial ones, so it should be capped at 100 total)
-    # Wait, my service had limit=100 as default.
-    # Let's check how many "Bulk Product" strings are in the response.
     bulk_count = response.text.count("Bulk Product")
-    assert bulk_count <= 100
+    assert bulk_count <= 8 # Home page limit is 8
+

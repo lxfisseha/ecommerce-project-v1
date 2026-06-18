@@ -11,7 +11,8 @@
     <!-- Center: Navigation -->
     <div class="flex-1 flex justify-center">
         <nav class="hidden md:flex items-center gap-6 text-[#3d4947] text-sm font-medium">
-            <a href="/" class="{% if request.url.path == '/' %}text-[#00685f] border-b-2 border-[#00685f] pb-1{% else %}hover:text-[#00685f]{% endif %}">Shop</a>
+            <a href="/" class="{% if request.url.path == '/' %}text-[#00685f] border-b-2 border-[#00685f] pb-1{% else %}hover:text-[#00685f]{% endif %}">Home</a>
+            <a href="/shop" class="{% if request.url.path == '/shop' %}text-[#00685f] border-b-2 border-[#00685f] pb-1{% else %}hover:text-[#00685f]{% endif %}">Shop</a>
             <a href="/support" class="{% if request.url.path == '/support' %}text-[#00685f] border-b-2 border-[#00685f] pb-1{% else %}hover:text-[#00685f]{% endif %}">Support</a>
         </nav>
     </div>
@@ -30,17 +31,13 @@
     </div>
 </header>
 
-<!-- Mobile Menu Overlay -->
 <div id="mobile-menu" class="fixed inset-0 z-40 hidden md:hidden">
 <div class="absolute inset-0 bg-black/20 backdrop-blur-sm" onclick="toggleMobileMenu()"></div>
 <div class="absolute top-16 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white rounded-2xl border border-[#bcc9c6] shadow-xl p-6 animate-in slide-in-from-top-4 box-border max-h-[calc(100vh-5rem)] overflow-y-auto overflow-x-hidden">
 <nav class="flex flex-col gap-4 w-full">
-    <a href="/" class="text-[#00685f] font-semibold text-lg break-words">Shop</a>
+    <a href="/" class="{% if request.url.path == '/' %}text-[#00685f] font-semibold{% else %}text-[#3d4947] font-medium{% endif %} text-lg break-words">Home</a>
+    <a href="/shop" class="{% if request.url.path == '/shop' %}text-[#00685f] font-semibold{% else %}text-[#3d4947] font-medium{% endif %} text-lg break-words">Shop</a>
     <a href="/support" class="text-[#3d4947] font-medium text-lg break-words">Support</a>
-    <hr class="border-t border-[#bcc9c6]">
-    <a href="/auth/login" class="w-full flex items-center justify-center py-3 px-2 bg-[#f3f4f5] text-[#191c1d] font-bold rounded-xl border border-[#bcc9c6] text-center break-words">
-        Merchant Access
-    </a>
 </nav>
 </div>
 </div>
@@ -49,25 +46,27 @@
     {% block buyer_content %}{% endblock %}
 </div>
 
-<!-- Mobile Bottom Navigation (Matching Figma 4:4357) -->
+<!-- Mobile Bottom Navigation -->
 {% block mobile_footer %}
-<footer class="md:hidden sticky bottom-0 z-40 bg-[#f8f9fa] border-t border-[#bcc9c6] flex justify-around items-center h-16 px-4">
-    <a href="/" class="flex flex-col items-center gap-1 text-[#00685f]">
-        <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"></path></svg>
-        <span class="text-[10px] font-medium">Home</span>
+<footer class="md:hidden sticky bottom-0 z-40 bg-white/80 backdrop-blur-md border-t border-[#bcc9c6] flex justify-around items-center h-16 px-4">
+    <a href="/" class="flex flex-col items-center gap-1 {% if request.url.path == '/' %}text-[#00685f]{% else %}text-[#3d4947]{% endif %}">
+        <svg class="w-6 h-6" fill="{% if request.url.path == '/' %}currentColor{% else %}none{% endif %}" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+        </svg>
+        <span class="text-[10px] font-bold">Home</span>
     </a>
-    <button class="flex flex-col items-center gap-1 text-[#3d4947]">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
-        <span class="text-[10px] font-medium">Search</span>
-    </button>
-    <button class="flex flex-col items-center gap-1 text-[#3d4947]">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-        <span class="text-[10px] font-medium">Orders</span>
-    </button>
-    <button class="flex flex-col items-center gap-1 text-[#3d4947]">
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-        <span class="text-[10px] font-medium">Profile</span>
-    </button>
+    <a href="/shop" class="flex flex-col items-center gap-1 {% if request.url.path == '/shop' %}text-[#00685f]{% else %}text-[#3d4947]{% endif %}">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path>
+        </svg>
+        <span class="text-[10px] font-bold">Shop</span>
+    </a>
+    <a href="/support" class="flex flex-col items-center gap-1 {% if request.url.path == '/support' %}text-[#00685f]{% else %}text-[#3d4947]{% endif %}">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        <span class="text-[10px] font-bold">Support</span>
+    </a>
 </footer>
 {% endblock %}
 

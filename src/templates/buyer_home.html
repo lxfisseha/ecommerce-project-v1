@@ -1,0 +1,89 @@
+{% extends "buyer_base.html" %}
+
+{% block title %}Welcome to AleMart{% endblock %}
+
+{% block buyer_content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
+    <!-- Hero Section (Redesigned & Contextual) -->
+    <div class="relative min-h-[460px] sm:min-h-[520px] rounded-[32px] overflow-hidden mb-16 bg-[#191c1d] flex items-center shadow-2xl">
+        <!-- Background Image with Modern Mask -->
+        <div class="absolute inset-0 opacity-40">
+            <img src="https://images.unsplash.com/photo-1547949003-9792a18a2601?auto=format&fit=crop&q=80&w=1470" 
+                 alt="Ethiopian Craftsmanship" 
+                 class="w-full h-full object-cover scale-110 blur-[2px]">
+        </div>
+        
+        <!-- Animated Decorative Elements -->
+        <div class="absolute -top-24 -right-24 w-96 h-96 bg-[#00685f]/20 rounded-full blur-[120px]"></div>
+        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-[#0058be]/10 rounded-full blur-[120px]"></div>
+
+        <!-- Content Overlay -->
+        <div class="relative z-20 w-full px-6 sm:px-16 flex flex-col items-center sm:items-start text-center sm:text-left">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-[#00685f]/20 border border-[#00685f]/30 rounded-full mb-6">
+                <span class="w-1.5 h-1.5 bg-[#00685f] rounded-full animate-pulse"></span>
+                <span class="text-[#00c4b4] text-[10px] sm:text-xs font-bold tracking-widest uppercase">Verified Ethiopian Sellers</span>
+            </div>
+            
+            <h1 class="text-4xl sm:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight max-w-2xl">
+                The Best of Ethiopia, <span class="text-[#00c4b4]">Now Digital.</span>
+            </h1>
+            
+            <p class="text-lg sm:text-xl text-white/70 mb-10 max-w-lg font-medium leading-relaxed">
+                Connect with local artisans and find premium essentials delivered directly to you.
+            </p>
+            
+            <!-- Modern Search Hub -->
+            <div class="w-full max-w-xl">
+                <form action="/shop" method="GET" class="relative group">
+                    <!-- Glow effect -->
+                    <div class="absolute inset-0 bg-white/5 rounded-[20px] blur-lg group-focus-within:bg-[#00685f]/10 transition-all"></div>
+                    
+                    <div class="relative flex items-center bg-white rounded-[20px] p-1.5 shadow-2xl border border-white/10">
+                        <div class="pl-3 sm:pl-4 text-[#3d4947] flex-shrink-0">
+                            <svg class="w-5 h-5 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                            </svg>
+                        </div>
+                        <input type="text" 
+                               name="q"
+                               placeholder="Search products..." 
+                               class="flex-1 min-w-0 px-3 sm:px-4 py-3 bg-transparent border-none text-sm sm:text-base text-[#191c1d] focus:outline-none focus:ring-0 placeholder:text-[#3d4947]/40">
+                        <button type="submit" class="flex-shrink-0 bg-[#191c1d] text-white px-5 sm:px-8 py-3 rounded-2xl text-sm font-bold hover:bg-[#00685f] transition-all active:scale-95 flex items-center justify-center gap-2 h-full min-h-[44px]">
+                            <span class="hidden xs:inline">Explore</span>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                        </button>
+                    </div>
+                </form>
+                <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-4 text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
+                    <span>Popular:</span>
+                    <a href="/shop?q=leather" class="text-white/60 hover:text-[#00c4b4] transition-colors">#Leather</a>
+                    <a href="/shop?q=coffee" class="text-white/60 hover:text-[#00c4b4] transition-colors">#Coffee</a>
+                    <a href="/shop?q=dress" class="text-white/60 hover:text-[#00c4b4] transition-colors">#Habesha</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Latest Collections Header -->
+    <div class="flex flex-col items-center text-center mb-10">
+        <span class="text-[#00685f] font-bold text-sm tracking-widest uppercase mb-2">Curated for You</span>
+        <h2 class="text-3xl font-bold text-[#191c1d]">Latest Collections</h2>
+        <div class="w-16 h-1 bg-[#00685f] mt-4 rounded-full"></div>
+    </div>
+
+    <!-- Latest Products Grid -->
+    <div class="mb-16">
+        {% include "buyer/_product_grid.html" %}
+    </div>
+
+    <!-- Shop All Button -->
+    <div class="flex justify-center">
+        <a href="/shop" class="group flex items-center gap-3 px-8 py-4 bg-[#00685f] text-white rounded-xl text-lg font-bold hover:bg-[#005a54] transition-all shadow-lg active:scale-95">
+            View All Products
+            <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+            </svg>
+        </a>
+    </div>
+</div>
+{% endblock %}

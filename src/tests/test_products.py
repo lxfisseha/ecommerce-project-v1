@@ -5,7 +5,7 @@ from fastapi.testclient import TestClient
 from src.main import app
 from src.features.auth.models import Seller
 from src.features.products.models import Product
-from sqlmodel import SQLModel, select
+from sqlmodel import SQLModel, select, delete
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.database import get_session
@@ -139,6 +139,37 @@ async def test_edit_product_success():
         product = result.scalar_one_or_none()
         assert product.name == "Updated Name"
         assert product.price == 75.00
+
+@pytest.mark.asyncio
+async def test_toggle_stock_success():
+    token, csrf_cookie = await get_csrf_context(client)
+
+    # 1. Create a product first
+    async with async_session_maker() as session:
+        # Check if product 1 exists, if so delete it or use another ID
+        await session.execute(delete(Product).where(Product.id == 99))
+        product = Product(id=99, seller_id=1, name="Toggle Test", price=50.0, in_stock=True)
+        session.add(product)
+        await session.commit()
+
+    from src.features.products.routes import get_current_seller_id
+    app.dependency_overrides[get_current_seller_id] = lambda: 1
+    
+    response = client.post(
+        "/dashboard/products/99/toggle-stock",
+        cookies={"csrftoken": csrf_cookie},
+        headers={"X-CSRF-Token": token},
+        follow_redirects=False
+    )
+    
+    assert response.status_code == 200
+    assert "Sold Out" in response.text
+    
+    async with async_session_maker() as session:
+        statement = select(Product).where(Product.id == 99)
+        result = await session.execute(statement)
+        product = result.scalar_one_or_none()
+        assert product.in_stock is False
 
 @pytest.mark.asyncio
 async def test_add_product_with_dynamic_attributes():

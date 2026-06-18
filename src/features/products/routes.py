@@ -335,3 +335,26 @@ async def delete_product(
     
     await ProductService.delete_product(db, product_id)
     return HTMLResponse(content="")
+
+@router.post("/{product_id}/toggle-stock")
+async def toggle_stock(
+    product_id: int,
+    request: Request,
+    db: AsyncSession = Depends(get_session),
+    seller_id: int = Depends(get_current_seller_id)
+):
+    product = await ProductService.get_product_by_id(db, product_id)
+    if not product or product.seller_id != seller_id:
+        raise HTTPException(status_code=404, detail="Product not found")
+    
+    new_status = not product.in_stock
+    product = await ProductService.update_product(db, product_id, in_stock=new_status)
+    
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found after update")
+    
+    return templates.TemplateResponse(
+        request,
+        "products/_stock_toggle.html",
+        {"product": product}
+    )

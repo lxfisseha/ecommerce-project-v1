@@ -1,0 +1,59 @@
+<div id="shop-content">
+    <!-- Product Grid Container -->
+    <div id="product-grid-container" class="relative min-h-[400px]">
+        <!-- Overlay Loading State (Improved & Targeted) -->
+        <div id="grid-indicator" class="htmx-indicator absolute inset-0 bg-[#f8f9fa]/60 backdrop-blur-[2px] z-30 flex flex-col items-center justify-start pt-32 rounded-2xl transition-all duration-300">
+            <div class="bg-white p-6 rounded-2xl shadow-xl border border-[#bcc9c6] flex flex-col items-center gap-4 animate-in zoom-in-95 duration-200 sticky top-40">
+                <div class="w-10 h-10 border-4 border-[#00685f]/20 border-t-[#00685f] rounded-full animate-spin"></div>
+                <p class="text-sm font-semibold text-[#191c1d]">Updating collection...</p>
+            </div>
+        </div>
+        
+        {% include "buyer/_product_grid.html" %}
+    </div>
+
+    <!-- Pagination -->
+    {% if total_pages > 1 %}
+    <div class="flex justify-center mt-16 space-x-2">
+        <!-- Previous Page -->
+        {% if current_page > 1 %}
+        <button hx-get="/shop?page={{ current_page - 1 }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+                hx-target="#shop-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                hx-indicator="#grid-indicator"
+                class="w-10 h-10 flex items-center justify-center bg-white text-[#3d4947] rounded-xl border border-[#bcc9c6] hover:bg-[#f3f4f5] transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        {% endif %}
+
+        <!-- Page Numbers -->
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == current_page %}
+            <button class="w-10 h-10 flex items-center justify-center bg-[#00685f] text-white rounded-xl font-bold shadow-lg shadow-[#00685f]/20 cursor-default">{{ p }}</button>
+            {% elif p <= 3 or p > total_pages - 3 or (p >= current_page - 1 and p <= current_page + 1) %}
+            <button hx-get="/shop?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+                    hx-target="#shop-content"
+                    hx-swap="outerHTML"
+                    hx-push-url="true"
+                    hx-indicator="#grid-indicator"
+                    class="w-10 h-10 flex items-center justify-center bg-white text-[#3d4947] rounded-xl border border-[#bcc9c6] hover:bg-[#f3f4f5] transition-colors">{{ p }}</button>
+            {% elif p == 4 or p == total_pages - 3 %}
+            <span class="w-10 h-10 flex items-center justify-center text-[#3d4947] opacity-50">...</span>
+            {% endif %}
+        {% endfor %}
+
+        <!-- Next Page -->
+        {% if current_page < total_pages %}
+        <button hx-get="/shop?page={{ current_page + 1 }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+                hx-target="#shop-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                hx-indicator="#grid-indicator"
+                class="w-10 h-10 flex items-center justify-center bg-white text-[#3d4947] rounded-xl border border-[#bcc9c6] hover:bg-[#f3f4f5] transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>

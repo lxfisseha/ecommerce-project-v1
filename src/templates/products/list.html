@@ -42,11 +42,13 @@
                 {% endif %}
 
                 <!-- Status Overlay (if sold out) -->
-                {% if not product.in_stock %}
-                <div class="absolute inset-0 bg-[#191c1d66] flex items-center justify-center">
-                    <span class="bg-[#f8f9fa] text-[#191c1d] px-4 py-2 rounded-lg text-sm font-bold">Sold Out</span>
+                <div id="product-overlay-{{ product.id }}">
+                    {% if not product.in_stock %}
+                    <div class="absolute inset-0 bg-[#191c1d66] flex items-center justify-center">
+                        <span class="bg-[#f8f9fa] text-[#191c1d] px-4 py-2 rounded-lg text-sm font-bold">Sold Out</span>
+                    </div>
+                    {% endif %}
                 </div>
-                {% endif %}
 
                 <!-- Actions Overlay -->
                 <div class="absolute top-4 right-4 flex gap-2">
@@ -69,12 +71,7 @@
                 <h3 class="text-lg font-semibold text-[#191c1d] leading-6 truncate">{{ product.name }}</h3>
                 <div class="flex justify-between items-center">
                     <span class="text-lg font-bold text-[#00685f]">{{ "{:,.2f}".format(product.price) }} ETB</span>
-                    <div class="flex items-center gap-2">
-                        <span class="text-xs font-medium text-[#3d4947]">{% if product.in_stock %}In Stock{% else %}Sold Out{% endif %}</span>
-                        <div class="w-11 h-6 rounded-full p-1 transition-colors {% if product.in_stock %}bg-[#008378]{% else %}bg-[#e1e3e4]{% endif %}">
-                            <div class="w-4 h-4 bg-white rounded-full shadow-sm transition-transform {% if product.in_stock %}translate-x-5{% endif %}"></div>
-                        </div>
-                    </div>
+                    {% include "products/_stock_toggle.html" %}
                 </div>
             </div>
         </div>
