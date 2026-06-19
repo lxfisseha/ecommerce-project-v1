@@ -147,7 +147,7 @@ async def update_order_status(
 ):
     seller = await get_current_seller(request, db)
     if not seller:
-        raise HTTPException(status_code=401)
+        raise HTTPException(status_code=303, headers={"Location": "/auth/login"})
     
     try:
         await OrderService.update_order_status(db, order_id, new_status, changed_by="seller", context=context)
@@ -212,7 +212,7 @@ async def update_profile(
 ):
     seller = await get_current_seller(request, db)
     if not seller:
-        raise HTTPException(status_code=401)
+        raise HTTPException(status_code=303, headers={"Location": "/auth/login"})
     
     # Validate business contact number if provided
     normalized_contact = None

@@ -41,7 +41,15 @@ async def post_login(
         )
 
     # 3. Generate and Save OTP
-    await AuthService.generate_otp(db, phone)
+    _, sms_success = await AuthService.generate_otp(db, phone)
+    
+    if not sms_success:
+        return templates.TemplateResponse(
+            request,
+            "auth/login_partial.html",
+            {"request": request, "error": "Something went wrong sending the SMS. Please try again.", "phone": phone},
+            status_code=500
+        )
 
     # 4. Return the OTP verification partial
     return templates.TemplateResponse(
@@ -88,3 +96,9 @@ async def post_verify_otp(
         content="<p class='text-green-600'>Login successful! Redirecting...</p>",
         headers={"HX-Redirect": "/dashboard"}
     )
+
+@router.get("/logout")
+async def logout(request: Request):
+    request.session.clear()
+    from fastapi.responses import RedirectResponse
+    return RedirectResponse(url="/auth/login", status_code=303)

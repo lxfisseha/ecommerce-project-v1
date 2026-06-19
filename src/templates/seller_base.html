@@ -15,24 +15,29 @@
 
             <nav class="space-y-1">
                 <a href="/dashboard" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium {% if request.url.path in ['/dashboard', '/dashboard/'] %}bg-[#00685f] text-white{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
                     <span>Dashboard</span>
                 </a>
                 <a href="/dashboard/products" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium {% if '/products' in request.url.path %}bg-[#00685f] text-white{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                     <span>Inventory</span>
                 </a>
                 <a href="/dashboard/orders" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium {% if '/orders' in request.url.path %}bg-[#00685f] text-white{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     <span>Orders</span>
                 </a>
                 <a href="/dashboard/profile" class="flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium {% if '/profile' in request.url.path %}bg-[#00685f] text-white{% else %}text-[#3d4947] hover:bg-[#e1e3e4]{% endif %}">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
                     <span>Profile</span>
                 </a>
             </nav>
         </div>
         
         <div class="mt-auto p-6">
-            <button class="w-full bg-[#00685f] text-white py-2 rounded-lg text-sm font-medium">
-                Refresh Data
-            </button>
+            <a href="/support" class="w-full flex items-center justify-center gap-2 px-4 py-2 border border-[#00685f] text-[#00685f] rounded-lg text-sm font-medium hover:bg-[#e1e3e4] transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 100 12.728m0 0l2.828-2.828M18.364 18.364L15.536 21.192"></path></svg>
+                Support
+            </a>
         </div>
     </aside>
 
@@ -55,13 +60,13 @@
                     <a href="#" class="hover:text-[#00685f]">Orders</a>
                     <a href="#" class="hover:text-[#00685f]">Support</a>
                 </nav>
-                <div class="flex gap-2">
-                    <button class="p-2 text-[#00685f] hover:bg-[#e1e3e4] rounded-full">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
-                    </button>
-                    <button class="p-2 text-[#00685f] hover:bg-[#e1e3e4] rounded-full">
+                <div class="flex gap-2 items-center">
+                    <a href="/dashboard/profile" class="p-2 text-[#00685f] hover:bg-[#e1e3e4] rounded-full" title="Profile">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    </button>
+                    </a>
+                    <a href="/auth/logout" class="ml-2 px-3 py-1.5 border border-[#bcc9c6] rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition" title="Logout">
+                        Logout
+                    </a>
                 </div>
             </div>
         </header>

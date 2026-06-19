@@ -22,7 +22,7 @@
     {% if products %}
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {% for product in products %}
-        <div id="product-{{ product.id }}" class="bg-white rounded-xl border border-[#bcc9c6] overflow-hidden flex flex-col group transition-shadow hover:shadow-md">
+        <div id="product-{{ product.id }}" class="bg-white rounded-xl border border-[#bcc9c6] overflow-hidden flex flex-col group transition-shadow hover:shadow-md relative">
             <!-- Product Image / Placeholder -->
             <div class="aspect-square bg-[#e1e3e4] relative overflow-hidden">
                 {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | map(attribute="image_url") | first %}
@@ -42,13 +42,11 @@
                 {% endif %}
 
                 <!-- Status Overlay (if sold out) -->
-                <div id="product-overlay-{{ product.id }}" class="absolute inset-0 pointer-events-none">
-                    {% if not product.in_stock %}
-                    <div class="absolute top-4 left-4">
-                        <span class="bg-[#ba1a1a] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Sold Out</span>
-                    </div>
-                    {% endif %}
+                {% if not product.in_stock %}
+                <div class="absolute top-4 left-4 z-10">
+                    <span class="bg-[#ba1a1a] text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Sold Out</span>
                 </div>
+                {% endif %}
 
                 <!-- Actions Overlay -->
                 <div class="absolute top-4 right-4 flex gap-2">

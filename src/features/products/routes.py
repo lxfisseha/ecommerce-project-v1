@@ -13,7 +13,7 @@ router = APIRouter()
 async def get_current_seller_id(request: Request):
     seller_id = request.session.get("seller_id")
     if not seller_id:
-        raise HTTPException(status_code=401, detail="Not authenticated")
+        raise HTTPException(status_code=303, headers={"Location": "/auth/login"})
     return seller_id
 
 @router.get("/")

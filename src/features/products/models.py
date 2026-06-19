@@ -13,6 +13,7 @@ class Product(SQLModel, table=True):
     description: Optional[str] = Field(default=None)
     price: Decimal = Field(default=0.0, decimal_places=2, gt=0)
     in_stock: bool = Field(default=True, index=True)
+    is_deleted: bool = Field(default=False, index=True)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 

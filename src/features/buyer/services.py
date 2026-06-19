@@ -18,10 +18,10 @@ class BuyerProductService:
         Supports searching and sorting.
         """
         # Base query for products
-        query = select(Product).where(Product.in_stock == True)
+        query = select(Product).where(Product.in_stock == True).where(Product.is_deleted == False)
         
         # Base query for total count
-        count_query = select(func.count(Product.id)).where(Product.in_stock == True)
+        count_query = select(func.count(Product.id)).where(Product.in_stock == True).where(Product.is_deleted == False)
 
         # Apply Search to both queries
         if search:
@@ -66,7 +66,7 @@ class BuyerProductService:
         """
         statement = (
             select(Product)
-            .where(Product.id == product_id, Product.in_stock == True)
+            .where(Product.id == product_id, Product.in_stock == True, Product.is_deleted == False)
             .options(
                 selectinload(Product.images), 
                 selectinload(Product.attributes),

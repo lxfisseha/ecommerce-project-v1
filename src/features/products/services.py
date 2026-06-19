@@ -40,6 +40,7 @@ class ProductService:
         statement = (
             select(Product)
             .where(Product.seller_id == seller_id)
+            .where(Product.is_deleted == False)
             .options(selectinload(Product.images), selectinload(Product.attributes))
             .order_by(Product.created_at.desc())
         )
@@ -51,6 +52,7 @@ class ProductService:
         statement = (
             select(Product)
             .where(Product.id == product_id)
+            .where(Product.is_deleted == False)
             .options(selectinload(Product.images), selectinload(Product.attributes))
         )
         result = await db.execute(statement)
@@ -106,11 +108,13 @@ class ProductService:
 
     @staticmethod
     async def delete_product(db: AsyncSession, product_id: int) -> bool:
+        # Note: We use get_product_by_id which already filters is_deleted=False
         product = await ProductService.get_product_by_id(db, product_id)
         if not product:
             return False
         
-        await db.delete(product)
+        product.is_deleted = True
+        db.add(product)
         await db.commit()
         return True
 

@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 from src.database import get_session
 from src.utils.crypto import encrypt_phone, hash_phone
+from unittest.mock import patch, AsyncMock
 
 # Setup async sqlite for testing
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
@@ -68,12 +69,13 @@ async def test_login_success_and_otp_verify():
     csrf_cookie = get_response.cookies.get("csrftoken")
     
     # 2. POST login (OTP Generation)
-    response = client.post(
-        "/auth/login", 
-        data={"phone": "912345678"},
-        headers={"X-CSRF-Token": token},
-        cookies={"csrftoken": csrf_cookie}
-    )
+    with patch("src.utils.sms.AfroMessageService.send_otp_sms", new_callable=AsyncMock, return_value=True):
+        response = client.post(
+            "/auth/login", 
+            data={"phone": "912345678"},
+            headers={"X-CSRF-Token": token},
+            cookies={"csrftoken": csrf_cookie}
+        )
     assert response.status_code == 200
     assert "Verify" in response.text
     

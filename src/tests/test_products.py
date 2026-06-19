@@ -61,9 +61,9 @@ async def get_csrf_context(client):
 @pytest.mark.asyncio
 async def test_list_products_unauthenticated():
     from src.features.products.routes import get_current_seller_id
-    # We don't override here, so it should raise 401
-    response = client.get("/dashboard/products")
-    assert response.status_code == 401
+    response = client.get("/dashboard/products/", follow_redirects=False)
+    assert response.status_code == 303
+    assert response.headers["location"] == "/auth/login"
 
 @pytest.mark.asyncio
 async def test_add_product_success():
@@ -241,6 +241,14 @@ async def test_delete_product_success():
     assert response.status_code == 200
     
     async with async_session_maker() as session:
+        # Check that it's NOT found via service (which filters is_deleted=False)
+        from src.features.products.services import ProductService
+        product_via_service = await ProductService.get_product_by_id(session, 1)
+        assert product_via_service is None
+
+        # Check that it's STILL in DB but marked is_deleted=True
         statement = select(Product).where(Product.id == 1)
         result = await session.execute(statement)
-        assert result.scalar_one_or_none() is None
+        product = result.scalar_one_or_none()
+        assert product is not None
+        assert product.is_deleted is True

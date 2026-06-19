@@ -10,6 +10,7 @@ from src.utils.datetime import utc_now
 
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
 
+
 class AuthService:
     @staticmethod
     async def get_seller_by_phone(db: AsyncSession, phone: str) -> Optional[Seller]:
@@ -22,28 +23,31 @@ class AuthService:
         return result.scalar_one_or_none()
 
     @staticmethod
-    async def generate_otp(db: AsyncSession, phone: str) -> str:
+    async def generate_otp(db: AsyncSession, phone: str) -> tuple[str, bool]:
         # Normalize input
         phone = normalize_phone(phone)
         # Generate a 6-digit code
         code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
-        
+
         # Set expiry to 5 minutes from now
         expires_at = utc_now() + timedelta(minutes=5)
-        
+
         otp = OtpCode(
-            phone=encrypt_phone(phone), # Encrypt phone for retrieval
-            phone_hash=hash_phone(phone), # Store hash for lookup
+            phone=encrypt_phone(phone),  # Encrypt phone for retrieval
+            phone_hash=hash_phone(phone),  # Store hash for lookup
             code=code,
-            expires_at=expires_at
+            expires_at=expires_at,
         )
-        
-        print("here is the otp code", code)
 
         db.add(otp)
         await db.commit()
-        
-        return code
+
+        # Trigger sending the SMS code via AfroMessage
+        from src.utils.sms import AfroMessageService
+
+        sms_success = await AfroMessageService.send_otp_sms(phone, code)
+
+        return code, sms_success
 
     @staticmethod
     async def verify_otp(db: AsyncSession, phone: str, code: str) -> dict:
@@ -61,21 +65,30 @@ class AuthService:
         result = await db.execute(statement)
         otp = result.first()
         if otp:
-            otp = otp[0] # result.first() returns a row, so extract the OtpCode object
-        
+            otp = otp[0]  # result.first() returns a row, so extract the OtpCode object
+
         if not otp:
-            return {"success": False, "message": "Verification code expired or not found."}
+            return {
+                "success": False,
+                "message": "Verification code expired or not found.",
+            }
 
         # Check attempts
         if otp.attempts >= 3:
-            return {"success": False, "message": "Too many attempts. Please request a new code."}
+            return {
+                "success": False,
+                "message": "Too many attempts. Please request a new code.",
+            }
 
         # Validate code
         if otp.code != code:
             otp.attempts += 1
             db.add(otp)
             await db.commit()
-            return {"success": False, "message": f"Invalid code. {3 - otp.attempts} attempts remaining."}
+            return {
+                "success": False,
+                "message": f"Invalid code. {3 - otp.attempts} attempts remaining.",
+            }
 
         # Success
         otp.used = True
