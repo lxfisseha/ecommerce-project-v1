@@ -172,6 +172,10 @@ async def add_product(
         if attributes_to_save:
             await ProductService.update_product_attributes(db, product.id, attributes_to_save)
 
+        # Process and save tags
+        tags_string = form.get("tags", "")
+        await ProductService.sync_product_tags(db, product, tags_string)
+
     except Exception as e:
         await db.rollback()
         # Fetch seller for sidebar context
@@ -214,12 +218,15 @@ async def edit_product_form(
     result = await db.execute(statement)
     seller = result.scalar_one_or_none()
 
+    tags_string = ", ".join([tag.name for tag in product.tags])
+
     return templates.TemplateResponse(
         request,
         "products/form.html", 
         {
             "request": request, 
             "product": product,
+            "tags_string": tags_string,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name
         }
@@ -315,6 +322,10 @@ async def edit_product(
         # If no attributes in form, clear existing ones
         product.attributes.clear()
         db.add(product)
+
+    # Sync tags
+    tags_string = form.get("tags", "")
+    await ProductService.sync_product_tags(db, product, tags_string)
 
     await ProductService.update_product(
         db, product_id, name=name, description=description, price=float(price), in_stock=in_stock

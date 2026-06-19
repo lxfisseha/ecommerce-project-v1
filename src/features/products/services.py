@@ -3,7 +3,7 @@ from sqlmodel import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from decimal import Decimal
-from .models import Product, ProductImage, ProductAttribute
+from .models import Product, ProductImage, ProductAttribute, Tag
 
 class ProductService:
     @staticmethod
@@ -36,12 +36,59 @@ class ProductService:
         await db.flush()
 
     @staticmethod
+    async def sync_product_tags(
+        db: AsyncSession,
+        product: Product,
+        tags_string: str
+    ):
+        # Ensure product.tags is loaded to prevent lazy-loading in async context
+        if "tags" not in product.__dict__:
+            await db.execute(
+                select(Product).where(Product.id == product.id).options(selectinload(Product.tags))
+            )
+
+        # Split and clean the tags
+        tag_names = [t.strip() for t in tags_string.split(",") if t.strip()]
+        
+        # Unique list of cleaned tag names
+        seen_tags = {}
+        for name in tag_names:
+            cleaned_name = name.lower()
+            if cleaned_name not in seen_tags:
+                seen_tags[cleaned_name] = name
+
+        # If there are no tags requested, clear tags relationship
+        if not seen_tags:
+            product.tags.clear()
+            db.add(product)
+            await db.flush()
+            return
+
+        # Fetch or create tags from DB
+        db_tags = []
+        for slug_name, orig_name in seen_tags.items():
+            slug = slug_name.replace(" ", "-").replace("/", "-")
+            tag_statement = select(Tag).where(Tag.slug == slug)
+            tag_result = await db.execute(tag_statement)
+            db_tag = tag_result.scalar_one_or_none()
+            if not db_tag:
+                db_tag = Tag(name=orig_name, slug=slug)
+                db.add(db_tag)
+                await db.flush()
+            db_tags.append(db_tag)
+
+        # Sync the tags on the product
+        product.tags = db_tags
+        db.add(product)
+        await db.flush()
+
+    @staticmethod
     async def get_seller_products(db: AsyncSession, seller_id: int) -> List[Product]:
         statement = (
             select(Product)
             .where(Product.seller_id == seller_id)
             .where(Product.is_deleted == False)
-            .options(selectinload(Product.images), selectinload(Product.attributes))
+            .options(selectinload(Product.images), selectinload(Product.attributes), selectinload(Product.tags))
             .order_by(Product.created_at.desc())
         )
         result = await db.execute(statement)
@@ -53,7 +100,7 @@ class ProductService:
             select(Product)
             .where(Product.id == product_id)
             .where(Product.is_deleted == False)
-            .options(selectinload(Product.images), selectinload(Product.attributes))
+            .options(selectinload(Product.images), selectinload(Product.attributes), selectinload(Product.tags))
         )
         result = await db.execute(statement)
         return result.scalar_one_or_none()

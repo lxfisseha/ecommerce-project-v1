@@ -86,6 +86,12 @@
                         <span>Subtotal</span>
                         <span class="font-medium">{{ "{:,.0f}".format(subtotal) }} ETB</span>
                     </div>
+                    {% if attribute_total and attribute_total != 0 %}
+                    <div class="flex justify-between text-xs text-[#3d4947]">
+                        <span>Attribute surcharge</span>
+                        <span class="font-medium">+{{ "{:,.0f}".format(attribute_total) }} ETB</span>
+                    </div>
+                    {% endif %}
                     <div class="flex justify-between text-xs text-[#3d4947]">
                         <span>Delivery Fee</span>
                         <span class="font-medium">{{ "{:,.0f}".format(delivery_fee) }} ETB</span>

@@ -4,6 +4,22 @@ from typing import Optional, List
 from sqlmodel import Field, SQLModel, Relationship
 from decimal import Decimal
 
+class ProductTagLink(SQLModel, table=True):
+    __tablename__ = "product_tag_links"
+    
+    product_id: int = Field(foreign_key="products.id", primary_key=True, index=True)
+    tag_id: int = Field(foreign_key="tags.id", primary_key=True, index=True)
+
+class Tag(SQLModel, table=True):
+    __tablename__ = "tags"
+    
+    id: Optional[int] = Field(default=None, primary_key=True)
+    name: str = Field(unique=True, index=True, max_length=50)
+    slug: str = Field(unique=True, index=True, max_length=50)
+    created_at: datetime = Field(default_factory=utc_now)
+
+    products: List["Product"] = Relationship(back_populates="tags", link_model=ProductTagLink)
+
 class Product(SQLModel, table=True):
     __tablename__ = "products"
     
@@ -21,6 +37,7 @@ class Product(SQLModel, table=True):
     seller: "Seller" = Relationship()
     images: List["ProductImage"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     attributes: List["ProductAttribute"] = Relationship(back_populates="product", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
+    tags: List[Tag] = Relationship(back_populates="products", link_model=ProductTagLink)
 
 class ProductImage(SQLModel, table=True):
     __tablename__ = "product_images"

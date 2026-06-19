@@ -9,7 +9,7 @@ from alembic import context
 
 # Import your models here to populate SQLModel.metadata
 from src.features.auth.models import Seller, OtpCode
-from src.features.products.models import Product, ProductImage, ProductAttribute
+from src.features.products.models import Product, ProductImage, ProductAttribute, Tag, ProductTagLink
 from src.features.orders.models import Order, OrderStatusLog
 from src.config import settings
 

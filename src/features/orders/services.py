@@ -1,7 +1,8 @@
 from src.utils.datetime import utc_now
-from typing import Optional, List
+from typing import Dict, Optional, List
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from src.features.orders.models import Order, OrderStatusLog
 from src.features.auth.models import Seller
 from src.features.products.models import Product
@@ -9,7 +10,36 @@ from src.utils.crypto import encrypt_data
 from decimal import Decimal
 import logging
 
+
+def parse_selected_attributes(attributes_str: Optional[str]) -> Dict[str, str]:
+    selected = {}
+    if not attributes_str:
+        return selected
+
+    for part in attributes_str.split(","):
+        if ":" in part:
+            key, value = part.split(":", 1)
+            selected[key.strip()] = value.strip()
+
+    return selected
+
+
+def calculate_attribute_extra_price(
+    product: Product, selected_attrs: Dict[str, str]
+) -> Decimal:
+    extra = Decimal("0.0")
+    if not selected_attrs:
+        return extra
+
+    for attr in product.attributes:
+        if selected_attrs.get(attr.attribute_type) == attr.attribute_value:
+            extra += attr.extra_price
+
+    return extra
+
+
 logger = logging.getLogger(__name__)
+
 
 class NotificationService:
     @staticmethod
@@ -18,9 +48,12 @@ class NotificationService:
         FR15: Dispatch receipt copy via SMS or Telegram.
         Mock implementation for v1.
         """
-        logger.info(f"NOTIFICATION: Sending order confirmation for {order.order_id} to {order.buyer_phone}")
+        logger.info(
+            f"NOTIFICATION: Sending order confirmation for {order.order_id} to {order.buyer_phone}"
+        )
         # In a real app, this would call an external API like AfroMessage or a Telegram Bot
         pass
+
 
 class OrderService:
     @staticmethod
@@ -32,19 +65,19 @@ class OrderService:
         seller = await db.get(Seller, seller_id)
         if not seller:
             raise ValueError("Seller not found")
-        
+
         prefix = seller.store_prefix.upper()
         today_str = utc_now().strftime("%Y%m%d")
-        
+
         # Count orders for this seller today to get the next sequence
         statement = select(func.count(Order.id)).where(
             Order.seller_id == seller_id,
-            Order.order_id.like(f"ET-{prefix}-{today_str}-%")
+            Order.order_id.like(f"ET-{prefix}-{today_str}-%"),
         )
         result = await db.execute(statement)
         count = result.scalar() or 0
         sequence = str(count + 1).zfill(4)
-        
+
         return f"ET-{prefix}-{today_str}-{sequence}"
 
     @staticmethod
@@ -55,7 +88,7 @@ class OrderService:
         buyer_phone: str,
         delivery_address: str,
         quantity: int,
-        attributes_selected: Optional[str] = None
+        attributes_selected: Optional[str] = None,
     ) -> Order:
         """
         Creates a new order and logs the initial status.
@@ -63,25 +96,40 @@ class OrderService:
         5.2: AES-256 encryption for phone and address.
         """
         order_id = await OrderService.generate_order_id(db, product.seller_id)
-        
+
+        # Ensure product relationships are loaded for attribute matching
+        if "attributes" not in product.__dict__:
+            product_result = await db.execute(
+                select(Product)
+                .where(Product.id == product.id)
+                .options(selectinload(Product.attributes))
+            )
+            product = product_result.scalar_one_or_none()
+            if not product:
+                raise ValueError("Product not found")
+
         # Normalize phone number to 9-digit format
         from src.utils.phone import normalize_phone
+
         buyer_phone = normalize_phone(buyer_phone)
-        
+
         # Calculate subtotal and total (v1: 150 ETB fixed delivery fee)
         delivery_fee = Decimal("150.0")
-        subtotal = product.price * quantity
+        selected_attrs = parse_selected_attributes(attributes_selected)
+        extra_price = calculate_attribute_extra_price(product, selected_attrs)
+        subtotal = (product.price + extra_price) * quantity
         total_amount = subtotal + delivery_fee
-        
+
         # Encrypt sensitive data (AES-256 via Fernet)
         encrypted_phone = encrypt_data(buyer_phone)
         encrypted_address = encrypt_data(delivery_address)
-        
+
         # Create hashes for lookup
         from src.utils.crypto import hash_data
+
         phone_h = hash_data(buyer_phone)
         address_h = hash_data(delivery_address)
-        
+
         order = Order(
             order_id=order_id,
             seller_id=product.seller_id,
@@ -97,28 +145,28 @@ class OrderService:
             attributes_selected=attributes_selected,
             subtotal=subtotal,
             total_amount=total_amount,
-            status="pending"
+            status="pending",
         )
-        
+
         db.add(order)
-        await db.flush() # Get order.id
-        
+        await db.flush()  # Get order.id
+
         # Log status
         log = OrderStatusLog(
             order_id=order.id,
             new_status="pending",
             changed_by="system",
-            context="Order created"
+            context="Order created",
         )
         db.add(log)
-        
+
         await db.commit()
         await db.refresh(order)
-        
+
         # Trigger Notification
         seller = await db.get(Seller, product.seller_id)
         await NotificationService.send_order_confirmation(order, seller)
-        
+
         return order
 
     @staticmethod
@@ -127,7 +175,7 @@ class OrderService:
         order_id: int,
         new_status: str,
         changed_by: str = "seller",
-        context: Optional[str] = None
+        context: Optional[str] = None,
     ) -> Order:
         """
         FR17/FR18: State machine workflow and terminal state locks.
@@ -135,31 +183,31 @@ class OrderService:
         order = await db.get(Order, order_id)
         if not order:
             raise ValueError("Order not found")
-        
+
         # FR18: Terminal state locks
         if order.status in ["completed", "cancelled"]:
             raise ValueError(f"Cannot update order in terminal state '{order.status}'")
-        
+
         # FR17: Workflow validation
         valid_transitions = {
             "pending": ["shipped", "cancelled"],
             "shipped": ["completed", "cancelled"],
         }
-        
+
         if new_status not in valid_transitions.get(order.status, []):
             raise ValueError(f"Invalid transition from {order.status} to {new_status}")
-            
+
         old_status = order.status
         order.status = new_status
         order.status_updated_at = utc_now()
-        
+
         # Log transition
         log = OrderStatusLog(
             order_id=order.id,
             old_status=old_status,
             new_status=new_status,
             changed_by=changed_by,
-            context=context
+            context=context,
         )
         db.add(log)
         db.add(order)
@@ -168,7 +216,9 @@ class OrderService:
         return order
 
     @staticmethod
-    async def get_order_by_reference(db: AsyncSession, order_reference: str) -> Optional[Order]:
+    async def get_order_by_reference(
+        db: AsyncSession, order_reference: str
+    ) -> Optional[Order]:
         """
         Retrieves an order by its public ET-... reference.
         """

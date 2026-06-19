@@ -1,4 +1,32 @@
 <div id="shop-content">
+    <!-- Hidden input to store current tag for search/sort includes -->
+    <input type="hidden" name="tag" id="tag-input" value="{{ current_tag if current_tag else '' }}">
+
+    <!-- Tag Filters (Rendered inside shop-content to update active state dynamically) -->
+    {% if tags %}
+    <div class="flex gap-2 mb-8 items-center px-1 overflow-x-auto scrollbar-hide whitespace-nowrap pb-2">
+        <span class="text-xs font-semibold text-[#3d4947] mr-2 uppercase tracking-wider opacity-75 flex-shrink-0">Filter by Tag:</span>
+        <button hx-get="/shop?{% if search_query %}q={{ search_query }}&{% endif %}{% if current_sort %}sort_by={{ current_sort }}&{% endif %}"
+                hx-target="#shop-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                hx-indicator="#grid-indicator"
+                class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex-shrink-0 {% if not current_tag %}bg-[#00685f] text-white shadow-md shadow-[#00685f]/10{% else %}bg-white text-[#3d4947] border border-[#bcc9c6]/60 hover:bg-[#f3f4f5]{% endif %}">
+            All
+        </button>
+        {% for t in tags %}
+        <button hx-get="/shop?tag={{ t.slug }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+                hx-target="#shop-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                hx-indicator="#grid-indicator"
+                class="px-4 py-1.5 rounded-full text-xs font-semibold transition-all duration-200 flex-shrink-0 {% if current_tag == t.slug %}bg-[#00685f] text-white shadow-md shadow-[#00685f]/10{% else %}bg-white text-[#3d4947] border border-[#bcc9c6]/60 hover:bg-[#f3f4f5]{% endif %}">
+            {{ t.name }}
+        </button>
+        {% endfor %}
+    </div>
+    {% endif %}
+
     <!-- Product Grid Container -->
     <div id="product-grid-container" class="relative min-h-[400px]">
         <!-- Overlay Loading State (Improved & Targeted) -->
@@ -17,7 +45,7 @@
     <div class="flex justify-center mt-16 space-x-2">
         <!-- Previous Page -->
         {% if current_page > 1 %}
-        <button hx-get="/shop?page={{ current_page - 1 }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+        <button hx-get="/shop?page={{ current_page - 1 }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}"
                 hx-target="#shop-content"
                 hx-swap="outerHTML"
                 hx-push-url="true"
@@ -32,7 +60,7 @@
             {% if p == current_page %}
             <button class="w-10 h-10 flex items-center justify-center bg-[#00685f] text-white rounded-xl font-bold shadow-lg shadow-[#00685f]/20 cursor-default">{{ p }}</button>
             {% elif p <= 3 or p > total_pages - 3 or (p >= current_page - 1 and p <= current_page + 1) %}
-            <button hx-get="/shop?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+            <button hx-get="/shop?page={{ p }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}"
                     hx-target="#shop-content"
                     hx-swap="outerHTML"
                     hx-push-url="true"
@@ -45,7 +73,7 @@
 
         <!-- Next Page -->
         {% if current_page < total_pages %}
-        <button hx-get="/shop?page={{ current_page + 1 }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}"
+        <button hx-get="/shop?page={{ current_page + 1 }}{% if search_query %}&q={{ search_query }}{% endif %}{% if current_sort %}&sort_by={{ current_sort }}{% endif %}{% if current_tag %}&tag={{ current_tag }}{% endif %}"
                 hx-target="#shop-content"
                 hx-swap="outerHTML"
                 hx-push-url="true"

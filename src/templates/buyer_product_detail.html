@@ -81,6 +81,16 @@
                 {{ product.description }}
             </p>
 
+            {% if product.tags %}
+            <div class="flex flex-wrap gap-2 mb-6">
+                {% for tag in product.tags %}
+                <span class="px-2.5 py-1 bg-[#00685f0a] text-[#00685f] text-xs font-semibold rounded-full border border-[#00685f]/15">
+                    {{ tag.name }}
+                </span>
+                {% endfor %}
+            </div>
+            {% endif %}
+
             <hr class="border-[#bcc9c6] mb-8">
 
             <!-- Selection Options (Figma 2:399) -->

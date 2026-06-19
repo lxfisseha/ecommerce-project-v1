@@ -38,6 +38,15 @@
         .htmx-request .htmx-hide-on-request {
             display: none !important;
         }
+
+        /* Hide scrollbar but keep scrolling */
+        .scrollbar-hide {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .scrollbar-hide::-webkit-scrollbar {
+            display: none;
+        }
     </style>
     {% block head %}{% endblock %}
 </head>

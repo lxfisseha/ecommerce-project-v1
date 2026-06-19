@@ -22,7 +22,8 @@ async def init_db():
     async with engine.begin() as conn:
         # Import all models here so SQLModel knows about them
         from .features.auth.models import Seller, OtpCode
-        # ... and other future models
+        from .features.products.models import Product, ProductImage, ProductAttribute, Tag, ProductTagLink
+        from .features.orders.models import Order, OrderStatusLog
         await conn.run_sync(SQLModel.metadata.create_all)
 
 async def get_session() -> AsyncSession:

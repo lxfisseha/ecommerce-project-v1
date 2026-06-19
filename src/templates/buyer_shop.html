@@ -35,7 +35,7 @@
                    hx-trigger="keyup changed delay:500ms, search"
                    hx-target="#shop-content"
                    hx-swap="outerHTML"
-                   hx-include="#sort-dropdown"
+                   hx-include="#sort-dropdown, #tag-input"
                    hx-push-url="true"
                    hx-indicator="#grid-indicator, #search-loading">
             <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[#3d4947]">
@@ -63,7 +63,7 @@
                     hx-trigger="change"
                     hx-target="#shop-content"
                     hx-swap="outerHTML"
-                    hx-include="#search-input"
+                    hx-include="#search-input, #tag-input"
                     hx-push-url="true"
                     hx-indicator="#grid-indicator, #search-loading">
                 <option value="newest" {% if current_sort == 'newest' or not current_sort %}selected{% endif %}>Sort: Newest First</option>
