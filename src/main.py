@@ -8,7 +8,7 @@ from src.templates_config import templates
 from src.features.auth.routes import router as auth_router
 from src.features.dashboard.routes import router as dashboard_router
 from src.features.products.routes import router as products_router
-from src.features.buyer.routes import router as buyer_router # New import
+from src.features.buyer.routes import router as buyer_router  # New import
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 
@@ -16,7 +16,12 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI(title="AleMart Merchant Solution Center")
+app = FastAPI(
+    title="AleMart Merchant Solution Center",
+    docs_url=None,  # Disable Swagger UI
+    redoc_url=None,  # Disable ReDoc
+    openapi_url=None,
+)
 
 # Middleware stack
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
@@ -25,11 +30,12 @@ app.add_middleware(
     secret=settings.SECRET_KEY,
 )
 
+
 # Global Exception Handler
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
     error_msg = "An unexpected error occurred. Please try again later."
-    
+
     if isinstance(exc, SQLAlchemyError):
         logger.error(f"Database error: {exc}")
         error_msg = "We're having trouble connecting to our services. Please refresh the page in a moment."
@@ -40,17 +46,21 @@ async def global_exception_handler(request: Request, exc: Exception):
         request,
         "error.html",
         {"request": request, "error_message": error_msg},
-        status_code=500
+        status_code=500,
     )
+
 
 # Include routers
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(dashboard_router, prefix="/dashboard", tags=["dashboard"])
 app.include_router(products_router, prefix="/dashboard/products", tags=["products"])
-app.include_router(buyer_router, tags=["buyer"]) # New router for buyer-facing pages
+app.include_router(buyer_router, tags=["buyer"])  # New router for buyer-facing pages
 
 
 @app.get("/")
 async def root_redirect():
     from fastapi.responses import RedirectResponse
-    return RedirectResponse(url="/") # Redirect to buyer homepage (handled by buyer_router)
+
+    return RedirectResponse(
+        url="/"
+    )  # Redirect to buyer homepage (handled by buyer_router)

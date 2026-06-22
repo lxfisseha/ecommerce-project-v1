@@ -1,3 +1,5 @@
+import asyncio
+
 from src.utils.datetime import utc_now
 from typing import Dict, Optional, List
 from sqlmodel import select, func
@@ -9,6 +11,8 @@ from src.features.products.models import Product
 from src.utils.crypto import encrypt_data
 from decimal import Decimal
 import logging
+
+from src.utils.sms import AfroMessageService
 
 
 def parse_selected_attributes(attributes_str: Optional[str]) -> Dict[str, str]:
@@ -42,17 +46,56 @@ logger = logging.getLogger(__name__)
 
 
 class NotificationService:
-    @staticmethod
-    async def send_order_confirmation(order: Order, seller: Seller):
+    @classmethod
+    async def send_order_confirmation(cls, order, seller, raw_buyer_phone: str) -> None:
         """
-        FR15: Dispatch receipt copy via SMS or Telegram.
-        Mock implementation for v1.
+        Processes multi-channel order confirmations. Dispatches external SMS
+        notifications to the buyer and seller asynchronously in the background.
         """
-        logger.info(
-            f"NOTIFICATION: Sending order confirmation for {order.order_id} to {order.buyer_phone}"
+
+        # 1. Safely construct the item description summary string
+        item_summary = f"{order.quantity}x {order.product_name}"
+        if order.attributes_selected:
+            item_summary += f" ({order.attributes_selected})"
+
+        # 2. Extract seller's phone number securely
+        # It handles both dictionary payloads and standard ORM attributes
+        seller_phone = (
+            getattr(seller, "business_contact_number", "")
+            if not isinstance(seller, dict)
+            else seller.get("business_contact_number", "")
         )
-        # In a real app, this would call an external API like AfroMessage or a Telegram Bot
-        pass
+
+        if not seller_phone:
+            logger.warning(
+                f"Skipping SMS notifications for Order #{order.order_id}. "
+                f"Reason: Seller phone number is missing or empty."
+            )
+            return
+
+        # 3. Schedule the SMS execution as a background task
+        # Using asyncio.create_task avoids waiting for the external HTTP call to finish,
+        # protecting your API route from hanging or timing out if AfroMessage is slow.
+        try:
+            asyncio.create_task(
+                AfroMessageService.send_order_notifications_sms(
+                    buyer_phone=raw_buyer_phone,
+                    seller_phone=str(seller_phone),
+                    order_id=str(order.order_id),
+                    total_amount=float(order.total_amount),
+                    item_summary=item_summary,
+                )
+            )
+            logger.info(
+                f"Successfully queued background SMS notifications for Order #{order.order_id}"
+            )
+
+        except Exception as e:
+            # Shielding: We catch all exceptions here so a failing SMS initialization
+            # never crashes the database transaction or the user's checkout redirection.
+            logger.error(
+                f"Failed to initialize background AfroMessage tasks for Order #{order.order_id}: {str(e)}"
+            )
 
 
 class OrderService:
@@ -165,7 +208,7 @@ class OrderService:
 
         # Trigger Notification
         seller = await db.get(Seller, product.seller_id)
-        await NotificationService.send_order_confirmation(order, seller)
+        await NotificationService.send_order_confirmation(order, seller, buyer_phone)
 
         return order
 
