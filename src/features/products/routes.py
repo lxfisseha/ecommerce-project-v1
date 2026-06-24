@@ -163,11 +163,14 @@ async def add_product(
         attributes_to_save = []
         for i in range(len(attr_types)):
             if attr_types[i] and attr_values[i]:
-                attributes_to_save.append({
-                    "type": attr_types[i],
-                    "value": attr_values[i],
-                    "extra_price": float(attr_prices[i]) if attr_prices[i] else 0.0
-                })
+                for val in attr_values[i].split(","):
+                    trimmed_val = val.strip()
+                    if trimmed_val:
+                        attributes_to_save.append({
+                            "type": attr_types[i],
+                            "value": trimmed_val,
+                            "extra_price": float(attr_prices[i]) if attr_prices[i] else 0.0
+                        })
         
         if attributes_to_save:
             await ProductService.update_product_attributes(db, product.id, attributes_to_save)
@@ -310,11 +313,14 @@ async def edit_product(
     attributes_to_save = []
     for i in range(len(attr_types)):
         if attr_types[i] and attr_values[i]:
-            attributes_to_save.append({
-                "type": attr_types[i],
-                "value": attr_values[i],
-                "extra_price": float(attr_prices[i]) if attr_prices[i] else 0.0
-            })
+            for val in attr_values[i].split(","):
+                trimmed_val = val.strip()
+                if trimmed_val:
+                    attributes_to_save.append({
+                        "type": attr_types[i],
+                        "value": trimmed_val,
+                        "extra_price": float(attr_prices[i]) if attr_prices[i] else 0.0
+                    })
     
     if attributes_to_save:
         await ProductService.update_product_attributes(db, product.id, attributes_to_save)

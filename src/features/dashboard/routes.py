@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, Form
+from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
@@ -10,6 +10,7 @@ from src.features.products.models import Product
 from src.utils.crypto import decrypt_data
 from src.utils.datetime import utc_now
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
+from src.utils.storage import CloudinaryService
 from sqlmodel import select, func, desc
 from decimal import Decimal
 
@@ -208,6 +209,7 @@ async def update_profile(
     business_address: str = Form(None),
     telegram_username: str = Form(None),
     business_contact_number: str = Form(None),
+    featured_image: UploadFile = File(None),
     db: AsyncSession = Depends(get_session)
 ):
     seller = await get_current_seller(request, db)
@@ -257,6 +259,26 @@ async def update_profile(
     seller.business_address = business_address
     seller.telegram_username = telegram_username
     seller.business_contact_number = normalized_contact
+    
+    if featured_image and featured_image.filename:
+        MAX_SIZE = 5 * 1024 * 1024
+        content = await featured_image.read()
+        if len(content) > MAX_SIZE:
+            seller.phone = f"+251{decrypt_data(seller.phone)}"
+            return templates.TemplateResponse(
+                request,
+                "dashboard/profile.html",
+                {
+                    "request": request,
+                    "seller": seller,
+                    "seller_name": f"{seller.first_name} {seller.last_name}",
+                    "store_name": seller.store_name,
+                    "error": "Featured image exceeds 5MB limit."
+                }
+            )
+        image_url = CloudinaryService.upload_image(content)
+        seller.featured_image = image_url
+
     seller.updated_at = utc_now()
     
     db.add(seller)

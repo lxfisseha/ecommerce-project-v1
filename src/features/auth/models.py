@@ -17,6 +17,7 @@ class Seller(SQLModel, table=True):
     business_address: Optional[str] = Field(default=None, max_length=255)
     telegram_username: Optional[str] = Field(default=None, max_length=100)
     business_contact_number: Optional[str] = Field(default=None, max_length=10)
+    featured_image: Optional[str] = Field(default=None)
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 

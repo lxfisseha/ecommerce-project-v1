@@ -17,10 +17,13 @@ router = APIRouter()
 
 @router.get("/", response_class=HTMLResponse)
 async def home_page(request: Request, db: AsyncSession = Depends(get_session)):
+    from src.features.auth.models import Seller
+    from sqlmodel import select
     # Fetch only latest 8 products for home page
     products, _ = await BuyerProductService.get_all_active_products(db, limit=8)
+    seller = (await db.execute(select(Seller))).scalars().first()
     return templates.TemplateResponse(
-        request, "buyer_home.html", {"request": request, "products": products}
+        request, "buyer_home.html", {"request": request, "products": products, "seller": seller}
     )
 
 
