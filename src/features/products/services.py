@@ -3,7 +3,7 @@ from sqlmodel import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from decimal import Decimal
-from .models import Product, ProductImage, ProductAttribute, Tag
+from .models import Product, ProductImage, ProductAttribute, ProductTagLink, Tag
 
 class ProductService:
     @staticmethod
@@ -164,6 +164,27 @@ class ProductService:
         db.add(product)
         await db.commit()
         return True
+
+    @staticmethod
+    async def search_seller_products(db: AsyncSession, seller_id: int, query: str) -> List[Product]:
+        search = f"%{query}%"
+        tag_exists = select(ProductTagLink).join(Tag, ProductTagLink.tag_id == Tag.id).where(
+            (ProductTagLink.product_id == Product.id) & (Tag.name.ilike(search))
+        ).exists()
+        statement = (
+            select(Product)
+            .where(Product.seller_id == seller_id)
+            .where(Product.is_deleted == False)
+            .where(
+                (Product.name.ilike(search)) |
+                (Product.description.ilike(search)) |
+                tag_exists
+            )
+            .options(selectinload(Product.images), selectinload(Product.attributes), selectinload(Product.tags))
+            .order_by(Product.created_at.desc())
+        )
+        result = await db.execute(statement)
+        return result.scalars().all()
 
     @staticmethod
     async def add_attribute(

@@ -17,78 +17,32 @@
         </a>
     </div>
 
-    <!-- Product Grid -->
-    {% if products %}
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {% for product in products %}
-        <div id="product-{{ product.id }}" class="bg-white rounded-xl border border-border-main overflow-hidden flex flex-col group transition-shadow hover:shadow-md relative">
-            <!-- Product Image / Placeholder -->
-            <div class="aspect-square bg-bg-muted relative overflow-hidden">
-                {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | map(attribute="image_url") | first %}
-                {% if not display_image %}
-                    {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | map(attribute="image_url") | first %}
-                {% endif %}
-                {% if not display_image and product.images %}
-                    {% set display_image = product.images | selectattr("image_tag", "equalto", "gallery") | map(attribute="image_url") | first %}
-                {% endif %}
-
-                {% if display_image %}
-                <img src="{{ display_image }}" alt="{{ product.name }}" class="w-full h-full object-cover">
-                {% else %}
-                <div class="w-full h-full flex items-center justify-center">
-                    <svg class="w-12 h-12 text-border-main" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                </div>
-                {% endif %}
-
-                <!-- Status Overlay (if sold out) -->
-                {% if not product.in_stock %}
-                <div class="absolute top-4 left-4 z-10">
-                    <span class="bg-danger text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg">Sold Out</span>
-                </div>
-                {% endif %}
-
-                <!-- Actions Overlay -->
-                <div class="absolute top-4 right-4 flex gap-2">
-                    <a href="/dashboard/products/edit/{{ product.id }}" class="w-8 h-8 bg-bg-main/80 rounded-full flex items-center justify-center text-text-main hover:bg-white transition-colors p-1.5 shadow-sm">
-                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.032 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
-                    </a>
-                    <button 
-                        hx-delete="/dashboard/products/{{ product.id }}" 
-                        hx-target="#product-{{ product.id }}" 
-                        hx-swap="outerHTML"
-                        hx-confirm="Are you sure you want to delete this product?"
-                        class="relative w-8 h-8 bg-bg-main/80 rounded-full flex items-center justify-center text-danger hover:bg-white transition-colors p-1.5 shadow-sm group/delete">
-                        <svg class="w-5 h-5 htmx-hide-on-request" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                        <div class="htmx-indicator">
-                            <div class="w-5 h-5 border-2 border-danger border-t-transparent rounded-full animate-spin"></div>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Product Details -->
-            <div class="p-4 flex flex-col gap-2">
-                <h3 class="text-lg font-semibold text-text-main leading-6 truncate">{{ product.name }}</h3>
-                <div class="flex justify-between items-center">
-                    <span class="text-lg font-bold text-primary">{{ "{:,.2f}".format(product.price) }} ETB</span>
-                    {% include "products/_stock_toggle.html" %}
-                </div>
-            </div>
+    <!-- Search Bar -->
+    <div class="relative mb-6 group">
+        <input type="text"
+               name="search"
+               value="{{ search if search else '' }}"
+               placeholder="Search products..."
+               class="w-full pl-12 pr-4 py-3 bg-white border border-border-main rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm"
+               hx-get="/dashboard/products"
+               hx-trigger="keyup changed delay:500ms, search"
+               hx-target="#product-list-content"
+               hx-swap="outerHTML"
+               hx-push-url="true"
+               hx-indicator="#grid-indicator, #search-loading">
+        <div class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
+            <svg id="search-icon" class="w-5 h-5 opacity-40 group-focus-within:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
         </div>
-        {% endfor %}
-    </div>
-    {% else %}
-    <div class="bg-white rounded-xl border border-border-main border-dashed p-12 text-center">
-        <div class="w-16 h-16 bg-bg-alt rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg class="w-8 h-8 text-border-main" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
+        <div id="search-loading" class="absolute right-4 top-1/2 -translate-y-1/2 htmx-indicator">
+            <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
         </div>
-        <h3 class="text-lg font-medium text-text-main">No products found</h3>
-        <p class="text-text-muted mt-1 mb-6">Start listing your items to see them here.</p>
-        <a href="/dashboard/products/add" class="inline-flex items-center gap-2 text-primary font-medium hover:underline">
-            Add your first product
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-        </a>
     </div>
-    {% endif %}
+
+    {% include "products/_product_list_content.html" %}
 </div>
 {% endblock %}

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Request, Depends, HTTPException
+from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
@@ -19,26 +19,35 @@ async def get_current_seller_id(request: Request):
 @router.get("/")
 async def list_products(
     request: Request, 
+    search: str = Query(None),
     db: AsyncSession = Depends(get_session),
     seller_id: int = Depends(get_current_seller_id)
 ):
-    products = await ProductService.get_seller_products(db, seller_id)
+    if search and len(search) > 100:
+        search = search[:100]
+
+    if search:
+        products = await ProductService.search_seller_products(db, seller_id, search)
+    else:
+        products = await ProductService.get_seller_products(db, seller_id)
     
     # Fetch seller for sidebar context
     statement = select(Seller).where(Seller.id == seller_id)
     result = await db.execute(statement)
     seller = result.scalar_one_or_none()
 
-    return templates.TemplateResponse(
-        request,
-        "products/list.html", 
-        {
-            "request": request, 
-            "products": products,
-            "seller_name": f"{seller.first_name} {seller.last_name}",
-            "store_name": seller.store_name
-        }
-    )
+    context = {
+        "request": request, 
+        "products": products,
+        "search": search,
+        "seller_name": f"{seller.first_name} {seller.last_name}",
+        "store_name": seller.store_name
+    }
+
+    if request.headers.get("HX-Request"):
+        return templates.TemplateResponse(request, "products/_product_list_content.html", context)
+
+    return templates.TemplateResponse(request, "products/list.html", context)
 
 @router.get("/add")
 async def add_product_form(
