@@ -4,69 +4,68 @@
 
 {% block seller_content %}
 <div class="mb-8">
-    <h1 class="text-2xl font-bold text-[#191c1d]">Welcome back, {{ seller_name }}</h1>
-    <p class="text-[#3d4947] text-sm">Here's what's happening with <span class="font-bold">{{ store_name }}</span> today.</p>
-</div>
+    <h1 class="text-2xl font-bold text-text-main">Welcome back, {{ seller_name }}</h1>
+    </div>
 
 <!-- Stats Grid -->
 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-    <div class="bg-white p-6 rounded-2xl border border-[#bcc9c6] shadow-sm">
+    <div class="bg-white p-6 rounded-2xl border border-border-main shadow-sm">
         <div class="flex items-center gap-4 mb-4">
-            <div class="p-2 bg-[#00685f0d] text-[#00685f] rounded-lg">
+            <div class="p-2 bg-primary/5 text-primary rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
             </div>
-            <span class="text-xs font-bold text-[#3d4947] uppercase tracking-wider">Total Orders</span>
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Total Orders</span>
         </div>
         <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-bold text-[#191c1d]">{{ total_orders }}</span>
+            <span class="text-3xl font-bold text-text-main">{{ total_orders }}</span>
             <span class="text-xs font-medium text-green-600">+12%</span>
         </div>
     </div>
     
-    <div class="bg-white p-6 rounded-2xl border border-[#bcc9c6] shadow-sm">
+    <div class="bg-white p-6 rounded-2xl border border-border-main shadow-sm">
         <div class="flex items-center gap-4 mb-4">
-            <div class="p-2 bg-[#00685f0d] text-[#00685f] rounded-lg">
+            <div class="p-2 bg-primary/5 text-primary rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
-            <span class="text-xs font-bold text-[#3d4947] uppercase tracking-wider">Total Sales</span>
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Total Sales</span>
         </div>
         <div class="flex items-baseline gap-2">
-            <span class="text-3xl font-bold text-[#191c1d]">{{ "{:,.0f}".format(total_sales) }}</span>
-            <span class="text-sm font-medium text-[#191c1d]">ETB</span>
+            <span class="text-3xl font-bold text-text-main">{{ "{:,.0f}".format(total_sales) }}</span>
+            <span class="text-sm font-medium text-text-main">ETB</span>
         </div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-[#bcc9c6] shadow-sm">
+    <div class="bg-white p-6 rounded-2xl border border-border-main shadow-sm">
         <div class="flex items-center gap-4 mb-4">
             <div class="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
-            <span class="text-xs font-bold text-[#3d4947] uppercase tracking-wider">Pending</span>
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Pending</span>
         </div>
-        <div class="text-3xl font-bold text-[#191c1d]">{{ pending_orders }}</div>
+        <div class="text-3xl font-bold text-text-main">{{ pending_orders }}</div>
     </div>
 
-    <div class="bg-white p-6 rounded-2xl border border-[#bcc9c6] shadow-sm">
+    <div class="bg-white p-6 rounded-2xl border border-border-main shadow-sm">
         <div class="flex items-center gap-4 mb-4">
             <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
             </div>
-            <span class="text-xs font-bold text-[#3d4947] uppercase tracking-wider">Active Products</span>
+            <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Active Products</span>
         </div>
-        <div class="text-3xl font-bold text-[#191c1d]">{{ active_products_count }}</div>
+        <div class="text-3xl font-bold text-text-main">{{ active_products_count }}</div>
         <p class="text-[10px] text-green-600 font-bold uppercase mt-1">Items in stock</p>
     </div>
 </div>
 
 <!-- Recent Orders Section -->
-<div class="bg-white border border-[#bcc9c6] rounded-2xl overflow-hidden shadow-sm">
-    <div class="p-6 border-b border-[#bcc9c6] flex justify-between items-center">
-        <h3 class="text-lg font-bold text-[#191c1d]">Recent Orders</h3>
-        <a href="/dashboard/orders" class="text-[#00685f] text-sm font-bold hover:underline">View All</a>
+<div class="bg-white border border-border-main rounded-2xl overflow-hidden shadow-sm">
+    <div class="p-6 border-b border-border-main flex justify-between items-center">
+        <h3 class="text-lg font-bold text-text-main">Recent Orders</h3>
+        <a href="/dashboard/orders" class="text-primary text-sm font-bold hover:underline">View All</a>
     </div>
     <div class="overflow-x-auto">
         <table class="w-full text-left">
-            <thead class="bg-[#f3f4f5] text-[10px] font-bold text-[#3d4947] uppercase tracking-widest">
+            <thead class="bg-bg-alt text-[10px] font-bold text-text-muted uppercase tracking-widest">
                 <tr>
                     <th class="px-6 py-4">Order ID</th>
                     <th class="px-6 py-4">Buyer</th>
@@ -75,22 +74,22 @@
                     <th class="px-6 py-4 text-center">Status</th>
                 </tr>
             </thead>
-            <tbody class="divide-y divide-[#bcc9c6]">
+            <tbody class="divide-y divide-border-main">
                 {% for order in recent_orders %}
-                <tr class="hover:bg-[#f8f9fa] transition-colors cursor-pointer" onclick="window.location='/dashboard/orders/{{ order.id }}'">
+                <tr class="hover:bg-bg-main transition-colors cursor-pointer" onclick="window.location='/dashboard/orders/{{ order.id }}'">
                     <td class="px-6 py-4">
-                        <span class="text-sm font-bold text-[#191c1d]">{{ order.order_id }}</span>
-                        <span class="block text-[10px] text-[#3d4947]">{{ order.created_at.strftime('%b %d, %H:%M') }}</span>
+                        <span class="text-sm font-bold text-text-main">{{ order.order_id }}</span>
+                        <span class="block text-[10px] text-text-muted">{{ order.created_at.strftime('%b %d, %H:%M') }}</span>
                     </td>
                     <td class="px-6 py-4">
-                        <span class="text-sm text-[#191c1d]">{{ order.buyer_name }}</span>
+                        <span class="text-sm text-text-main">{{ order.buyer_name }}</span>
                     </td>
                     <td class="px-6 py-4">
-                        <span class="text-sm text-[#191c1d]">{{ order.product_name }}</span>
-                        <span class="block text-[10px] text-[#3d4947]">Qty: {{ order.quantity }}</span>
+                        <span class="text-sm text-text-main">{{ order.product_name }}</span>
+                        <span class="block text-[10px] text-text-muted">Qty: {{ order.quantity }}</span>
                     </td>
                     <td class="px-6 py-4 text-right">
-                        <span class="text-sm font-bold text-[#191c1d]">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
+                        <span class="text-sm font-bold text-text-main">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
                     </td>
                     <td class="px-6 py-4 text-center">
                         {% if order.status == 'pending' %}
@@ -106,7 +105,7 @@
                 </tr>
                 {% else %}
                 <tr>
-                    <td colspan="5" class="px-6 py-12 text-center text-[#3d4947] text-sm">
+                    <td colspan="5" class="px-6 py-12 text-center text-text-muted text-sm">
                         No orders found.
                     </td>
                 </tr>

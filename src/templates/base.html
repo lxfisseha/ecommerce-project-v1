@@ -8,6 +8,48 @@
     <!-- Scripts -->
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            DEFAULT: '#333333',
+                            hover: '#1F1F1F',
+                        },
+                        accent: '#C99940',
+
+                        danger: '#C44536',
+                        success: {
+                            DEFAULT: '#4F8A65',
+                            dark: '#3A694B',
+                            light: '#EDF5F0'
+                        },
+                        info: {
+                            DEFAULT: '#407899',
+                            dark: '#2E5A73',
+                            light: '#4C8BC4'
+                        },
+                        text: {
+                            main: '#2B2624',
+                            muted: '#524B48',
+                            light: '#7A736F',
+                        },
+                        bg: {
+                            main: '#FAF9F8',
+                            alt: '#F5F3F1',
+                            muted: '#E8E5E3',
+                            hover: '#F0ECE9',
+                        },
+                        border: {
+                            main: '#D0CBC7',
+                            dark: '#B5B0AD'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,12 +92,12 @@
     </style>
     {% block head %}{% endblock %}
 </head>
-<body class="bg-[#f8f9fa] min-h-screen relative overflow-x-hidden flex flex-col">
+<body class="bg-bg-main min-h-screen relative overflow-x-hidden flex flex-col">
 
     <!-- Global Background Decorations -->
     <div class="fixed inset-0 pointer-events-none overflow-hidden z-[-1]">
-        <div class="blur-decoration absolute -top-[102px] -left-[128px] w-[512px] h-[410px] bg-[#00685f0d] rounded-full blur-[100px]"></div>
-        <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-[#0058be0d] rounded-full blur-[100px]"></div>
+        <div class="blur-decoration absolute -top-[102px] -left-[128px] w-[512px] h-[410px] bg-primary/5 rounded-full blur-[100px]"></div>
+        <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-info-dark/5 rounded-full blur-[100px]"></div>
     </div>
 
     <!-- Main Content Area -->
@@ -65,16 +107,16 @@
 
     <!-- Global Footer -->
     {% block footer %}
-    <footer class="bg-[#e1e3e4] border-t border-[#bcc9c6] py-8 px-6 mt-auto">
+    <footer class="bg-bg-muted border-t border-border-main py-8 px-6 mt-auto">
         <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
-                <span class="font-semibold text-lg text-[#191c1d]">AleMart</span>
-                <span class="text-[#3d4947] text-sm">© 2024 EthiopiaMarket. Reliability in Commerce.</span>
+                <span class="font-semibold text-lg text-text-main">AleMart</span>
+                <span class="text-text-muted text-sm">© 2024 EthiopiaMarket. Reliability in Commerce.</span>
             </div>
             <div class="flex gap-6">
-                <a href="#" class="text-[#3d4947] text-sm hover:text-[#00685f]">Terms of Service</a>
-                <a href="#" class="text-[#3d4947] text-sm hover:text-[#00685f]">Privacy Policy</a>
-                <a href="#" class="text-[#3d4947] text-sm hover:text-[#00685f]">Seller Guidelines</a>
+                <a href="#" class="text-text-muted text-sm hover:text-primary">Terms of Service</a>
+                <a href="#" class="text-text-muted text-sm hover:text-primary">Privacy Policy</a>
+                <a href="#" class="text-text-muted text-sm hover:text-primary">Seller Guidelines</a>
             </div>
         </div>
     </footer>

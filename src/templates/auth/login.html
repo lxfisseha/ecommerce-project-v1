@@ -6,22 +6,21 @@
 <div class="flex-grow flex flex-col items-center justify-center w-full px-4 sm:px-6 py-12">
     <!-- Logo Branding -->
     <div class="text-center mb-8 sm:mb-12">
-        <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-[#00685f] rounded-xl shadow-sm mb-4">
+        <div class="inline-flex items-center justify-center w-14 h-14 sm:w-16 sm:h-16 bg-primary rounded-xl shadow-sm mb-4">
             <svg width="30" height="26" viewBox="0 0 34 30" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17 0L33.4545 29.25H0.545517L17 0Z" fill="white"/>
             </svg>
         </div>
-        <h1 class="text-[#00685f] text-2xl sm:text-[32px] font-semibold tracking-[-0.32px] leading-tight sm:leading-10">AleMart</h1>
-        <p class="text-[#3d4947] text-sm sm:text-base leading-6 mt-1">Merchant Solution Center</p>
+        <h1 class="text-primary text-2xl sm:text-[32px] font-semibold tracking-[-0.32px] leading-tight sm:leading-10">AleMart</h1>
     </div>
 
     <!-- Auth Container -->
-    <div class="w-full max-w-sm bg-white rounded-xl border border-[#bcc9c6] shadow-sm p-6 sm:p-8">
+    <div class="w-full max-w-sm bg-white rounded-xl border border-border-main shadow-sm p-6 sm:p-8">
         {% include "auth/login_partial.html" %}
     </div>
 
     <!-- Trust Badges -->
-    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 w-full text-[#191c1d]">
+    <div class="mt-8 flex flex-col sm:flex-row justify-center gap-4 sm:gap-6 w-full text-text-main">
         <div class="flex items-center gap-2 justify-center">
             <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z"></path></svg>
             <span class="text-xs sm:text-base leading-6">Secure AES Encryption</span>

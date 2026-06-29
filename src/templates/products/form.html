@@ -6,10 +6,10 @@
 <div class="py-8">
     <div class="max-w-4xl mx-auto px-4 sm:px-6">
         <div class="mb-8">
-            <h1 class="text-2xl sm:text-[32px] font-semibold text-[#191c1d] leading-tight sm:leading-10 tracking-[-0.32px]">
+            <h1 class="text-2xl sm:text-[32px] font-semibold text-text-main leading-tight sm:leading-10 tracking-[-0.32px]">
                 {% if product %}Edit Product{% else %}Add New Product{% endif %}
             </h1>
-            <p class="text-[#3d4947] text-sm sm:text-base leading-6 mt-1">
+            <p class="text-text-muted text-sm sm:text-base leading-6 mt-1">
                 {% if product %}Update your product details and availability.{% else %}Fill in the details to list a new item on EthiopiaMarket.{% endif %}
             </p>
             {% if error %}
@@ -25,19 +25,19 @@
         
         <!-- Left Column: Media -->
         <div class="md:col-span-1 space-y-6">
-            <div class="bg-white p-6 rounded-xl border border-[#bcc9c6] space-y-4">
+            <div class="bg-white p-6 rounded-xl border border-border-main space-y-4">
                 <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
-                    <h3 class="text-lg font-semibold text-[#191c1d]">Product Media</h3>
+                    <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <h3 class="text-lg font-semibold text-text-main">Product Media</h3>
                 </div>
                 
                 <div id="image-preview-wrapper" class="mb-3">
                     <div id="image-preview-container" class="grid grid-cols-2 gap-3 p-2 overflow-y-auto">
                         {% if product and product.images %}
                             {% for img in product.images %}
-                                <div class="relative w-full aspect-square {% if img.image_tag == 'main' %}ring-2 ring-[#008378]{% endif %}">
+                                <div class="relative w-full aspect-square {% if img.image_tag == 'main' %}ring-2 ring-accent{% endif %}">
                                     <img src="{{ img.image_url }}" class="object-cover w-full h-full rounded-md">
-                                    <select name="image_tag_{{ loop.index0 }}" onclick="event.stopPropagation()" class="absolute top-2 left-2 z-10 appearance-none rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm {% if img.image_tag == 'main' %}bg-[#00685f] text-white{% elif img.image_tag == 'gallery' %}bg-[#0058be] text-white{% else %}bg-white text-[#6b7280] border border-[#d1d5db]{% endif %}">
+                                    <select name="image_tag_{{ loop.index0 }}" onclick="event.stopPropagation()" class="absolute top-2 left-2 z-10 appearance-none rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm {% if img.image_tag == 'main' %}bg-primary text-white{% elif img.image_tag == 'gallery' %}bg-info-dark text-white{% else %}bg-white text-text-light border border-border-dark{% endif %}">
                                         <option value="main" {% if img.image_tag == 'main' %}selected{% endif %}>Main</option>
                                         <option value="gallery" {% if img.image_tag == 'gallery' %}selected{% endif %}>Gallery</option>
                                         <option value="thumbnail" {% if img.image_tag == 'thumbnail' %}selected{% endif %}>Thumbnail</option>
@@ -48,12 +48,12 @@
                     </div>
                 </div>
 
-                <div onclick="document.getElementById('image-input').click()" class="h-32 relative bg-[#f3f4f5] border-2 border-dashed border-[#bcc9c6] rounded-lg overflow-hidden cursor-pointer hover:bg-[#edeeef] transition-colors">
+                <div onclick="document.getElementById('image-input').click()" class="h-32 relative bg-bg-alt border-2 border-dashed border-border-main rounded-lg overflow-hidden cursor-pointer hover:bg-bg-hover transition-colors">
                     <input type="file" name="image" id="image-input" class="hidden" accept="image/*" multiple onchange="previewImages(this)">
                     <div id="upload-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-center">
-                        <svg class="w-5 h-5 text-[#bcc9c6] mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
-                        <span class="text-sm font-medium text-[#3d4947]">Upload {% if product and product.images %}New{% endif %} Images</span>
-                        <p class="text-xs text-[#6b7280]">PNG, JPG up to 5MB</p>
+                        <svg class="w-5 h-5 text-border-main mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                        <span class="text-sm font-medium text-text-muted">Upload {% if product and product.images %}New{% endif %} Images</span>
+                        <p class="text-xs text-text-light">PNG, JPG up to 5MB</p>
                     </div>
 
 
@@ -89,14 +89,14 @@
                                     function applyStyle(selectEl){
                                         const val = selectEl.value;
                                         selectEl.className = 'absolute top-2 left-2 z-10 appearance-none rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm';
-                                        wrapper.classList.remove('ring-2','ring-[#008378]');
+                                        wrapper.classList.remove('ring-2','ring-accent');
                                         if(val === 'main'){
-                                            selectEl.classList.add('bg-[#00685f]','text-white');
-                                            wrapper.classList.add('ring-2','ring-[#008378]');
+                                            selectEl.classList.add('bg-primary','text-white');
+                                            wrapper.classList.add('ring-2','ring-accent');
                                         } else if(val === 'gallery'){
-                                            selectEl.classList.add('bg-[#0058be]','text-white');
+                                            selectEl.classList.add('bg-info-dark','text-white');
                                         } else {
-                                            selectEl.classList.add('bg-white','text-[#6b7280]','border','border-[#d1d5db]');
+                                            selectEl.classList.add('bg-white','text-text-light','border','border-border-dark');
                                         }
                                     }
                                     applyStyle(sel);
@@ -118,14 +118,14 @@
                             function apply(selEl){
                                 const val = selEl.value;
                                 selEl.className = 'absolute top-2 left-2 z-10 appearance-none rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm';
-                                if(wrapper) wrapper.classList.remove('ring-2','ring-[#008378]');
+                                if(wrapper) wrapper.classList.remove('ring-2','ring-accent');
                                 if(val === 'main'){
-                                    selEl.classList.add('bg-[#00685f]','text-white');
-                                    if(wrapper) wrapper.classList.add('ring-2','ring-[#008378]');
+                                    selEl.classList.add('bg-primary','text-white');
+                                    if(wrapper) wrapper.classList.add('ring-2','ring-accent');
                                 } else if(val === 'gallery'){
-                                    selEl.classList.add('bg-[#0058be]','text-white');
+                                    selEl.classList.add('bg-info-dark','text-white');
                                 } else {
-                                    selEl.classList.add('bg-white','text-[#6b7280]','border','border-[#d1d5db]');
+                                    selEl.classList.add('bg-white','text-text-light','border','border-border-dark');
                                 }
                             }
                             apply(sel);
@@ -134,14 +134,14 @@
                     })();
                 </script>
 
-                <div class="p-4 bg-[#f8f9fa] rounded-lg flex items-center justify-between">
+                <div class="p-4 bg-bg-main rounded-lg flex items-center justify-between">
                     <div>
-                        <span class="block text-sm font-medium text-[#191c1d]">Visible to Buyers</span>
-                        <span class="text-xs text-[#3d4947]">Toggle if product is currently available</span>
+                        <span class="block text-sm font-medium text-text-main">Visible to Buyers</span>
+                        <span class="text-xs text-text-muted">Toggle if product is currently available</span>
                     </div>
                     <label class="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" name="in_stock" class="sr-only peer" {% if not product or product.in_stock %}checked{% endif %}>
-                        <div class="w-11 h-6 bg-[#e1e3e4] peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#008378]"></div>
+                        <div class="w-11 h-6 bg-bg-muted peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-accent"></div>
                     </label>
                 </div>
             </div>
@@ -150,71 +150,71 @@
         <!-- Right Column: Form Fields -->
         <div class="md:col-span-2 space-y-6">
             <!-- Basic Info -->
-            <div class="bg-white p-6 rounded-xl border border-[#bcc9c6] space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-border-main space-y-6">
                 <div class="flex items-center gap-2 mb-2">
-                    <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <h3 class="text-lg font-semibold text-[#191c1d]">Product Information</h3>
+                    <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <h3 class="text-lg font-semibold text-text-main">Product Information</h3>
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium text-[#191c1d]">Product Name</label>
-                    <input type="text" name="name" value="{{ product.name if product else '' }}" required placeholder="e.g. Traditional Hand-Woven Dress" class="w-full px-4 py-2.5 bg-[#f3f4f5] border border-[#bcc9c6] rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#00685f33] focus:border-[#00685f]">
+                    <label class="text-sm font-medium text-text-main">Product Name</label>
+                    <input type="text" name="name" value="{{ product.name if product else '' }}" required placeholder="e.g. Traditional Hand-Woven Dress" class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 </div>
 
                 <div class="space-y-2">
-                    <label class="text-sm font-medium text-[#191c1d]">Description</label>
-                    <textarea name="description" rows="5" placeholder="Tell customers about the materials, origin, and unique features..." class="w-full px-4 py-2.5 bg-[#f3f4f5] border border-[#bcc9c6] rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#00685f33] focus:border-[#00685f]">{{ product.description if product else '' }}</textarea>
+                    <label class="text-sm font-medium text-text-main">Description</label>
+                    <textarea name="description" rows="5" placeholder="Tell customers about the materials, origin, and unique features..." class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ product.description if product else '' }}</textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div class="space-y-2">
-                        <label class="text-sm font-medium text-[#191c1d]">Price (ETB)</label>
+                        <label class="text-sm font-medium text-text-main">Price (ETB)</label>
                         <div class="relative">
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <span class="text-[#3d4947] font-serif">ብር</span>
+                                <span class="text-text-muted font-serif">ብር</span>
                             </div>
-                            <input type="number" step="0.01" min="0.01" name="price" value="{{ product.price|float if product else '' }}" required placeholder="0.00" class="w-full pl-10 pr-4 py-2.5 bg-[#f3f4f5] border border-[#bcc9c6] rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#00685f33] focus:border-[#00685f]">
+                            <input type="number" step="0.01" min="0.01" name="price" value="{{ product.price|float if product else '' }}" required placeholder="0.00" class="w-full pl-10 pr-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                         </div>
                     </div>
                     <div class="space-y-2">
-                        <label class="text-sm font-medium text-[#191c1d]">Tags (comma-separated)</label>
-                        <input type="text" name="tags" value="{{ tags_string if tags_string else '' }}" placeholder="e.g. streetwear, hot, summer" class="w-full px-4 py-2.5 bg-[#f3f4f5] border border-[#bcc9c6] rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-[#00685f33] focus:border-[#00685f]">
+                        <label class="text-sm font-medium text-text-main">Tags (comma-separated)</label>
+                        <input type="text" name="tags" value="{{ tags_string if tags_string else '' }}" placeholder="e.g. streetwear, hot, summer" class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     </div>
                 </div>
             </div>
 
             <!-- Attributes -->
-            <div class="bg-white p-6 rounded-xl border border-[#bcc9c6] space-y-6">
+            <div class="bg-white p-6 rounded-xl border border-border-main space-y-6">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-2">
-                        <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
-                        <h3 class="text-lg font-semibold text-[#191c1d]">Product Attributes</h3>
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>
+                        <h3 class="text-lg font-semibold text-text-main">Product Attributes</h3>
                     </div>
-                    <button type="button" onclick="addAttributeRow()" class="text-xs font-bold text-[#00685f] hover:text-[#005a54] flex items-center gap-1 p-2 bg-[#00685f0d] rounded-lg transition-all">
+                    <button type="button" onclick="addAttributeRow()" class="text-xs font-bold text-primary hover:text-primary-hover flex items-center gap-1 p-2 bg-primary/5 rounded-lg transition-all">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
                         Add Option
                     </button>
                 </div>
 
-                <p class="text-xs text-[#3d4947] -mt-4 mb-4">Add options like Size, Color, or Material. You can also specify an extra price for specific variations.</p>
+                <p class="text-xs text-text-muted -mt-4 mb-4">Add options like Size, Color, or Material. You can also specify an extra price for specific variations.</p>
 
                 <div id="attributes-container" class="space-y-3">
                     {% if product and product.attributes %}
                         {% for attr in product.attributes %}
-                        <div class="attribute-row flex flex-col sm:flex-row gap-3 p-4 bg-[#f8f9fa] rounded-xl border border-[#bcc9c6] relative group">
+                        <div class="attribute-row flex flex-col sm:flex-row gap-3 p-4 bg-bg-main rounded-xl border border-border-main relative group">
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Type</label>
-                                <input type="text" name="attr_type[]" value="{{ attr.attribute_type }}" placeholder="e.g. Size" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Type</label>
+                                <input type="text" name="attr_type[]" value="{{ attr.attribute_type }}" placeholder="e.g. Size" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Value</label>
-                                <input type="text" name="attr_value[]" value="{{ attr.attribute_value }}" placeholder="e.g. S, M, L" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Value</label>
+                                <input type="text" name="attr_value[]" value="{{ attr.attribute_value }}" placeholder="e.g. S, M, L" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                             </div>
                             <div class="w-full sm:w-32">
-                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Extra Price</label>
+                                <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Extra Price</label>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#3d4947]">+</span>
-                                    <input type="number" step="0.01" name="attr_price[]" value="{{ attr.extra_price|float }}" placeholder="0.00" class="w-full pl-6 pr-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">+</span>
+                                    <input type="number" step="0.01" name="attr_price[]" value="{{ attr.extra_price|float }}" placeholder="0.00" class="w-full pl-6 pr-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                                 </div>
                             </div>
                             <button type="button" onclick="this.closest('.attribute-row').remove()" class="sm:self-end p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all" title="Remove Option">
@@ -225,9 +225,9 @@
                     {% endif %}
                 </div>
 
-                <div id="empty-attributes" class="py-8 text-center bg-[#f8f9fa] rounded-xl border border-dashed border-[#bcc9c6] {% if product and product.attributes %}hidden{% endif %}">
-                    <p class="text-sm text-[#3d4947]">No custom options added yet.</p>
-                    <button type="button" onclick="addAttributeRow()" class="mt-2 text-xs font-bold text-[#00685f] hover:underline">Click to add your first option</button>
+                <div id="empty-attributes" class="py-8 text-center bg-bg-main rounded-xl border border-dashed border-border-main {% if product and product.attributes %}hidden{% endif %}">
+                    <p class="text-sm text-text-muted">No custom options added yet.</p>
+                    <button type="button" onclick="addAttributeRow()" class="mt-2 text-xs font-bold text-primary hover:underline">Click to add your first option</button>
                 </div>
 
                 <script>
@@ -237,21 +237,21 @@
                         emptyMsg.classList.add('hidden');
                         
                         const row = document.createElement('div');
-                        row.className = 'attribute-row flex flex-col sm:flex-row gap-3 p-4 bg-[#f8f9fa] rounded-xl border border-[#bcc9c6] relative animate-in slide-in-from-top-2 duration-200';
+                        row.className = 'attribute-row flex flex-col sm:flex-row gap-3 p-4 bg-bg-main rounded-xl border border-border-main relative animate-in slide-in-from-top-2 duration-200';
                         row.innerHTML = `
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Type</label>
-                                <input type="text" name="attr_type[]" placeholder="e.g. Size" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Type</label>
+                                <input type="text" name="attr_type[]" placeholder="e.g. Size" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                             </div>
                             <div class="flex-1">
-                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Value</label>
-                                <input type="text" name="attr_value[]" placeholder="e.g. S, M, L" class="w-full px-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Value</label>
+                                <input type="text" name="attr_value[]" placeholder="e.g. S, M, L" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                             </div>
                             <div class="w-full sm:w-32">
-                                <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-1">Extra Price</label>
+                                <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Extra Price</label>
                                 <div class="relative">
-                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-[#3d4947]">+</span>
-                                    <input type="number" step="0.01" name="attr_price[]" placeholder="0.00" class="w-full pl-6 pr-3 py-2 bg-white border border-[#bcc9c6] rounded-lg text-sm focus:ring-2 focus:ring-[#00685f33] outline-none">
+                                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">+</span>
+                                    <input type="number" step="0.01" name="attr_price[]" placeholder="0.00" class="w-full pl-6 pr-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                                 </div>
                             </div>
                             <button type="button" onclick="removeRow(this)" class="sm:self-end p-2 text-red-500 hover:bg-red-50 rounded-lg transition-all">
@@ -274,8 +274,8 @@
 
             <!-- Actions -->
             <div class="flex justify-end gap-4 pt-4 pb-12">
-                <a href="/dashboard/products" class="px-8 py-3 rounded-lg text-sm font-medium text-[#3d4947] hover:bg-[#e1e3e4] transition-colors">Cancel</a>
-                <button type="submit" class="px-8 py-3 bg-[#00685f] text-white rounded-lg font-medium text-sm transition-colors hover:bg-[#005a54] flex items-center gap-2 shadow-sm">
+                <a href="/dashboard/products" class="px-8 py-3 rounded-lg text-sm font-medium text-text-muted hover:bg-bg-muted transition-colors">Cancel</a>
+                <button type="submit" class="px-8 py-3 bg-primary text-white rounded-lg font-medium text-sm transition-colors hover:bg-primary-hover flex items-center gap-2 shadow-sm">
                     <span>Save Product</span>
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 </button>

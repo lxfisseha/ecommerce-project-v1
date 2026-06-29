@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Slow Down - AleMart{% endblock %}
+
+{% block content %}
+<div class="flex-grow flex items-center justify-center bg-bg-main px-4 py-12">
+    <div class="max-w-md w-full bg-white p-8 rounded-2xl border border-border-main shadow-sm text-center">
+
+        <!-- Icon -->
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-accent/20 mb-6">
+            <svg class="w-10 h-10 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+        </div>
+
+        <!-- Heading -->
+        <h1 class="text-2xl font-bold text-text-main mb-2">Too Many Requests</h1>
+        <p class="text-text-muted text-sm leading-relaxed mb-6">
+            {{ context_message | default("You've made too many requests in a short period. Please wait a moment before trying again.") }}
+        </p>
+
+        <!-- Countdown -->
+        {% if retry_after %}
+        <div class="bg-bg-alt rounded-xl p-4 mb-6 border border-border-main">
+            <p class="text-xs text-text-light uppercase tracking-widest font-semibold mb-1">Try again in</p>
+            <p class="text-3xl font-bold text-primary tabular-nums" id="countdown">{{ retry_after }}s</p>
+        </div>
+        {% endif %}
+
+        <!-- Actions -->
+        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+            <button onclick="history.back()"
+                class="px-5 py-2.5 border border-border-main text-text-muted rounded-lg text-sm font-medium hover:bg-bg-hover transition-colors">
+                ← Go Back
+            </button>
+            <a href="/"
+                id="home-link"
+                class="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary-hover transition-colors {% if retry_after %}opacity-50 pointer-events-none{% endif %}"
+                {% if retry_after %}aria-disabled="true"{% endif %}>
+                Return Home
+            </a>
+        </div>
+
+        <!-- Subtle note -->
+        <p class="text-[11px] text-text-light mt-6">
+            If you believe this is a mistake, please
+            <a href="/support" class="underline hover:text-primary transition-colors">contact support</a>.
+        </p>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% if retry_after %}
+<script>
+    (function () {
+        let seconds = {{ retry_after }};
+        const display = document.getElementById('countdown');
+        const homeLink = document.getElementById('home-link');
+
+        const tick = setInterval(() => {
+            seconds -= 1;
+            if (seconds <= 0) {
+                clearInterval(tick);
+                display.textContent = '0s';
+                // Re-enable the home link
+                homeLink.classList.remove('opacity-50', 'pointer-events-none');
+                homeLink.removeAttribute('aria-disabled');
+                // Auto-redirect after countdown ends
+                window.location.href = '/';
+            } else {
+                display.textContent = seconds + 's';
+            }
+        }, 1000);
+    })();
+</script>
+{% endif %}
+{% endblock %}

@@ -7,22 +7,22 @@
     <!-- Shop Header (Redesigned) -->
     <div class="mb-10 flex flex-col items-start">
         <div class="flex items-center gap-2 mb-2">
-            <span class="px-2 py-0.5 bg-[#00685f]/10 text-[#00685f] rounded-full text-[10px] font-bold tracking-widest uppercase">
+            <span class="px-2 py-0.5 bg-accent/10 text-primary rounded-full text-[10px] font-bold tracking-widest uppercase">
                 Explore Catalog
             </span>
-            <div class="h-px w-8 bg-[#00685f]/20"></div>
+            <div class="h-px w-8 bg-primary/20"></div>
         </div>
-        <h1 class="text-3xl sm:text-4xl font-bold text-[#191c1d] tracking-tight">
+        <h1 class="text-3xl sm:text-4xl font-bold text-text-main tracking-tight">
             The Full Collection
         </h1>
-        <p class="text-[#3d4947] mt-3 max-w-lg text-sm sm:text-base leading-relaxed opacity-80">
-            Browse our carefully curated selection of high-quality Ethiopian products, from heritage leather to modern essentials.
+        <p class="text-text-muted mt-3 max-w-lg text-sm sm:text-base leading-relaxed opacity-80">
+            Browse our carefully curated selection of high-quality products.
         </p>
-        <div class="w-12 h-1 bg-[#00685f] mt-6 rounded-full"></div>
+        <div class="w-12 h-1 bg-primary mt-6 rounded-full"></div>
     </div>
 
     <!-- Search and Sort Bar -->
-    <div class="flex flex-col md:flex-row gap-4 mb-10 sticky top-16 z-30 bg-[#f8f9fa]/90 backdrop-blur-md py-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+    <div class="flex flex-col md:flex-row gap-4 mb-10 sticky top-16 z-30 bg-bg-main/90 backdrop-blur-md py-4 -mx-4 px-4 sm:mx-0 sm:px-0">
         <!-- Search Input -->
         <div class="flex-1 relative group">
             <input type="text" 
@@ -30,7 +30,7 @@
                    id="search-input"
                    value="{{ search_query if search_query else '' }}"
                    placeholder="Search products..." 
-                   class="w-full pl-12 pr-4 py-3 bg-white border border-[#bcc9c6] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00685f] focus:border-transparent transition-all shadow-sm"
+                   class="w-full pl-12 pr-4 py-3 bg-white border border-border-main rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm"
                    hx-get="/shop"
                    hx-trigger="keyup changed delay:500ms, search"
                    hx-target="#shop-content"
@@ -38,7 +38,7 @@
                    hx-include="#sort-dropdown, #tag-input"
                    hx-push-url="true"
                    hx-indicator="#grid-indicator, #search-loading">
-            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-[#3d4947]">
+            <div class="absolute left-4 top-1/2 -translate-y-1/2 text-text-muted">
                 <!-- Static Icon -->
                 <svg id="search-icon" class="w-5 h-5 opacity-40 group-focus-within:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
@@ -47,7 +47,7 @@
             
             <!-- Loading Indicator -->
             <div id="search-loading" class="absolute right-4 top-1/2 -translate-y-1/2 htmx-indicator">
-                <svg class="animate-spin h-5 w-5 text-[#00685f]" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin h-5 w-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -58,7 +58,7 @@
         <div class="w-full md:w-56 relative group">
             <select name="sort_by"
                     id="sort-dropdown"
-                    class="w-full px-4 py-3 bg-white border border-[#bcc9c6] rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#00685f] focus:border-transparent transition-all shadow-sm appearance-none cursor-pointer pr-10"
+                    class="w-full px-4 py-3 bg-white border border-border-main rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all shadow-sm appearance-none cursor-pointer pr-10"
                     hx-get="/shop"
                     hx-trigger="change"
                     hx-target="#shop-content"
@@ -71,7 +71,7 @@
                 <option value="price-high" {% if current_sort == 'price-high' %}selected{% endif %}>Price: High to Low</option>
                 <option value="popular" {% if current_sort == 'popular' %}selected{% endif %}>Most Popular</option>
             </select>
-            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-[#3d4947] opacity-40 group-focus-within:opacity-100 transition-opacity">
+            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-text-muted opacity-40 group-focus-within:opacity-100 transition-opacity">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
             </div>
         </div>

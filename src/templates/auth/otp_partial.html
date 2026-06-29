@@ -4,14 +4,14 @@
                 hx-get="/auth/login" 
                 hx-target="#auth-container" 
                 hx-swap="outerHTML"
-                class="inline-flex items-center gap-2 text-[#00685f] text-sm font-medium hover:underline mb-4">
+                class="inline-flex items-center gap-2 text-primary text-sm font-medium hover:underline mb-4">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M7.5 9L4.5 6L7.5 3" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
             <span>Back</span>
         </button>
-        <h2 class="text-[#191c1d] text-[18px] font-semibold leading-6">Verify Number</h2>
-        <p class="text-[#3d4947] text-sm leading-5 mt-2">We've sent a 6-digit code to <strong>+251 {{ phone }}</strong></p>
+        <h2 class="text-text-main text-[18px] font-semibold leading-6">Verify Number</h2>
+        <p class="text-text-muted text-sm leading-5 mt-2">We've sent a 6-digit code to <strong>+251 {{ phone }}</strong></p>
     </div>
 
     <!-- OTP Form -->
@@ -28,7 +28,7 @@
                    maxlength="1" 
                    required
                    pattern="\d"
-                   class="w-11 h-14 text-center text-[29px] font-medium bg-[#f8f9fa] border border-[#bcc9c6] rounded-lg focus:border-[#2563eb] focus:ring-1 focus:ring-[#2563eb] outline-none transition-all">
+                   class="w-11 h-14 text-center text-[29px] font-medium bg-bg-main border border-border-main rounded-lg focus:border-info-light focus:ring-1 focus:ring-info-light outline-none transition-all">
             {% endfor %}
             <!-- Hidden combined input for the backend -->
             <input type="hidden" name="code" id="otp-code">
@@ -39,7 +39,7 @@
         {% endif %}
 
         <button type="submit" 
-                class="w-full bg-[#00685f] hover:bg-[#005a52] text-white text-sm font-medium h-12 rounded-lg shadow-sm flex items-center justify-center transition-colors relative disabled:opacity-70 disabled:cursor-not-allowed"
+                class="w-full bg-primary hover:bg-primary-hover text-white text-sm font-medium h-12 rounded-lg shadow-sm flex items-center justify-center transition-colors relative disabled:opacity-70 disabled:cursor-not-allowed"
                 hx-indicator="#loading-spinner-otp">
             <span class="htmx-hide-on-request">Verify & Login</span>
             <!-- Loading Spinner -->

@@ -4,14 +4,14 @@
 
 {% block seller_content %}
 <div class="mb-8">
-    <a href="/dashboard/orders" class="text-[#3d4947] hover:text-[#00685f] text-xs font-bold flex items-center gap-2 mb-4 group transition-colors">
+    <a href="/dashboard/orders" class="text-text-muted hover:text-primary text-xs font-bold flex items-center gap-2 mb-4 group transition-colors">
         <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         Back to Orders
     </a>
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-            <h1 class="text-2xl font-bold text-[#191c1d]">Order {{ order.order_id }}</h1>
-            <p class="text-[#3d4947] text-sm">Placed on {{ order.created_at.strftime('%B %d, %Y at %H:%M') }}</p>
+            <h1 class="text-2xl font-bold text-text-main">Order {{ order.order_id }}</h1>
+            <p class="text-text-muted text-sm">Placed on {{ order.created_at.strftime('%B %d, %Y at %H:%M') }}</p>
         </div>
         <div class="flex items-center gap-3">
             {% if order.status == 'pending' %}
@@ -37,61 +37,61 @@
     <!-- Left Column: Details -->
     <div class="lg:col-span-8 space-y-8">
         <!-- Order Items -->
-        <div class="bg-white border border-[#bcc9c6] rounded-2xl overflow-hidden shadow-sm">
-            <div class="p-6 border-b border-[#bcc9c6]">
-                <h3 class="text-base font-bold text-[#191c1d]">Order Summary</h3>
+        <div class="bg-white border border-border-main rounded-2xl overflow-hidden shadow-sm">
+            <div class="p-6 border-b border-border-main">
+                <h3 class="text-base font-bold text-text-main">Order Summary</h3>
             </div>
             <div class="p-6">
-                <div class="flex gap-6 pb-6 border-b border-[#bcc9c6] mb-6">
-                    <div class="w-24 h-24 bg-[#f3f4f5] rounded-xl flex-shrink-0 flex items-center justify-center text-[#bcc9c6] border border-[#bcc9c6]">
+                <div class="flex gap-6 pb-6 border-b border-border-main mb-6">
+                    <div class="w-24 h-24 bg-bg-alt rounded-xl flex-shrink-0 flex items-center justify-center text-border-main border border-border-main">
                         <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                     </div>
                     <div class="flex-grow">
                         <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-[#191c1d] text-lg">{{ order.product_name }}</h4>
-                            <span class="font-bold text-[#191c1d]">{{ "{:,.0f}".format(order.product_price) }} ETB</span>
+                            <h4 class="font-bold text-text-main text-lg">{{ order.product_name }}</h4>
+                            <span class="font-bold text-text-main">{{ "{:,.0f}".format(order.product_price) }} ETB</span>
                         </div>
-                        <p class="text-sm text-[#3d4947] mb-1">
+                        <p class="text-sm text-text-muted mb-1">
                             {% if order.attributes_selected %}{{ order.attributes_selected }}{% else %}Standard{% endif %}
                         </p>
-                        <p class="text-sm text-[#3d4947]">Quantity: {{ order.quantity }}</p>
+                        <p class="text-sm text-text-muted">Quantity: {{ order.quantity }}</p>
                     </div>
                 </div>
                 
                 <div class="space-y-3 max-w-xs ml-auto">
-                    <div class="flex justify-between text-sm text-[#3d4947]">
+                    <div class="flex justify-between text-sm text-text-muted">
                         <span>Subtotal</span>
                         <span class="font-medium">{{ "{:,.0f}".format(order.subtotal) }} ETB</span>
                     </div>
-                    <div class="flex justify-between text-sm text-[#3d4947]">
+                    <div class="flex justify-between text-sm text-text-muted">
                         <span>Delivery Fee</span>
                         <span class="font-medium">150 ETB</span>
                     </div>
-                    <div class="pt-3 border-t border-[#bcc9c6] flex justify-between items-center mt-3">
-                        <span class="text-base font-bold text-[#191c1d]">Total</span>
-                        <span class="text-xl font-bold text-[#00685f]">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
+                    <div class="pt-3 border-t border-border-main flex justify-between items-center mt-3">
+                        <span class="text-base font-bold text-text-main">Total</span>
+                        <span class="text-xl font-bold text-primary">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
                     </div>
                 </div>
             </div>
         </div>
 
         <!-- Buyer Information -->
-        <div class="bg-white border border-[#bcc9c6] rounded-2xl overflow-hidden shadow-sm">
-            <div class="p-6 border-b border-[#bcc9c6]">
-                <h3 class="text-base font-bold text-[#191c1d]">Buyer Information</h3>
+        <div class="bg-white border border-border-main rounded-2xl overflow-hidden shadow-sm">
+            <div class="p-6 border-b border-border-main">
+                <h3 class="text-base font-bold text-text-main">Buyer Information</h3>
             </div>
             <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div>
-                    <span class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-2">Customer Details</span>
-                    <p class="text-[#191c1d] font-bold text-lg mb-1">{{ order.buyer_name }}</p>
-                    <div class="flex items-center gap-2 text-[#00685f]">
+                    <span class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">Customer Details</span>
+                    <p class="text-text-main font-bold text-lg mb-1">{{ order.buyer_name }}</p>
+                    <div class="flex items-center gap-2 text-primary">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
                         <span class="font-bold">+251 {{ order.buyer_phone }}</span>
                     </div>
                 </div>
                 <div>
-                    <span class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-2">Delivery Address</span>
-                    <p class="text-[#191c1d] font-medium leading-relaxed bg-[#f3f4f5] p-4 rounded-xl border border-[#bcc9c6]">
+                    <span class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-2">Delivery Address</span>
+                    <p class="text-text-main font-medium leading-relaxed bg-bg-alt p-4 rounded-xl border border-border-main">
                         {{ order.delivery_address }}
                     </p>
                 </div>
@@ -101,29 +101,29 @@
 
     <!-- Right Column: Status Actions -->
     <div class="lg:col-span-4 space-y-6">
-        <div class="bg-white border border-[#bcc9c6] rounded-2xl p-6 shadow-sm">
-            <h3 class="text-base font-bold text-[#191c1d] mb-6">Update Status</h3>
+        <div class="bg-white border border-border-main rounded-2xl p-6 shadow-sm">
+            <h3 class="text-base font-bold text-text-main mb-6">Update Status</h3>
             
             {% if order.status in ['completed', 'cancelled'] %}
-            <div class="p-4 bg-[#f8f9fa] rounded-xl border border-[#bcc9c6] text-center">
-                <p class="text-xs text-[#3d4947] font-medium">This order is in a terminal state (<span class="font-bold">{{ order.status }}</span>) and cannot be modified.</p>
+            <div class="p-4 bg-bg-main rounded-xl border border-border-main text-center">
+                <p class="text-xs text-text-muted font-medium">This order is in a terminal state (<span class="font-bold">{{ order.status }}</span>) and cannot be modified.</p>
             </div>
             {% else %}
             <form action="/dashboard/orders/{{ order.id }}/status" method="POST" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="{{ request.scope.csrf_token }}">
                 
                 <div>
-                    <label class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-3">Available Transitions</label>
+                    <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-3">Available Transitions</label>
                     <div class="grid grid-cols-1 gap-3">
                         {% if order.status == 'pending' %}
-                        <button type="submit" name="new_status" value="shipped" class="w-full py-3 bg-[#00685f] text-white text-sm font-bold rounded-xl hover:bg-[#005a54] transition-all shadow-md">
+                        <button type="submit" name="new_status" value="shipped" class="w-full py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition-all shadow-md">
                             Mark as Shipped
                         </button>
                         <button type="submit" name="new_status" value="cancelled" class="w-full py-3 bg-white text-red-600 border border-red-100 text-sm font-bold rounded-xl hover:bg-red-50 transition-all">
                             Cancel Order
                         </button>
                         {% elif order.status == 'shipped' %}
-                        <button type="submit" name="new_status" value="completed" class="w-full py-3 bg-[#00685f] text-white text-sm font-bold rounded-xl hover:bg-[#005a54] transition-all shadow-md">
+                        <button type="submit" name="new_status" value="completed" class="w-full py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition-all shadow-md">
                             Mark as Completed
                         </button>
                         <button type="submit" name="new_status" value="cancelled" class="w-full py-3 bg-white text-red-600 border border-red-100 text-sm font-bold rounded-xl hover:bg-red-50 transition-all">
@@ -135,9 +135,9 @@
             </form>
             {% endif %}
             
-            <div class="mt-8 pt-6 border-t border-[#bcc9c6]">
-                <span class="block text-[10px] font-bold text-[#3d4947] uppercase tracking-wider mb-3">Merchant Actions</span>
-                <button onclick="window.print()" class="w-full flex items-center justify-center gap-2 py-3 bg-[#f3f4f5] text-[#191c1d] text-sm font-bold rounded-xl hover:bg-[#e1e3e4] transition-all">
+            <div class="mt-8 pt-6 border-t border-border-main">
+                <span class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-3">Merchant Actions</span>
+                <button onclick="window.print()" class="w-full flex items-center justify-center gap-2 py-3 bg-bg-alt text-text-main text-sm font-bold rounded-xl hover:bg-bg-muted transition-all">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
                     Print Packing Slip
                 </button>
@@ -152,21 +152,21 @@
         </div>
 
         <!-- Audit Trail -->
-        <div class="bg-white border border-[#bcc9c6] rounded-2xl p-6 shadow-sm">
-            <h3 class="text-base font-bold text-[#191c1d] mb-4">Audit Trail</h3>
+        <div class="bg-white border border-border-main rounded-2xl p-6 shadow-sm">
+            <h3 class="text-base font-bold text-text-main mb-4">Audit Trail</h3>
             <div class="space-y-4">
                 {% for log in logs %}
                 <div class="flex gap-3 text-xs">
                     <div class="flex flex-col items-center">
-                        <div class="w-2 h-2 rounded-full bg-[#bcc9c6]"></div>
-                        {% if not loop.last %}<div class="w-px h-full bg-[#bcc9c6] my-1"></div>{% endif %}
+                        <div class="w-2 h-2 rounded-full bg-border-main"></div>
+                        {% if not loop.last %}<div class="w-px h-full bg-border-main my-1"></div>{% endif %}
                     </div>
                     <div class="pb-4">
-                        <p class="text-[#191c1d] font-bold">{{ log.new_status | capitalize }}</p>
-                        <p class="text-[#3d4947]">
+                        <p class="text-text-main font-bold">{{ log.new_status | capitalize }}</p>
+                        <p class="text-text-muted">
                             By {% if log.changed_by == 'seller' %}{{ seller_name }}{% else %}System{% endif %} on {{ log.changed_at.strftime('%Y-%m-%d %H:%M') }}
                         </p>
-                        {% if log.context %}<p class="text-[#6b7280] italic mt-1">"{{ log.context }}"</p>{% endif %}
+                        {% if log.context %}<p class="text-text-light italic mt-1">"{{ log.context }}"</p>{% endif %}
                     </div>
                 </div>
                 {% endfor %}

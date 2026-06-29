@@ -7,7 +7,7 @@
 {% block buyer_content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8 pb-32 lg:pb-8 overflow-x-hidden">
     <!-- Breadcrumb / Back Link (Figma 2:357) -->
-    <a href="/" class="inline-flex items-center text-[#00685f] hover:underline mb-6 text-sm font-medium transition-all group">
+    <a href="/" class="inline-flex items-center text-primary hover:underline mb-6 text-sm font-medium transition-all group">
         <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
         </svg>
@@ -17,7 +17,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-12 items-start">
         <!-- Left Column: Image Carousel (Figma 2:362) -->
         <div class="lg:col-span-6 flex flex-col gap-4 w-full overflow-hidden">
-            <div class="w-full bg-[#edeeef] rounded-2xl overflow-hidden border border-[#bcc9c6] shadow-sm relative group">
+            <div class="w-full bg-bg-hover rounded-2xl overflow-hidden border border-border-main shadow-sm relative group">
                 {% set product_images = product.images | map(attribute="image_url") | list %}
                 {% if product_images %}
                     <div class="aspect-square sm:aspect-auto sm:h-[450px] lg:h-[550px] w-full">
@@ -26,16 +26,16 @@
                     
                     <!-- Carousel Navigation Arrows (Figma 2:366 / 2:371) -->
                     {% if product_images | length > 1 %}
-                    <button onclick="navigateImage(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 bg-white/90 backdrop-blur-sm rounded-full text-[#00685f] shadow-sm opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-30">
+                    <button onclick="navigateImage(-1)" class="absolute left-4 top-1/2 -translate-y-1/2 p-2.5 bg-white/90 backdrop-blur-sm rounded-full text-primary shadow-sm opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-30">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
                     </button>
-                    <button onclick="navigateImage(1)" class="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 bg-white/90 backdrop-blur-sm rounded-full text-[#00685f] shadow-sm opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-30">
+                    <button onclick="navigateImage(1)" class="absolute right-4 top-1/2 -translate-y-1/2 p-2.5 bg-white/90 backdrop-blur-sm rounded-full text-primary shadow-sm opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity z-30">
                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
                     </button>
                     {% endif %}
                 {% else %}
                     <div class="aspect-square w-full flex items-center justify-center">
-                        <svg class="w-20 h-20 text-[#bcc9c6]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="w-20 h-20 text-border-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
                         </svg>
                     </div>
@@ -47,7 +47,7 @@
                 {% for image in product.images %}
                 <button onclick="updateMainImage('{{ image.image_url }}', {{ loop.index0 }})" 
                         id="thumb-{{ loop.index0 }}"
-                        class="thumb-btn w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl border-2 transition-all overflow-hidden {% if loop.first %}border-[#00685f]{% else %}border-[#bcc9c6]{% endif %}">
+                        class="thumb-btn w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl border-2 transition-all overflow-hidden {% if loop.first %}border-primary{% else %}border-border-main{% endif %}">
                     <img src="{{ image.image_url }}" alt="Thumbnail" class="w-full h-full object-cover">
                 </button>
                 {% endfor %}
@@ -59,39 +59,39 @@
             <!-- Header Info (Figma 2:385) -->
             <div class="flex items-center gap-2 mb-3">
                 {% if product.in_stock %}
-                <span class="px-2.5 py-0.5 bg-[#008378] text-[#f4fffc] text-[10px] font-bold rounded-full uppercase tracking-wider">In Stock</span>
+                <span class="px-2.5 py-0.5 bg-success text-white text-[10px] font-bold rounded-full uppercase tracking-wider">In Stock</span>
                 {% else %}
-                <span class="px-2.5 py-0.5 bg-[#ba1a1a] text-white text-[10px] font-bold rounded-full uppercase tracking-wider">Sold Out</span>
+                <span class="px-2.5 py-0.5 bg-danger text-white text-[10px] font-bold rounded-full uppercase tracking-wider">Sold Out</span>
                 {% endif %}
                 </div>
 
-            <h1 class="text-xl sm:text-4xl font-bold text-[#191c1d] mb-2 leading-tight break-words">
+            <h1 class="text-xl sm:text-4xl font-bold text-text-main mb-2 leading-tight break-words">
                 {{ product.name }}
             </h1>
 
             <!-- Price (Figma 2:395) -->
             <div class="flex items-baseline gap-3 mb-4">
-                <span class="text-2xl sm:text-5xl font-bold text-[#00685f]">{{ "{:,.0f}".format(product.price) }} <span class="text-lg sm:text-xl">ETB</span></span>
+                <span class="text-2xl sm:text-5xl font-bold text-accent">{{ "{:,.0f}".format(product.price) }} <span class="text-lg sm:text-xl">ETB</span></span>
                 {% if product.price > 1000 %}
-                <span class="text-sm sm:text-lg text-[#3d4947] line-through opacity-60">{{ "{:,.0f}".format(product.price * 12 / 10) }} ETB</span>
+                <span class="text-sm sm:text-lg text-text-muted line-through opacity-60">{{ "{:,.0f}".format(product.price * 12 / 10) }} ETB</span>
                 {% endif %}
             </div>
 
-            <p class="text-[#3d4947] text-sm sm:text-lg leading-relaxed mb-6 break-words">
+            <p class="text-text-muted text-sm sm:text-lg leading-relaxed mb-6 break-words">
                 {{ product.description }}
             </p>
 
             {% if product.tags %}
             <div class="flex flex-wrap gap-2 mb-6">
                 {% for tag in product.tags %}
-                <span class="px-2.5 py-1 bg-[#00685f0a] text-[#00685f] text-xs font-semibold rounded-full border border-[#00685f]/15">
+                <span class="px-2.5 py-1 bg-primary/5 text-primary text-xs font-semibold rounded-full border border-primary/25">
                     {{ tag.name }}
                 </span>
                 {% endfor %}
             </div>
             {% endif %}
 
-            <hr class="border-[#bcc9c6] mb-8">
+            <hr class="border-border-main mb-6">
 
             <!-- Selection Options (Figma 2:399) -->
             <div class="space-y-6">
@@ -100,11 +100,11 @@
                 <div class="space-y-6">
                     {% for type, items in product.attributes | groupby('attribute_type') %}
                     <div class="attribute-group" data-type="{{ type }}">
-                        <label class="block text-[#191c1d] text-sm font-semibold mb-3">{{ type }}</label>
+                        <label class="block text-text-main text-sm font-semibold mb-3">{{ type }}</label>
                         <div class="flex flex-wrap gap-2">
                             {% for attr in items %}
                             <button onclick="selectAttribute(this, '{{ type }}', '{{ attr.attribute_value }}')"
-                                    class="attr-btn px-4 py-2 border border-[#bcc9c6] rounded-xl text-sm font-medium text-[#3d4947] hover:border-[#00685f] hover:text-[#00685f] transition-all active:scale-95 bg-white">
+                                    class="attr-btn px-4 py-2 border border-border-main rounded-xl text-sm font-medium text-text-muted hover:border-primary hover:text-primary transition-all active:scale-95 bg-white">
                                 {{ attr.attribute_value }}
                                 {% if attr.extra_price > 0 %}
                                 <span class="text-[10px] ml-1 opacity-60">(+{{ "{:,.0f}".format(attr.extra_price) }} ETB)</span>
@@ -119,29 +119,29 @@
 
                 <!-- Bento-style Info Cards (Figma 4:3101) -->
                 <div class="grid grid-cols-2 gap-3 pt-2">
-                    <div class="bg-[#f3f4f5] border border-[#bcc9c6] rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#00685f] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                        <span class="text-[9px] sm:text-[10px] text-[#3d4947] font-medium uppercase tracking-wider">Delivery</span>
-                        <span class="text-xs sm:text-sm font-bold text-[#191c1d]">2-3 Days</span>
+                    <div class="bg-bg-alt border border-border-main rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
+                        <span class="text-[9px] sm:text-[10px] text-text-muted font-medium uppercase tracking-wider">Delivery</span>
+                        <span class="text-xs sm:text-sm font-bold text-text-main">2-3 Days</span>
                     </div>
-                    <div class="bg-[#f3f4f5] border border-[#bcc9c6] rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-[#00685f] mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                        <span class="text-[9px] sm:text-[10px] text-[#3d4947] font-medium uppercase tracking-wider">Warranty</span>
-                        <span class="text-xs sm:text-sm font-bold text-[#191c1d]">1 Year</span>
+                    <div class="bg-bg-alt border border-border-main rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
+                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
+                        <span class="text-[9px] sm:text-[10px] text-text-muted font-medium uppercase tracking-wider">Warranty</span>
+                        <span class="text-xs sm:text-sm font-bold text-text-main">1 Year</span>
                     </div>
                 </div>
 
                 <!-- Quantity Selector & Main Action -->
                 <div>
-                    <label class="block text-[#191c1d] pt-2 text-sm font-semibold mb-3">Quantity & Action</label>
+                    <label class="block text-text-main pt-2 text-sm font-semibold mb-3">Quantity & Action</label>
                     <div class="flex items-center gap-2 sm:gap-3">
-                        <div class="flex items-center bg-[#f3f4f5] border border-[#bcc9c6] rounded-xl p-0.5 h-[52px] sm:h-[58px]">
-                            <button onclick="updateQty(-1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-[#191c1d] hover:bg-white rounded-lg transition-colors font-bold text-lg">-</button>
-                            <input type="number" id="quantity" value="1" min="1" max="10" class="w-10 sm:w-12 text-center bg-transparent font-bold text-[#191c1d] focus:outline-none text-base sm:text-lg" readonly>
-                            <button onclick="updateQty(1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-[#191c1d] hover:bg-white rounded-lg transition-colors font-bold text-lg">+</button>
+                        <div class="flex items-center bg-bg-alt border border-border-main rounded-xl p-0.5 h-[52px] sm:h-[58px]">
+                            <button onclick="updateQty(-1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-text-main hover:bg-white rounded-lg transition-colors font-bold text-lg">-</button>
+                            <input type="number" id="quantity" value="1" min="1" max="10" class="w-10 sm:w-12 text-center bg-transparent font-bold text-text-main focus:outline-none text-base sm:text-lg" readonly>
+                            <button onclick="updateQty(1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-text-main hover:bg-white rounded-lg transition-colors font-bold text-lg">+</button>
                         </div>
                         
-                        <button onclick="goToCheckout()" class="flex-grow bg-[#00685f] text-white h-[52px] sm:h-[58px] rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 hover:bg-[#005a54] transition-all active:scale-95 shadow-lg shadow-[#00685f]/20 px-4 sm:px-6">
+                        <button onclick="goToCheckout()" class="flex-grow bg-primary text-white h-[52px] sm:h-[58px] rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 hover:bg-primary-hover transition-all active:scale-95 shadow-lg shadow-primary/20 px-4 sm:px-6">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                             <span>Buy Now</span>
                         </button>
@@ -152,27 +152,27 @@
     </div>
 
     <!-- Details Section (Figma 2:456) -->
-    <div class="mt-16 lg:mt-4 border-t border-[#bcc9c6] pt-12">
-        <div class="flex gap-6 border-b border-[#bcc9c6] mb-8 overflow-x-auto scrollbar-hide">
-            <button id="tab-btn-terms" onclick="switchTab('terms')" class="pb-4 border-b-2 border-[#00685f] text-[#00685f] font-bold text-sm whitespace-nowrap transition-all">Terms And Conditions</button>
-            <button id="tab-btn-seller" onclick="switchTab('seller')" class="pb-4 border-b-2 border-transparent text-[#3d4947] font-medium text-sm hover:text-[#00685f] transition-all whitespace-nowrap">Seller Information</button>
+    <div class="mt-16 lg:mt-4 border-t border-border-main pt-12">
+        <div class="flex gap-6 border-b border-border-main mb-8 overflow-x-auto scrollbar-hide">
+            <button id="tab-btn-terms" onclick="switchTab('terms')" class="pb-4 border-b-2 border-primary text-primary font-bold text-sm whitespace-nowrap transition-all">Terms And Conditions</button>
+            <button id="tab-btn-seller" onclick="switchTab('seller')" class="pb-4 border-b-2 border-transparent text-text-muted font-medium text-sm hover:text-primary transition-all whitespace-nowrap">Seller Information</button>
         </div>
         
         <!-- Terms and Conditions Content -->
-        <div id="content-terms" class="max-w-3xl space-y-6 text-[#191c1d] leading-relaxed break-words mb-12">
+        <div id="content-terms" class="max-w-3xl space-y-6 text-text-main leading-relaxed break-words mb-12">
             <p>
                 Experience unparalleled quality with our premium collection. Each item is carefully selected and verified for the best customer experience in Ethiopia. 
             </p>
             <ul class="space-y-4">
                 <li class="flex gap-4">
-                    <div class="w-6 h-6 rounded-full bg-[#00685f1a] flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <span class="break-words">Sustainable local materials sourced in Addis Ababa</span>
                 </li>
                 <li class="flex gap-4">
-                    <div class="w-6 h-6 rounded-full bg-[#00685f1a] flex items-center justify-center flex-shrink-0">
-                        <svg class="w-4 h-4 text-[#00685f]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+                    <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
                     <span class="break-words">Hand-assembled with attention to detail</span>
                 </li>
@@ -180,25 +180,25 @@
         </div>
 
         <!-- Seller Information Content -->
-        <div id="content-seller" class="max-w-3xl space-y-6 text-[#191c1d] leading-relaxed break-words hidden">
-            <h3 class="text-lg font-bold text-[#191c1d]">{{ product.seller.store_name }}</h3>
+        <div id="content-seller" class="max-w-3xl space-y-6 text-text-main leading-relaxed break-words hidden">
+            <h3 class="text-lg font-bold text-text-main">{{ product.seller.store_name }}</h3>
             <div class="space-y-3">
                 <p class="text-sm">
-                    <span class="font-bold text-[#3d4947]">Contact Number:</span> +251 {{ product.seller.business_contact_number }}
+                    <span class="font-bold text-text-muted">Contact Number:</span> +251 {{ product.seller.business_contact_number }}
                 </p>
                 {% if product.seller.business_email %}
                 <p class="text-sm">
-                    <span class="font-bold text-[#3d4947]">Email:</span> {{ product.seller.business_email }}
+                    <span class="font-bold text-text-muted">Email:</span> {{ product.seller.business_email }}
                 </p>
                 {% endif %}
                 {% if product.seller.business_address %}
                 <p class="text-sm">
-                    <span class="font-bold text-[#3d4947]">Address:</span> {{ product.seller.business_address }}
+                    <span class="font-bold text-text-muted">Address:</span> {{ product.seller.business_address }}
                 </p>
                 {% endif %}
                 {% if product.seller.telegram_username %}
                 <p class="text-sm">
-                    <span class="font-bold text-[#3d4947]">Telegram:</span> @{{ product.seller.telegram_username }}
+                    <span class="font-bold text-text-muted">Telegram:</span> @{{ product.seller.telegram_username }}
                 </p>
                 {% endif %}
             </div>
@@ -207,9 +207,9 @@
 </div>
 
 <!-- Mobile Sticky Action Bar (Figma 4:3134) -->
-<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-[#bcc9c6] z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+<div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border-main z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
     <div class="p-4 flex">
-        <button onclick="goToCheckout()" class="h-14 flex-1 bg-[#00685f] text-white font-bold rounded-xl flex items-center justify-center hover:bg-[#005a54] active:scale-[0.98] transition-all">
+        <button onclick="goToCheckout()" class="h-14 flex-1 bg-primary text-white font-bold rounded-xl flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all">
             Buy Now
         </button>
     </div>
@@ -228,11 +228,11 @@
         // Update thumbnails
         document.querySelectorAll('.thumb-btn').forEach((btn, i) => {
             if (i === idx) {
-                btn.classList.add('border-[#00685f]');
-                btn.classList.remove('border-[#bcc9c6]');
+                btn.classList.add('border-primary');
+                btn.classList.remove('border-border-main');
             } else {
-                btn.classList.remove('border-[#00685f]');
-                btn.classList.add('border-[#bcc9c6]');
+                btn.classList.remove('border-primary');
+                btn.classList.add('border-border-main');
             }
         });
     }
@@ -256,13 +256,13 @@
         // Clear selection in this group
         const group = btn.closest('.attribute-group');
         group.querySelectorAll('.attr-btn').forEach(b => {
-            b.classList.remove('border-[#00685f]', 'text-[#00685f]', 'bg-[#00685f0d]');
-            b.classList.add('border-[#bcc9c6]', 'text-[#3d4947]', 'bg-white');
+            b.classList.remove('border-primary', 'text-primary', 'bg-primary/5');
+            b.classList.add('border-border-main', 'text-text-muted', 'bg-white');
         });
 
         // Set active state
-        btn.classList.remove('border-[#bcc9c6]', 'text-[#3d4947]', 'bg-white');
-        btn.classList.add('border-[#00685f]', 'text-[#00685f]', 'bg-[#00685f0d]');
+        btn.classList.remove('border-border-main', 'text-text-muted', 'bg-white');
+        btn.classList.add('border-primary', 'text-primary', 'bg-primary/5');
 
         // Store value
         selectedAttributes[type] = value;
@@ -288,12 +288,12 @@
             const btn = document.getElementById(`tab-btn-${t}`);
             const content = document.getElementById(`content-${t}`);
             if (t === tabId) {
-                btn.classList.add('border-[#00685f]', 'text-[#00685f]');
-                btn.classList.remove('border-transparent', 'text-[#3d4947]');
+                btn.classList.add('border-primary', 'text-primary');
+                btn.classList.remove('border-transparent', 'text-text-muted');
                 content.classList.remove('hidden');
             } else {
-                btn.classList.remove('border-[#00685f]', 'text-[#00685f]');
-                btn.classList.add('border-transparent', 'text-[#3d4947]');
+                btn.classList.remove('border-primary', 'text-primary');
+                btn.classList.add('border-transparent', 'text-text-muted');
                 content.classList.add('hidden');
             }
         });

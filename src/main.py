@@ -3,6 +3,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 from src.middleware.csrf import CustomCSRFMiddleware
+from src.middleware.rate_limit import RateLimitMiddleware
 from src.config import settings
 from src.templates_config import templates
 from src.features.auth.routes import router as auth_router
@@ -23,12 +24,13 @@ app = FastAPI(
     openapi_url=None,
 )
 
-# Middleware stack
+# Middleware stack (applied in reverse order — last added runs first)
 app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
 app.add_middleware(
     CustomCSRFMiddleware,
     secret=settings.SECRET_KEY,
 )
+app.add_middleware(RateLimitMiddleware)
 
 
 # Global Exception Handler
