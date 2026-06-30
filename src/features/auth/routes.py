@@ -90,6 +90,8 @@ async def post_verify_otp(
 
     # 3. Set Session
     request.session["seller_id"] = seller.id
+    request.session["seller_name"] = f"{seller.first_name} {seller.last_name}"
+    request.session["store_name"] = seller.store_name
 
     # 4. Redirect
     return HTMLResponse(

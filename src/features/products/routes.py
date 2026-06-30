@@ -1,47 +1,45 @@
+import math
 from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
 from src.templates_config import templates
 from .services import ProductService
-from src.features.auth.models import Seller
+from src.dependencies import require_seller_id
 from src.utils.storage import CloudinaryService
 from sqlmodel import select
 
 router = APIRouter()
 
-async def get_current_seller_id(request: Request):
-    seller_id = request.session.get("seller_id")
-    if not seller_id:
-        raise HTTPException(status_code=303, headers={"Location": "/auth/login"})
-    return seller_id
-
 @router.get("/")
 async def list_products(
     request: Request, 
     search: str = Query(None),
+    page: int = Query(1, ge=1),
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
     if search and len(search) > 100:
         search = search[:100]
 
+    per_page = 12
+    offset = (page - 1) * per_page
+
     if search:
-        products = await ProductService.search_seller_products(db, seller_id, search)
+        products, total_count = await ProductService.search_products_paginated(db, search, limit=per_page, offset=offset)
     else:
-        products = await ProductService.get_seller_products(db, seller_id)
+        products, total_count = await ProductService.get_products_paginated(db, limit=per_page, offset=offset)
     
-    # Fetch seller for sidebar context
-    statement = select(Seller).where(Seller.id == seller_id)
-    result = await db.execute(statement)
-    seller = result.scalar_one_or_none()
+    total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
     context = {
         "request": request, 
         "products": products,
         "search": search,
-        "seller_name": f"{seller.first_name} {seller.last_name}",
-        "store_name": seller.store_name
+        "current_page": page,
+        "total_pages": total_pages,
+        "seller_name": request.session.get("seller_name", "Seller"),
+        "store_name": request.session.get("store_name", "Store")
     }
 
     if request.headers.get("HX-Request"):
@@ -53,19 +51,15 @@ async def list_products(
 async def add_product_form(
     request: Request,
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
-    statement = select(Seller).where(Seller.id == seller_id)
-    result = await db.execute(statement)
-    seller = result.scalar_one_or_none()
-
     return templates.TemplateResponse(
         request,
         "products/form.html", 
         {
             "request": request,
-            "seller_name": f"{seller.first_name} {seller.last_name}",
-            "store_name": seller.store_name
+            "seller_name": request.session.get("seller_name", "Seller"),
+            "store_name": request.session.get("store_name", "Store")
         }
     )
 
@@ -73,7 +67,7 @@ async def add_product_form(
 async def add_product(
     request: Request,
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
     form = getattr(request.state, "form_data", None) or await request.form()
     name = form.get("name")
@@ -88,50 +82,43 @@ async def add_product(
     # Process image tags from the form
     image_tags = {k: v for k, v in form.items() if k.startswith("image_tag_")}
 
+    seller_name = request.session.get("seller_name", "Seller")
+    store_name = request.session.get("store_name", "Store")
+
     # Validation: Must have at least one image and one must be 'main'
     if not valid_images:
-        statement = select(Seller).where(Seller.id == seller_id)
-        result = await db.execute(statement)
-        seller = result.scalar_one_or_none()
         return templates.TemplateResponse(
             request,
             "products/form.html",
             {
                 "request": request,
                 "error": "Please upload at least one image.",
-                "seller_name": f"{seller.first_name} {seller.last_name}",
-                "store_name": seller.store_name
+                "seller_name": seller_name,
+                "store_name": store_name
             }
         )
     
     if "main" not in image_tags.values():
-        statement = select(Seller).where(Seller.id == seller_id)
-        result = await db.execute(statement)
-        seller = result.scalar_one_or_none()
         return templates.TemplateResponse(
             request,
             "products/form.html",
             {
                 "request": request,
                 "error": "At least one image must be tagged as 'main'.",
-                "seller_name": f"{seller.first_name} {seller.last_name}",
-                "store_name": seller.store_name
+                "seller_name": seller_name,
+                "store_name": store_name
             }
         )
 
     if not name or not price:
-        # Fetch seller for sidebar context
-        statement = select(Seller).where(Seller.id == seller_id)
-        result = await db.execute(statement)
-        seller = result.scalar_one_or_none()
         return templates.TemplateResponse(
             request,
             "products/form.html",
             {
                 "request": request,
                 "error": "Product name and price are required.",
-                "seller_name": f"{seller.first_name} {seller.last_name}",
-                "store_name": seller.store_name
+                "seller_name": seller_name,
+                "store_name": store_name
             }
         )
 
@@ -142,17 +129,14 @@ async def add_product(
     for i, img in enumerate(valid_images):
         content = await img.read()
         if len(content) > MAX_SIZE:
-            statement = select(Seller).where(Seller.id == seller_id)
-            result = await db.execute(statement)
-            seller = result.scalar_one_or_none()
             return templates.TemplateResponse(
                 request,
                 "products/form.html",
                 {
                     "request": request,
                     "error": f"Image {img.filename} exceeds 5MB limit.",
-                    "seller_name": f"{seller.first_name} {seller.last_name}",
-                    "store_name": seller.store_name
+                    "seller_name": seller_name,
+                    "store_name": store_name
                 }
             )
         
@@ -190,28 +174,37 @@ async def add_product(
 
     except Exception as e:
         await db.rollback()
-        # Fetch seller for sidebar context
-        statement = select(Seller).where(Seller.id == seller_id)
-        result = await db.execute(statement)
-        seller = result.scalar_one_or_none()
         return templates.TemplateResponse(
             request,
             "products/form.html",
             {
                 "request": request,
                 "error": f"Failed to create product: {str(e)}",
-                "seller_name": f"{seller.first_name} {seller.last_name}",
-                "store_name": seller.store_name
+                "seller_name": seller_name,
+                "store_name": store_name
             }
         )
     
     from .models import ProductImage
-    for content, tag in image_data:
-        image_url = CloudinaryService.upload_image(content)
-        new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
-        db.add(new_image)
-    
-    await db.commit()
+    try:
+        for content, tag in image_data:
+            image_url = CloudinaryService.upload_image(content)
+            new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
+            db.add(new_image)
+        
+        await db.commit()
+    except Exception as e:
+        await db.rollback()
+        return templates.TemplateResponse(
+            request,
+            "products/form.html",
+            {
+                "request": request,
+                "error": f"Failed to upload images: {str(e)}. Please try again.",
+                "seller_name": seller_name,
+                "store_name": store_name
+            }
+        )
 
     return RedirectResponse(url="/dashboard/products", status_code=303)
 
@@ -220,16 +213,12 @@ async def edit_product_form(
     product_id: int,
     request: Request,
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
     product = await ProductService.get_product_by_id(db, product_id)
-    if not product or product.seller_id != seller_id:
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
-    statement = select(Seller).where(Seller.id == seller_id)
-    result = await db.execute(statement)
-    seller = result.scalar_one_or_none()
-
     tags_string = ", ".join([tag.name for tag in product.tags])
 
     return templates.TemplateResponse(
@@ -239,8 +228,8 @@ async def edit_product_form(
             "request": request, 
             "product": product,
             "tags_string": tags_string,
-            "seller_name": f"{seller.first_name} {seller.last_name}",
-            "store_name": seller.store_name
+            "seller_name": request.session.get("seller_name", "Seller"),
+            "store_name": request.session.get("store_name", "Store")
         }
     )
 
@@ -249,7 +238,7 @@ async def edit_product(
     product_id: int,
     request: Request,
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
     form = getattr(request.state, "form_data", None) or await request.form()
     name = form.get("name")
@@ -268,7 +257,7 @@ async def edit_product(
     existing_image_count = int(form.get("existing_image_count", 0))
 
     product = await ProductService.get_product_by_id(db, product_id)
-    if not product or product.seller_id != seller_id:
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
     if not name or not price:
@@ -307,7 +296,18 @@ async def edit_product(
                         "error": f"Image {img.filename} exceeds 5MB limit."
                     }
                 )
-            image_url = CloudinaryService.upload_image(content)
+            try:
+                image_url = CloudinaryService.upload_image(content)
+            except Exception as e:
+                return templates.TemplateResponse(
+                    request,
+                    "products/form.html",
+                    {
+                        "request": request,
+                        "product": product,
+                        "error": f"Failed to upload image {img.filename}: {str(e)}. Please try again."
+                    }
+                )
             # Use new index starting from 0 since we cleared existing images
             tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
             from .models import ProductImage
@@ -353,10 +353,10 @@ async def edit_product(
 async def delete_product(
     product_id: int,
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
     product = await ProductService.get_product_by_id(db, product_id)
-    if not product or product.seller_id != seller_id:
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
     await ProductService.delete_product(db, product_id)
@@ -367,10 +367,10 @@ async def toggle_stock(
     product_id: int,
     request: Request,
     db: AsyncSession = Depends(get_session),
-    seller_id: int = Depends(get_current_seller_id)
+    seller_id: int = Depends(require_seller_id)
 ):
     product = await ProductService.get_product_by_id(db, product_id)
-    if not product or product.seller_id != seller_id:
+    if not product:
         raise HTTPException(status_code=404, detail="Product not found")
     
     new_status = not product.in_stock
