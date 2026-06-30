@@ -1,7 +1,8 @@
-from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
+﻿from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
+from src.dependencies import get_current_seller
 from src.templates_config import templates
 from src.features.auth.models import Seller
 from src.features.orders.models import Order, OrderStatusLog
@@ -16,13 +17,6 @@ from decimal import Decimal
 
 router = APIRouter()
 
-async def get_current_seller(request: Request, db: AsyncSession):
-    seller_id = request.session.get("seller_id")
-    if not seller_id:
-        return None
-    result = await db.execute(select(Seller).where(Seller.id == int(seller_id)))
-    return result.scalar_one_or_none()
-
 @router.get("/")
 async def get_dashboard(request: Request, db: AsyncSession = Depends(get_session)):
     seller = await get_current_seller(request, db)
@@ -31,32 +25,23 @@ async def get_dashboard(request: Request, db: AsyncSession = Depends(get_session
 
     # Calculate Stats
     # 1. Total Orders
-    total_orders_stmt = select(func.count(Order.id)).where(Order.seller_id == seller.id)
+    total_orders_stmt = select(func.count(Order.id))
     total_orders = (await db.execute(total_orders_stmt)).scalar() or 0
 
     # 2. Total Sales (Completed only)
-    total_sales_stmt = select(func.sum(Order.total_amount)).where(
-        Order.seller_id == seller.id, 
-        Order.status == "completed"
-    )
+    total_sales_stmt = select(func.sum(Order.total_amount)).where(Order.status == "completed")
     total_sales = (await db.execute(total_sales_stmt)).scalar() or Decimal("0.0")
 
     # 3. Pending Orders
-    pending_orders_stmt = select(func.count(Order.id)).where(
-        Order.seller_id == seller.id, 
-        Order.status == "pending"
-    )
+    pending_orders_stmt = select(func.count(Order.id)).where(Order.status == "pending")
     pending_orders = (await db.execute(pending_orders_stmt)).scalar() or 0
 
     # 4. Active Products (Items currently marked as in stock)
-    active_products_stmt = select(func.count(Product.id)).where(
-        Product.seller_id == seller.id,
-        Product.in_stock == True
-    )
+    active_products_stmt = select(func.count(Product.id)).where(Product.in_stock == True)
     active_products_count = (await db.execute(active_products_stmt)).scalar() or 0
 
     # Recent Orders
-    recent_orders_stmt = select(Order).where(Order.seller_id == seller.id).order_by(desc(Order.created_at)).limit(5)
+    recent_orders_stmt = select(Order).order_by(desc(Order.created_at)).limit(5)
     recent_orders = (await db.execute(recent_orders_stmt)).scalars().all()
 
     return templates.TemplateResponse(
@@ -84,7 +69,7 @@ async def list_orders(
     if not seller:
         return RedirectResponse(url="/auth/login")
     
-    statement = select(Order).where(Order.seller_id == seller.id)
+    statement = select(Order)
     if status:
         statement = statement.where(Order.status == status)
     
@@ -115,7 +100,7 @@ async def order_detail(
         return RedirectResponse(url="/auth/login")
     
     order = await db.get(Order, order_id)
-    if not order or order.seller_id != seller.id:
+    if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
     # Decrypt sensitive data for display
@@ -284,7 +269,11 @@ async def update_profile(
     db.add(seller)
     await db.commit()
     await db.refresh(seller)
-    
+
+    # Refresh session name fields so product routes see the update
+    request.session["seller_name"] = f"{seller.first_name} {seller.last_name}"
+    request.session["store_name"] = seller.store_name
+
     # Prepare decrypted phone for re-display
     seller.phone = f"+251{decrypt_data(seller.phone)}"
     # Do NOT prepend 251 to business_contact_number; it is already normalized and the UI handles the label.
@@ -300,3 +289,4 @@ async def update_profile(
             "message": "Profile updated successfully!"
         }
     )
+

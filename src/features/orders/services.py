@@ -112,9 +112,8 @@ class OrderService:
         prefix = seller.store_prefix.upper()
         today_str = utc_now().strftime("%Y%m%d")
 
-        # Count orders for this seller today to get the next sequence
+        # Count orders today to get the next sequence
         statement = select(func.count(Order.id)).where(
-            Order.seller_id == seller_id,
             Order.order_id.like(f"ET-{prefix}-{today_str}-%"),
         )
         result = await db.execute(statement)

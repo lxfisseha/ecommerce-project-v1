@@ -1,5 +1,5 @@
-from typing import List, Optional
-from sqlmodel import select, delete
+from typing import List, Optional, Tuple
+from sqlmodel import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 from decimal import Decimal
@@ -83,10 +83,9 @@ class ProductService:
         await db.flush()
 
     @staticmethod
-    async def get_seller_products(db: AsyncSession, seller_id: int) -> List[Product]:
+    async def get_all_products(db: AsyncSession) -> List[Product]:
         statement = (
             select(Product)
-            .where(Product.seller_id == seller_id)
             .where(Product.is_deleted == False)
             .options(selectinload(Product.images), selectinload(Product.attributes), selectinload(Product.tags))
             .order_by(Product.created_at.desc())
@@ -166,14 +165,13 @@ class ProductService:
         return True
 
     @staticmethod
-    async def search_seller_products(db: AsyncSession, seller_id: int, query: str) -> List[Product]:
+    async def search_products(db: AsyncSession, query: str) -> List[Product]:
         search = f"%{query}%"
         tag_exists = select(ProductTagLink).join(Tag, ProductTagLink.tag_id == Tag.id).where(
             (ProductTagLink.product_id == Product.id) & (Tag.name.ilike(search))
         ).exists()
         statement = (
             select(Product)
-            .where(Product.seller_id == seller_id)
             .where(Product.is_deleted == False)
             .where(
                 (Product.name.ilike(search)) |
@@ -185,6 +183,54 @@ class ProductService:
         )
         result = await db.execute(statement)
         return result.scalars().all()
+
+    @staticmethod
+    async def get_products_paginated(db: AsyncSession, limit: int = 12, offset: int = 0) -> Tuple[List[Product], int]:
+        count_statement = select(func.count(Product.id)).where(Product.is_deleted == False)
+        count_result = await db.execute(count_statement)
+        total_count = count_result.scalar() or 0
+
+        statement = (
+            select(Product)
+            .where(Product.is_deleted == False)
+            .options(selectinload(Product.images), selectinload(Product.attributes), selectinload(Product.tags))
+            .order_by(Product.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await db.execute(statement)
+        return result.scalars().all(), total_count
+
+    @staticmethod
+    async def search_products_paginated(db: AsyncSession, query: str, limit: int = 12, offset: int = 0) -> Tuple[List[Product], int]:
+        search = f"%{query}%"
+        tag_exists = select(ProductTagLink).join(Tag, ProductTagLink.tag_id == Tag.id).where(
+            (ProductTagLink.product_id == Product.id) & (Tag.name.ilike(search))
+        ).exists()
+
+        count_statement = select(func.count(Product.id)).where(Product.is_deleted == False).where(
+            (Product.name.ilike(search)) |
+            (Product.description.ilike(search)) |
+            tag_exists
+        )
+        count_result = await db.execute(count_statement)
+        total_count = count_result.scalar() or 0
+
+        statement = (
+            select(Product)
+            .where(Product.is_deleted == False)
+            .where(
+                (Product.name.ilike(search)) |
+                (Product.description.ilike(search)) |
+                tag_exists
+            )
+            .options(selectinload(Product.images), selectinload(Product.attributes), selectinload(Product.tags))
+            .order_by(Product.created_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await db.execute(statement)
+        return result.scalars().all(), total_count
 
     @staticmethod
     async def add_attribute(
