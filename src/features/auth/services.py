@@ -5,7 +5,7 @@ import secrets
 from sqlmodel import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from .models import Seller, OtpCode
-from src.utils.crypto import encrypt_phone, hash_phone
+from src.utils.crypto import encrypt_phone, hash_phone, legacy_hash_phone
 from src.utils.datetime import utc_now
 
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
@@ -16,8 +16,15 @@ class AuthService:
     async def get_seller_by_phone(db: AsyncSession, phone: str) -> Optional[Seller]:
         # Normalize input to ensure consistency
         phone = normalize_phone(phone)
-        # Use deterministic hash for lookup
+        # Try current hash first
         phone_h = hash_phone(phone)
+        statement = select(Seller).where(Seller.phone_hash == phone_h)
+        result = await db.execute(statement)
+        seller = result.scalar_one_or_none()
+        if seller:
+            return seller
+        # Fall back to legacy hash (pre-derive_key) for existing records
+        phone_h = legacy_hash_phone(phone)
         statement = select(Seller).where(Seller.phone_hash == phone_h)
         result = await db.execute(statement)
         return result.scalar_one_or_none()
@@ -66,6 +73,21 @@ class AuthService:
         otp = result.first()
         if otp:
             otp = otp[0]  # result.first() returns a row, so extract the OtpCode object
+
+        if not otp:
+            # Fall back to legacy hash for OTPs generated before derive_key change
+            phone_h = legacy_hash_phone(phone)
+            statement = (
+                select(OtpCode)
+                .where(OtpCode.phone_hash == phone_h)
+                .where(OtpCode.used == False)
+                .where(OtpCode.expires_at > now)
+                .order_by(OtpCode.created_at.desc())
+            )
+            result = await db.execute(statement)
+            otp = result.first()
+            if otp:
+                otp = otp[0]
 
         if not otp:
             return {

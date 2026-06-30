@@ -5,6 +5,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from src.middleware.csrf import CustomCSRFMiddleware
 from src.middleware.rate_limit import RateLimitMiddleware
 from src.config import settings
+from src.utils.crypto import derive_key
 from src.templates_config import templates
 from src.features.auth.routes import router as auth_router
 from src.features.dashboard.routes import router as dashboard_router
@@ -25,10 +26,11 @@ app = FastAPI(
 )
 
 # Middleware stack (applied in reverse order — last added runs first)
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY)
+# Each middleware gets a purpose-specific key derived from the master SECRET_KEY
+app.add_middleware(SessionMiddleware, secret_key=derive_key("session"))
 app.add_middleware(
     CustomCSRFMiddleware,
-    secret=settings.SECRET_KEY,
+    secret=derive_key("csrf"),
 )
 app.add_middleware(RateLimitMiddleware)
 
