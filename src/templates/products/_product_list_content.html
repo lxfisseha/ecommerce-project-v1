@@ -88,4 +88,45 @@
         </a>
     </div>
     {% endif %}
+
+    {% if total_pages > 1 %}
+    <div class="flex justify-center mt-12 space-x-2">
+        {% if current_page > 1 %}
+        <button hx-get="/dashboard/products?page={{ current_page - 1 }}{% if search %}&search={{ search }}{% endif %}"
+                hx-target="#product-list-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                hx-indicator="#grid-indicator"
+                class="w-10 h-10 flex items-center justify-center bg-white text-text-muted rounded-xl border border-border-main hover:bg-bg-alt transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        {% endif %}
+
+        {% for p in range(1, total_pages + 1) %}
+            {% if p == current_page %}
+            <button class="w-10 h-10 flex items-center justify-center bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 cursor-default">{{ p }}</button>
+            {% elif p <= 3 or p > total_pages - 3 or (p >= current_page - 1 and p <= current_page + 1) %}
+            <button hx-get="/dashboard/products?page={{ p }}{% if search %}&search={{ search }}{% endif %}"
+                    hx-target="#product-list-content"
+                    hx-swap="outerHTML"
+                    hx-push-url="true"
+                    hx-indicator="#grid-indicator"
+                    class="w-10 h-10 flex items-center justify-center bg-white text-text-muted rounded-xl border border-border-main hover:bg-bg-alt transition-colors">{{ p }}</button>
+            {% elif p == 4 or p == total_pages - 3 %}
+            <span class="w-10 h-10 flex items-center justify-center text-text-muted opacity-50">...</span>
+            {% endif %}
+        {% endfor %}
+
+        {% if current_page < total_pages %}
+        <button hx-get="/dashboard/products?page={{ current_page + 1 }}{% if search %}&search={{ search }}{% endif %}"
+                hx-target="#product-list-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                hx-indicator="#grid-indicator"
+                class="w-10 h-10 flex items-center justify-center bg-white text-text-muted rounded-xl border border-border-main hover:bg-bg-alt transition-colors">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+        {% endif %}
+    </div>
+    {% endif %}
 </div>

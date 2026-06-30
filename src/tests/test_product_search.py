@@ -75,28 +75,28 @@ async def get_csrf_context(client):
 @pytest.mark.asyncio
 async def test_search_by_name():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "Wallet")
+        results = await ProductService.search_products(session, "Wallet")
         assert len(results) == 1
         assert results[0].name == "Leather Wallet"
 
 @pytest.mark.asyncio
 async def test_search_by_description():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "organic")
+        results = await ProductService.search_products(session, "organic")
         assert len(results) == 1
         assert results[0].name == "Cotton T-Shirt"
 
 @pytest.mark.asyncio
 async def test_search_by_tag_name():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "summer")
+        results = await ProductService.search_products(session, "summer")
         assert len(results) == 1
         assert results[0].name == "Cotton T-Shirt"
 
 @pytest.mark.asyncio
 async def test_search_multiple_results():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "Leather")
+        results = await ProductService.search_products(session, "Leather")
         assert len(results) == 2
         names = [p.name for p in results]
         assert "Leather Wallet" in names
@@ -105,50 +105,53 @@ async def test_search_multiple_results():
 @pytest.mark.asyncio
 async def test_search_case_insensitive():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "WALLET")
+        results = await ProductService.search_products(session, "WALLET")
         assert len(results) == 1
         assert results[0].name == "Leather Wallet"
 
 @pytest.mark.asyncio
 async def test_search_partial_match():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "Wal")
+        results = await ProductService.search_products(session, "Wal")
         assert len(results) == 1
         assert results[0].name == "Leather Wallet"
 
 @pytest.mark.asyncio
 async def test_search_no_results():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "NonexistentXYZ")
+        results = await ProductService.search_products(session, "NonexistentXYZ")
         assert len(results) == 0
 
 @pytest.mark.asyncio
 async def test_search_excludes_deleted_products():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "Deleted")
+        results = await ProductService.search_products(session, "Deleted")
         assert len(results) == 0
 
 @pytest.mark.asyncio
-async def test_search_only_own_seller_products():
+async def test_search_all_products():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "Other Seller")
-        assert len(results) == 0
+        results = await ProductService.get_all_products(session)
+        assert len(results) == 4
+        results, total = await ProductService.get_products_paginated(session, limit=10, offset=0)
+        assert len(results) == 4
+        assert total == 4
 
 @pytest.mark.asyncio
 async def test_search_empty_query_returns_all():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "")
-        all_products = await ProductService.get_seller_products(session, 1)
+        results = await ProductService.search_products(session, "")
+        all_products = await ProductService.get_all_products(session)
         assert len(results) == len(all_products)
 
 @pytest.mark.asyncio
 async def test_search_special_characters():
     async with async_session_maker() as session:
-        results = await ProductService.search_seller_products(session, 1, "%")
+        results = await ProductService.search_products(session, "%")
         assert isinstance(results, list)
-        results = await ProductService.search_seller_products(session, 1, "'")
+        results = await ProductService.search_products(session, "'")
         assert isinstance(results, list)
-        results = await ProductService.search_seller_products(session, 1, "*")
+        results = await ProductService.search_products(session, "*")
         assert isinstance(results, list)
 
 # --- Route layer tests ---
@@ -161,7 +164,7 @@ async def test_search_unauthenticated():
 
 @pytest.mark.asyncio
 async def test_search_full_page():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=Leather")
     assert response.status_code == 200
@@ -173,7 +176,7 @@ async def test_search_full_page():
 
 @pytest.mark.asyncio
 async def test_search_htmx_returns_partial():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=Leather", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -185,7 +188,7 @@ async def test_search_htmx_returns_partial():
 
 @pytest.mark.asyncio
 async def test_search_htmx_no_results():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=NonexistentXYZ", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -196,7 +199,7 @@ async def test_search_htmx_no_results():
 
 @pytest.mark.asyncio
 async def test_search_empty_query_shows_all():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -206,7 +209,7 @@ async def test_search_empty_query_shows_all():
 
 @pytest.mark.asyncio
 async def test_search_by_tag_via_route():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=summer", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -215,7 +218,7 @@ async def test_search_by_tag_via_route():
 
 @pytest.mark.asyncio
 async def test_search_case_insensitive_via_route():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=LEATHER", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -224,7 +227,7 @@ async def test_search_case_insensitive_via_route():
 
 @pytest.mark.asyncio
 async def test_search_partial_via_route():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=Bel", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -232,7 +235,7 @@ async def test_search_partial_via_route():
 
 @pytest.mark.asyncio
 async def test_search_special_chars_via_route():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=%", headers={"HX-Request": "true"})
     assert response.status_code == 200
@@ -240,17 +243,16 @@ async def test_search_special_chars_via_route():
     assert response.status_code == 200
 
 @pytest.mark.asyncio
-async def test_search_other_seller_products_not_returned():
-    from src.features.products.routes import get_current_seller_id
+async def test_search_across_all_products():
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=Other", headers={"HX-Request": "true"})
     assert response.status_code == 200
-    assert "Other Seller Product" not in response.text
-    assert "No results found" in response.text
+    assert "Other Seller Product" in response.text
 
 @pytest.mark.asyncio
 async def test_search_long_query_truncated():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     long_query = "a" * 200
     response = client.get(f"/dashboard/products/?search={long_query}", headers={"HX-Request": "true"})
@@ -258,8 +260,30 @@ async def test_search_long_query_truncated():
 
 @pytest.mark.asyncio
 async def test_search_preserves_search_in_input():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     response = client.get("/dashboard/products/?search=Wallet")
     assert response.status_code == 200
     assert 'value="Wallet"' in response.text or "value='Wallet'" in response.text
+
+@pytest.mark.asyncio
+async def test_get_seller_products_pagination():
+    async with async_session_maker() as session:
+        page1, total = await ProductService.get_products_paginated(session, limit=2, offset=0)
+        assert len(page1) == 2
+        assert total == 4
+
+        page2, total = await ProductService.get_products_paginated(session, limit=2, offset=2)
+        assert len(page2) == 2
+        assert total == 4
+
+@pytest.mark.asyncio
+async def test_search_pagination():
+    async with async_session_maker() as session:
+        page1, total = await ProductService.search_products_paginated(session, "Leather", limit=1, offset=0)
+        assert len(page1) == 1
+        assert total == 2
+
+        page2, total = await ProductService.search_products_paginated(session, "Leather", limit=1, offset=1)
+        assert len(page2) == 1
+        assert total == 2

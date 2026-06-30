@@ -92,7 +92,7 @@ async def test_unauthorized_product_management_fails(client):
 
 @pytest.mark.asyncio
 async def test_cross_seller_protection(client):
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 2
     
     response = await client.get("/dashboard/products/edit/10")

@@ -72,7 +72,7 @@ async def test_add_product_size_too_large():
         "csrf_token": token
     }
     
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     
     response = client.post(

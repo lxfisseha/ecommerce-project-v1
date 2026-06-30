@@ -60,7 +60,7 @@ async def get_csrf_context(client):
 
 @pytest.mark.asyncio
 async def test_list_products_unauthenticated():
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     response = client.get("/dashboard/products/", follow_redirects=False)
     assert response.status_code == 303
     assert response.headers["location"] == "/auth/login"
@@ -87,7 +87,7 @@ async def test_add_product_success():
             "csrf_token": token
         }
         
-        from src.features.products.routes import get_current_seller_id
+        from src.dependencies import get_current_seller_id
         app.dependency_overrides[get_current_seller_id] = lambda: 1
         
         response = client.post(
@@ -112,7 +112,7 @@ async def test_edit_product_success():
         session.add(product)
         await session.commit()
 
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     
     data = {
@@ -152,7 +152,7 @@ async def test_toggle_stock_success():
         session.add(product)
         await session.commit()
 
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     
     response = client.post(
@@ -193,7 +193,7 @@ async def test_add_product_with_dynamic_attributes():
             "attr_price[]": ["0", "150.50"]
         }
         
-        from src.features.products.routes import get_current_seller_id
+        from src.dependencies import get_current_seller_id
         app.dependency_overrides[get_current_seller_id] = lambda: 1
         
         response = client.post(
@@ -230,7 +230,7 @@ async def test_delete_product_success():
         session.add(product)
         await session.commit()
 
-    from src.features.products.routes import get_current_seller_id
+    from src.dependencies import get_current_seller_id
     app.dependency_overrides[get_current_seller_id] = lambda: 1
     
     response = client.delete(
