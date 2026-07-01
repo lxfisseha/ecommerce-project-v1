@@ -52,6 +52,19 @@
         </button>
     </form>
 
+    <!-- Resend Code -->
+    <form hx-post="/auth/resend-otp" hx-target="#auth-container" hx-swap="outerHTML" class="mt-6 text-center">
+        {% if csrf_token %}
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        {% endif %}
+        <input type="hidden" name="phone" value="{{ phone }}">
+        <button type="submit" id="resend-btn" 
+                class="text-primary text-sm font-medium hover:underline disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled>
+            Resend code <span id="resend-countdown" class="text-text-muted"></span>
+        </button>
+    </form>
+
     <script>
         (function() {
             const container = document.getElementById('otp-inputs');
@@ -87,6 +100,26 @@
             function updateHidden() {
                 hiddenInput.value = Array.from(inputs).map(i => i.value).join('');
             }
+
+            startResendCountdown(30);
         })();
+
+        function startResendCountdown(seconds) {
+            const btn = document.getElementById('resend-btn');
+            const cd = document.getElementById('resend-countdown');
+            if (!btn || !cd) return;
+            btn.disabled = true;
+            cd.innerText = `(${seconds}s)`;
+            const interval = setInterval(() => {
+                seconds--;
+                if (seconds <= 0) {
+                    clearInterval(interval);
+                    btn.disabled = false;
+                    cd.innerText = '';
+                } else {
+                    cd.innerText = `(${seconds}s)`;
+                }
+            }, 1000);
+        }
     </script>
 </div>

@@ -6,7 +6,7 @@
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
     <!-- Success Hero Section -->
     <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-accent rounded-full mb-4 shadow-lg shadow-accent/20">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-success rounded-full mb-4 shadow-lg shadow-accent/20">
             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
         </div>
         <h1 class="text-2xl font-bold text-primary mb-1 tracking-tight">Order Confirmed</h1>
@@ -84,11 +84,11 @@
                     </div>
                     <div>
                         <span class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Phone</span>
-                        <p class="text-text-main text-sm font-medium">+251 {{ order.buyer_phone }}</p>
+                        <p class="text-text-main text-sm font-medium">+251 {{ buyer_phone }}</p>
                     </div>
                     <div>
                         <span class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-0.5">Delivery Address</span>
-                        <p class="text-text-main text-sm font-medium leading-normal">{{ order.delivery_address }}</p>
+                        <p class="text-text-main text-sm font-medium leading-normal">{{ delivery_address }}</p>
                     </div>
                 </div>
             </div>
@@ -105,7 +105,7 @@
                         <p class="font-bold text-base">{{ seller.store_name }}</p>
                         <div class="flex items-center gap-2 opacity-90">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                            <span class="text-xs">+251 {{ seller.phone }}</span>
+                            <span class="text-xs">+251 {{ seller_phone }}</span>
                         </div>
                     {% else %}
                         <p class="font-bold text-base">AleMart Seller</p>
