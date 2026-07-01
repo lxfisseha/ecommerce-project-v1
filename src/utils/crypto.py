@@ -5,7 +5,7 @@ import hmac
 import logging
 
 logger = logging.getLogger(__name__)
-from cryptography.fernet import Fernet
+from cryptography.fernet import Fernet, InvalidToken
 
 
 def derive_key(purpose: str) -> str:
@@ -46,8 +46,14 @@ def decrypt_data(encrypted_data: str) -> str:
     f = _get_fernet()
     try:
         return f.decrypt(encrypted_data.encode()).decode()
+    except InvalidToken:
+        # Data encrypted with old key — try legacy fallback
+        try:
+            return legacy_decrypt_data(encrypted_data)
+        except Exception:
+            logger.error("Legacy decryption also failed for data")
+            return "[encrypted]"
     except Exception as e:
-        # Log the error but return encrypted data to avoid breaking display
         logger.error(f"Decryption failed: {e}")
         return "[encrypted]" 
 

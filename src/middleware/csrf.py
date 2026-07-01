@@ -2,8 +2,6 @@ import secrets
 from fastapi import Request
 from starlette.responses import JSONResponse
 from starlette.types import ASGIApp, Scope, Receive, Send
-import hmac
-import hashlib
 from urllib.parse import parse_qs
 
 class CustomCSRFMiddleware:
@@ -34,6 +32,7 @@ class CustomCSRFMiddleware:
             scope["csrf_token_new"] = csrf_cookie_token
 
         scope["csrf_token"] = csrf_cookie_token
+        is_secure = request.url.scheme == "https"
 
         # 2. Handle Validation for Unsafe Methods
         if request.method not in self.safe_methods:
@@ -75,6 +74,8 @@ class CustomCSRFMiddleware:
                     # Manually add Set-Cookie header
                     headers = message.get("headers", [])
                     cookie_val = f"{self.cookie_name}={scope['csrf_token_new']}; Path=/; HttpOnly; SameSite=Lax"
+                    if is_secure:
+                        cookie_val += "; Secure"
                     headers.append([b"set-cookie", cookie_val.encode()])
                     message["headers"] = headers
             await send(message)

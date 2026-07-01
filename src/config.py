@@ -4,6 +4,9 @@ from pydantic import field_validator
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    DATABASE_ECHO: bool = False
+    DATABASE_POOL_SIZE: int = 10
+    DATABASE_MAX_OVERFLOW: int = 20
 
     # Session / Security — must be set via environment or .env, no default
     SECRET_KEY: str

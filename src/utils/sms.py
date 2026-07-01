@@ -51,15 +51,15 @@ class AfroMessageService:
         )
 
         try:
-            print(
-                f"\n\n\nAttempting to send {recipient_label} SMS via AfroMessage to {to_phone} with message: {message}"
+            logger.info(
+                f"Attempting to send {recipient_label} SMS via AfroMessage to {to_phone} with message: {message}"
             )
             response = await client.get(
                 cls.BASE_URL, headers=headers, params=params, timeout=10.0
             )
 
-            print(
-                f"\n\n\nAfroMessage API response for {recipient_label} to {to_phone}: "
+            logger.info(
+                f"AfroMessage API response for {recipient_label} to {to_phone}: "
                 f"Status {response.status_code}, Content: {response.text}"
             )
 

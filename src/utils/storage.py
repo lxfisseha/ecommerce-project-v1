@@ -1,11 +1,7 @@
 import cloudinary
 import cloudinary.uploader
 from src.config import settings
-
 from urllib.parse import urlparse
-import cloudinary
-import cloudinary.uploader
-from src.config import settings
 
 # Initialize Cloudinary
 if settings.CLOUDINARY_URL:
