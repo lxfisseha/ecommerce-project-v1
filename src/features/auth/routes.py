@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Request, Depends, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.templates_config import templates
 from src.database import get_session
@@ -41,15 +41,7 @@ async def post_login(
         )
 
     # 3. Generate and Save OTP
-    _, sms_success = await AuthService.generate_otp(db, phone)
-    
-    if not sms_success:
-        return templates.TemplateResponse(
-            request,
-            "auth/login_partial.html",
-            {"request": request, "error": "Something went wrong sending the SMS. Please try again.", "phone": phone},
-            status_code=500
-        )
+    await AuthService.generate_otp(db, phone)
 
     # 4. Return the OTP verification partial
     return templates.TemplateResponse(
@@ -99,8 +91,23 @@ async def post_verify_otp(
         headers={"HX-Redirect": "/dashboard"}
     )
 
+@router.post("/resend-otp")
+async def post_resend_otp(
+    request: Request,
+    db: AsyncSession = Depends(get_session)
+):
+    form = getattr(request.state, "form_data", None) or await request.form()
+    phone = form.get("phone")
+
+    await AuthService.generate_otp(db, phone)
+
+    return templates.TemplateResponse(
+        request,
+        "auth/otp_partial.html",
+        {"request": request, "phone": phone}
+    )
+
 @router.get("/logout")
 async def logout(request: Request):
     request.session.clear()
-    from fastapi.responses import RedirectResponse
     return RedirectResponse(url="/auth/login", status_code=303)

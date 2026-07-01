@@ -8,7 +8,9 @@ from sqlalchemy.orm import selectinload
 from src.features.orders.models import Order, OrderStatusLog
 from src.features.auth.models import Seller
 from src.features.products.models import Product
-from src.utils.crypto import encrypt_data
+from src.utils.crypto import encrypt_data, hash_data
+from src.utils.phone import normalize_phone
+from src.constants import DELIVERY_FEE
 from decimal import Decimal
 import logging
 
@@ -100,16 +102,12 @@ class NotificationService:
 
 class OrderService:
     @staticmethod
-    async def generate_order_id(db: AsyncSession, seller_id: int) -> str:
+    async def generate_order_id(db: AsyncSession, store_prefix: str) -> str:
         """
         Generates a unique order ID: ET-[store prefix]-[YYYYMMDD]-[0001]
+        Uses the seller's store prefix directly instead of fetching the Seller row.
         """
-        # Get seller for prefix
-        seller = await db.get(Seller, seller_id)
-        if not seller:
-            raise ValueError("Seller not found")
-
-        prefix = seller.store_prefix.upper()
+        prefix = store_prefix.upper()
         today_str = utc_now().strftime("%Y%m%d")
 
         # Count orders today to get the next sequence
@@ -131,13 +129,16 @@ class OrderService:
         delivery_address: str,
         quantity: int,
         attributes_selected: Optional[str] = None,
+        store_prefix: Optional[str] = None,
     ) -> Order:
         """
         Creates a new order and logs the initial status.
         FR10: Full Name, Phone Number, Delivery Address.
         5.2: AES-256 encryption for phone and address.
         """
-        order_id = await OrderService.generate_order_id(db, product.seller_id)
+        if not store_prefix:
+            raise ValueError("store_prefix is required to generate order ID")
+        order_id = await OrderService.generate_order_id(db, store_prefix)
 
         # Ensure product relationships are loaded for attribute matching
         if "attributes" not in product.__dict__:
@@ -151,12 +152,10 @@ class OrderService:
                 raise ValueError("Product not found")
 
         # Normalize phone number to 9-digit format
-        from src.utils.phone import normalize_phone
-
         buyer_phone = normalize_phone(buyer_phone)
 
         # Calculate subtotal and total (v1: 150 ETB fixed delivery fee)
-        delivery_fee = Decimal("150.0")
+        delivery_fee = DELIVERY_FEE
         selected_attrs = parse_selected_attributes(attributes_selected)
         extra_price = calculate_attribute_extra_price(product, selected_attrs)
         subtotal = (product.price + extra_price) * quantity
@@ -167,8 +166,6 @@ class OrderService:
         encrypted_address = encrypt_data(delivery_address)
 
         # Create hashes for lookup
-        from src.utils.crypto import hash_data
-
         phone_h = hash_data(buyer_phone)
         address_h = hash_data(delivery_address)
 

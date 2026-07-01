@@ -11,14 +11,17 @@ from src.features.orders.services import (
 )
 from typing import Optional, List
 import re
+import math
+from sqlmodel import select
+from src.features.auth.models import Seller
+from src.utils.phone import validate_ethiopian_phone, normalize_phone
+from src.utils.crypto import decrypt_data
 
 router = APIRouter()
 
 
 @router.get("/", response_class=HTMLResponse)
 async def home_page(request: Request, db: AsyncSession = Depends(get_session)):
-    from src.features.auth.models import Seller
-    from sqlmodel import select
     # Fetch only latest 8 products for home page
     products, _ = await BuyerProductService.get_all_active_products(db, limit=8)
     seller = (await db.execute(select(Seller))).scalars().first()
@@ -44,8 +47,6 @@ async def shop_page(
     )
 
     active_tags = await BuyerProductService.get_all_active_tags(db)
-
-    import math
 
     total_pages = math.ceil(total_count / per_page) if total_count > 0 else 1
 
@@ -137,8 +138,6 @@ async def process_checkout(
         raise HTTPException(status_code=404, detail="Product not found")
 
     # Validation: Phone Number
-    from src.utils.phone import validate_ethiopian_phone, normalize_phone
-
     if not validate_ethiopian_phone(buyer_phone):
         selected_attrs = parse_selected_attributes(attributes)
         extra_price = calculate_attribute_extra_price(product, selected_attrs)
@@ -172,6 +171,7 @@ async def process_checkout(
         delivery_address=delivery_address,
         quantity=quantity,
         attributes_selected=attributes,
+        store_prefix=product.seller.store_prefix,
     )
 
     return RedirectResponse(
@@ -187,21 +187,23 @@ async def order_confirmation(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
-    # Decrypt sensitive data for display
-    from src.utils.crypto import decrypt_data
-
-    order.buyer_phone = decrypt_data(order.buyer_phone)
-    order.delivery_address = decrypt_data(order.delivery_address)
+    # Decrypt sensitive data for display (separate variables — DON'T mutate ORM)
+    buyer_phone = decrypt_data(order.buyer_phone)
+    delivery_address = decrypt_data(order.delivery_address)
 
     # Fetch seller info
-    from src.features.auth.models import Seller
-
     seller = await db.get(Seller, order.seller_id)
-    if seller:
-        seller.phone = decrypt_data(seller.phone)
+    seller_phone = decrypt_data(seller.phone) if seller else None
 
     return templates.TemplateResponse(
         request,
         "buyer_confirmation.html",
-        {"request": request, "order": order, "seller": seller},
+        {
+            "request": request,
+            "order": order,
+            "buyer_phone": buyer_phone,
+            "delivery_address": delivery_address,
+            "seller": seller,
+            "seller_phone": seller_phone,
+        },
     )

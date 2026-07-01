@@ -2,7 +2,7 @@
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
-from src.dependencies import get_current_seller
+from src.dependencies import require_current_seller
 from src.templates_config import templates
 from src.features.auth.models import Seller
 from src.features.orders.models import Order, OrderStatusLog
@@ -12,17 +12,18 @@ from src.utils.crypto import decrypt_data
 from src.utils.datetime import utc_now
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
 from src.utils.storage import CloudinaryService
+from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select, func, desc
 from decimal import Decimal
 
 router = APIRouter()
 
 @router.get("/")
-async def get_dashboard(request: Request, db: AsyncSession = Depends(get_session)):
-    seller = await get_current_seller(request, db)
-    if not seller:
-        return RedirectResponse(url="/auth/login")
-
+async def get_dashboard(
+    request: Request,
+    db: AsyncSession = Depends(get_session),
+    seller: Seller = Depends(require_current_seller)
+):
     # Calculate Stats
     # 1. Total Orders
     total_orders_stmt = select(func.count(Order.id))
@@ -61,13 +62,11 @@ async def get_dashboard(request: Request, db: AsyncSession = Depends(get_session
 
 @router.get("/orders", response_class=HTMLResponse)
 async def list_orders(
-    request: Request, 
+    request: Request,
     status: str | None = None,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    seller: Seller = Depends(require_current_seller)
 ):
-    seller = await get_current_seller(request, db)
-    if not seller:
-        return RedirectResponse(url="/auth/login")
     
     statement = select(Order)
     if status:
@@ -93,19 +92,17 @@ async def list_orders(
 async def order_detail(
     order_id: int,
     request: Request,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    seller: Seller = Depends(require_current_seller)
 ):
-    seller = await get_current_seller(request, db)
-    if not seller:
-        return RedirectResponse(url="/auth/login")
     
     order = await db.get(Order, order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
-    # Decrypt sensitive data for display
-    order.buyer_phone = decrypt_data(order.buyer_phone)
-    order.delivery_address = decrypt_data(order.delivery_address)
+    # Decrypt sensitive data for display (separate variables — DON'T mutate ORM)
+    buyer_phone = decrypt_data(order.buyer_phone)
+    delivery_address = decrypt_data(order.delivery_address)
     
     # Fetch audit logs
     logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at)
@@ -117,6 +114,8 @@ async def order_detail(
         {
             "request": request,
             "order": order,
+            "buyer_phone": buyer_phone,
+            "delivery_address": delivery_address,
             "logs": logs,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name
@@ -129,11 +128,9 @@ async def update_order_status(
     request: Request,
     new_status: str = Form(...),
     context: str = Form(None),
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    seller: Seller = Depends(require_current_seller)
 ):
-    seller = await get_current_seller(request, db)
-    if not seller:
-        raise HTTPException(status_code=303, headers={"Location": "/auth/login"})
     
     try:
         await OrderService.update_order_status(db, order_id, new_status, changed_by="seller", context=context)
@@ -141,8 +138,8 @@ async def update_order_status(
     except ValueError as e:
         # Handle invalid transitions
         order = await db.get(Order, order_id)
-        order.buyer_phone = decrypt_data(order.buyer_phone)
-        order.delivery_address = decrypt_data(order.delivery_address)
+        buyer_phone = decrypt_data(order.buyer_phone)
+        delivery_address = decrypt_data(order.delivery_address)
         
         # Fetch audit logs
         logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at)
@@ -154,6 +151,8 @@ async def update_order_status(
             {
                 "request": request,
                 "order": order,
+                "buyer_phone": buyer_phone,
+                "delivery_address": delivery_address,
                 "logs": logs,
                 "error": str(e),
                 "seller_name": f"{seller.first_name} {seller.last_name}",
@@ -164,14 +163,12 @@ async def update_order_status(
 @router.get("/profile", response_class=HTMLResponse)
 async def get_profile(
     request: Request,
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    seller: Seller = Depends(require_current_seller)
 ):
-    seller = await get_current_seller(request, db)
-    if not seller:
-        return RedirectResponse(url="/auth/login")
     
-    # Decrypt phone number for display
-    seller.phone = f"+251{decrypt_data(seller.phone)}"
+    # Decrypt phone number for display (separate variable — DON'T mutate ORM)
+    decrypted_phone = f"+251{decrypt_data(seller.phone)}"
     
     return templates.TemplateResponse(
         request,
@@ -179,6 +176,7 @@ async def get_profile(
         {
             "request": request,
             "seller": seller,
+            "decrypted_phone": decrypted_phone,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name
         }
@@ -195,23 +193,22 @@ async def update_profile(
     telegram_username: str = Form(None),
     business_contact_number: str = Form(None),
     featured_image: UploadFile = File(None),
-    db: AsyncSession = Depends(get_session)
+    db: AsyncSession = Depends(get_session),
+    seller: Seller = Depends(require_current_seller)
 ):
-    seller = await get_current_seller(request, db)
-    if not seller:
-        raise HTTPException(status_code=303, headers={"Location": "/auth/login"})
     
     # Validate business contact number if provided
     normalized_contact = None
     if business_contact_number:
         if not validate_ethiopian_phone(business_contact_number):
-            seller.phone = f"+251{decrypt_data(seller.phone)}"
+            decrypted_phone = f"+251{decrypt_data(seller.phone)}"
             return templates.TemplateResponse(
                 request,
                 "dashboard/profile.html",
                 {
                     "request": request,
                     "seller": seller,
+                    "decrypted_phone": decrypted_phone,
                     "seller_name": f"{seller.first_name} {seller.last_name}",
                     "store_name": seller.store_name,
                     "error": "Invalid business phone number format."
@@ -223,14 +220,14 @@ async def update_profile(
     if store_name != seller.store_name:
         existing_seller = await db.execute(select(Seller).where(Seller.store_name == store_name))
         if existing_seller.scalar_one_or_none():
-            # Error handling in template (re-displaying)
-            seller.phone = f"+251{decrypt_data(seller.phone)}"
+            decrypted_phone = f"+251{decrypt_data(seller.phone)}"
             return templates.TemplateResponse(
                 request,
                 "dashboard/profile.html",
                 {
                     "request": request,
                     "seller": seller,
+                    "decrypted_phone": decrypted_phone,
                     "seller_name": f"{seller.first_name} {seller.last_name}",
                     "store_name": seller.store_name,
                     "error": "Store name already exists."
@@ -246,16 +243,16 @@ async def update_profile(
     seller.business_contact_number = normalized_contact
     
     if featured_image and featured_image.filename:
-        MAX_SIZE = 5 * 1024 * 1024
         content = await featured_image.read()
-        if len(content) > MAX_SIZE:
-            seller.phone = f"+251{decrypt_data(seller.phone)}"
+        if len(content) > MAX_IMAGE_SIZE:
+            decrypted_phone = f"+251{decrypt_data(seller.phone)}"
             return templates.TemplateResponse(
                 request,
                 "dashboard/profile.html",
                 {
                     "request": request,
                     "seller": seller,
+                    "decrypted_phone": decrypted_phone,
                     "seller_name": f"{seller.first_name} {seller.last_name}",
                     "store_name": seller.store_name,
                     "error": "Featured image exceeds 5MB limit."
@@ -275,7 +272,7 @@ async def update_profile(
     request.session["store_name"] = seller.store_name
 
     # Prepare decrypted phone for re-display
-    seller.phone = f"+251{decrypt_data(seller.phone)}"
+    decrypted_phone = f"+251{decrypt_data(seller.phone)}"
     # Do NOT prepend 251 to business_contact_number; it is already normalized and the UI handles the label.
     
     return templates.TemplateResponse(
@@ -284,6 +281,7 @@ async def update_profile(
         {
             "request": request,
             "seller": seller,
+            "decrypted_phone": decrypted_phone,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name,
             "message": "Profile updated successfully!"

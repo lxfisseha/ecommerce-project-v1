@@ -35,6 +35,7 @@ class AuthService:
         phone = normalize_phone(phone)
         # Generate a 6-digit code
         code = "".join([str(secrets.randbelow(10)) for _ in range(6)])
+        print(f"[DEV] OTP for {phone}: {code}")
 
         # Set expiry to 5 minutes from now
         expires_at = utc_now() + timedelta(minutes=5)

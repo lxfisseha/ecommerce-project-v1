@@ -5,11 +5,22 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
 from src.templates_config import templates
 from .services import ProductService
+from .models import ProductImage
 from src.dependencies import require_seller_id
 from src.utils.storage import CloudinaryService
+from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select
 
 router = APIRouter()
+
+
+def _form_response(request, error=None, seller_name="Seller", store_name="Store", **extra):
+    ctx = {"request": request, "seller_name": seller_name, "store_name": store_name}
+    if error:
+        ctx["error"] = error
+    ctx.update(extra)
+    return templates.TemplateResponse(request, "products/form.html", ctx)
+
 
 @router.get("/")
 async def list_products(
@@ -87,58 +98,20 @@ async def add_product(
 
     # Validation: Must have at least one image and one must be 'main'
     if not valid_images:
-        return templates.TemplateResponse(
-            request,
-            "products/form.html",
-            {
-                "request": request,
-                "error": "Please upload at least one image.",
-                "seller_name": seller_name,
-                "store_name": store_name
-            }
-        )
-    
+        return _form_response(request, "Please upload at least one image.", seller_name, store_name)
+
     if "main" not in image_tags.values():
-        return templates.TemplateResponse(
-            request,
-            "products/form.html",
-            {
-                "request": request,
-                "error": "At least one image must be tagged as 'main'.",
-                "seller_name": seller_name,
-                "store_name": store_name
-            }
-        )
+        return _form_response(request, "At least one image must be tagged as 'main'.", seller_name, store_name)
 
     if not name or not price:
-        return templates.TemplateResponse(
-            request,
-            "products/form.html",
-            {
-                "request": request,
-                "error": "Product name and price are required.",
-                "seller_name": seller_name,
-                "store_name": store_name
-            }
-        )
+        return _form_response(request, "Product name and price are required.", seller_name, store_name)
 
-    # Image Size Validation (5MB limit)
-    MAX_SIZE = 5 * 1024 * 1024
     image_data = []
 
     for i, img in enumerate(valid_images):
         content = await img.read()
-        if len(content) > MAX_SIZE:
-            return templates.TemplateResponse(
-                request,
-                "products/form.html",
-                {
-                    "request": request,
-                    "error": f"Image {img.filename} exceeds 5MB limit.",
-                    "seller_name": seller_name,
-                    "store_name": store_name
-                }
-            )
+        if len(content) > MAX_IMAGE_SIZE:
+            return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", seller_name, store_name)
         
         tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
         image_data.append((content, tag))
@@ -174,18 +147,8 @@ async def add_product(
 
     except Exception as e:
         await db.rollback()
-        return templates.TemplateResponse(
-            request,
-            "products/form.html",
-            {
-                "request": request,
-                "error": f"Failed to create product: {str(e)}",
-                "seller_name": seller_name,
-                "store_name": store_name
-            }
-        )
+        return _form_response(request, f"Failed to create product: {str(e)}", seller_name, store_name)
     
-    from .models import ProductImage
     try:
         for content, tag in image_data:
             image_url = CloudinaryService.upload_image(content)
@@ -195,16 +158,7 @@ async def add_product(
         await db.commit()
     except Exception as e:
         await db.rollback()
-        return templates.TemplateResponse(
-            request,
-            "products/form.html",
-            {
-                "request": request,
-                "error": f"Failed to upload images: {str(e)}. Please try again.",
-                "seller_name": seller_name,
-                "store_name": store_name
-            }
-        )
+        return _form_response(request, f"Failed to upload images: {str(e)}. Please try again.", seller_name, store_name)
 
     return RedirectResponse(url="/dashboard/products", status_code=303)
 
@@ -261,15 +215,7 @@ async def edit_product(
         raise HTTPException(status_code=404, detail="Product not found")
     
     if not name or not price:
-        return templates.TemplateResponse(
-            request,
-            "products/form.html",
-            {
-                "request": request,
-                "product": product,
-                "error": "Product name and price are required."
-            }
-        )
+        return _form_response(request, "Product name and price are required.", product=product)
 
     # 1. Update Tags for existing images
     for i, img in enumerate(product.images):
@@ -279,38 +225,20 @@ async def edit_product(
             db.add(img)
 
     # 2. Handle New Image Uploads (if any)
-    MAX_SIZE = 5 * 1024 * 1024
     if valid_images:
         # Clear existing images - cascade="all, delete-orphan" handles deletion
         product.images.clear()
             
         for i, img in enumerate(valid_images):
             content = await img.read()
-            if len(content) > MAX_SIZE:
-                return templates.TemplateResponse(
-                    request,
-                    "products/form.html",
-                    {
-                        "request": request,
-                        "product": product,
-                        "error": f"Image {img.filename} exceeds 5MB limit."
-                    }
-                )
+            if len(content) > MAX_IMAGE_SIZE:
+                return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", product=product)
             try:
                 image_url = CloudinaryService.upload_image(content)
             except Exception as e:
-                return templates.TemplateResponse(
-                    request,
-                    "products/form.html",
-                    {
-                        "request": request,
-                        "product": product,
-                        "error": f"Failed to upload image {img.filename}: {str(e)}. Please try again."
-                    }
-                )
+                return _form_response(request, f"Failed to upload image {img.filename}: {str(e)}. Please try again.", product=product)
             # Use new index starting from 0 since we cleared existing images
             tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
-            from .models import ProductImage
             new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
             product.images.append(new_image)
 
