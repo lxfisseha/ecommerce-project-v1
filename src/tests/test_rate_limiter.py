@@ -38,3 +38,24 @@ async def test_checkout_rate_limited():
         cookies={"csrftoken": csrf_cookie}
     )
     assert response.status_code == 429
+
+
+@pytest.mark.asyncio
+async def test_resend_otp_rate_limited():
+    """Fix 15: /auth/resend-otp must be rate-limited (5 per 60s)."""
+    token, csrf_cookie = get_csrf_context(client)
+    ip = "10.0.0.201"
+    for _ in range(6):
+        client.post(
+            "/auth/resend-otp",
+            data={"phone": "912345678"},
+            headers={"X-CSRF-Token": token, "X-Forwarded-For": ip},
+            cookies={"csrftoken": csrf_cookie}
+        )
+    response = client.post(
+        "/auth/resend-otp",
+        data={"phone": "912345678"},
+        headers={"X-CSRF-Token": token, "X-Forwarded-For": ip},
+        cookies={"csrftoken": csrf_cookie}
+    )
+    assert response.status_code == 429

@@ -56,8 +56,23 @@ class CustomCSRFMiddleware:
 
                     receive = receive_with_body
                 
-                # Note: multipart/form-data body parsing is complex and not fully implemented
-                # for CSRF here. Relying on header/query param fallback.
+                elif "multipart/form-data" in content_type:
+                    body = await request.body()
+                    boundary = content_type.split("boundary=")[-1].strip()
+                    if boundary:
+                        parts = body.split(f"--{boundary}".encode())
+                        for part in parts:
+                            if b'name="csrf_token"' in part:
+                                header_end = part.find(b"\r\n\r\n")
+                                if header_end != -1:
+                                    value = part[header_end+4:].strip().split(b"\r\n")[0].decode()
+                                    header_token = header_token or value
+                                    break
+
+                    async def receive_with_body() -> dict:
+                        return {"type": "http.request", "body": body, "more_body": False}
+
+                    receive = receive_with_body
 
             if not header_token or header_token != csrf_cookie_token:
                 response = JSONResponse(

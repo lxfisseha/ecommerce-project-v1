@@ -162,20 +162,21 @@ async def test_delete_product_success(seller_id_override):
         session.add(product)
         await session.commit()
 
-    response = client.delete(
-        "/dashboard/products/1",
-        cookies={"csrftoken": csrf_cookie},
-        headers={"X-CSRF-Token": token}
-    )
-    assert response.status_code == 200
+    with patch("src.utils.storage.CloudinaryService.delete_image") as mock_delete:
+        response = client.delete(
+            "/dashboard/products/1",
+            cookies={"csrftoken": csrf_cookie},
+            headers={"X-CSRF-Token": token}
+        )
+        assert response.status_code == 200
 
-    async with maker() as session:
-        from src.features.products.services import ProductService
-        product_via_service = await ProductService.get_product_by_id(session, 1)
-        assert product_via_service is None
+        async with maker() as session:
+            from src.features.products.services import ProductService
+            product_via_service = await ProductService.get_product_by_id(session, 1)
+            assert product_via_service is None
 
-        statement = select(Product).where(Product.id == 1)
-        result = await session.execute(statement)
-        product = result.scalar_one_or_none()
-        assert product is not None
-        assert product.is_deleted is True
+            statement = select(Product).where(Product.id == 1)
+            result = await session.execute(statement)
+            product = result.scalar_one_or_none()
+            assert product is not None
+            assert product.is_deleted is True

@@ -83,15 +83,34 @@ client = TestClient(app)
 @pytest_asyncio.fixture(autouse=True)
 async def _db_setup_teardown():
     app.dependency_overrides[get_session] = override_get_session
+    # Clear rate limiter in-memory store between tests
+    _clear_rate_limiter(app)
     async with engine.begin() as conn:
+        await conn.run_sync(SQLModel.metadata.drop_all)
         await conn.run_sync(SQLModel.metadata.create_all)
     async with maker() as session:
         seed_seller(session)
         await session.commit()
     yield
     app.dependency_overrides.clear()
+    _clear_rate_limiter(app)
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
+
+
+def _clear_rate_limiter(app_instance):
+    """Walk the ASGI middleware stack and clear the rate limiter store."""
+    stack = getattr(app_instance, 'middleware_stack', None)
+    if not stack:
+        return
+    current = stack
+    while current:
+        if hasattr(current, '_store'):
+            current._store.clear()
+            if hasattr(current, '_req_count'):
+                current._req_count = 0
+            return
+        current = getattr(current, 'app', None)
 
 
 @pytest.fixture

@@ -16,8 +16,17 @@ from sqlmodel import select
 from src.features.auth.models import Seller
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
 from src.utils.crypto import decrypt_data
+from src.constants import DELIVERY_FEE
 
 router = APIRouter()
+
+
+def _calculate_checkout_totals(product, quantity, selected_attrs):
+    extra_price = calculate_attribute_extra_price(product, selected_attrs)
+    subtotal = (product.price + extra_price) * quantity
+    attribute_total = extra_price * quantity
+    total = subtotal + DELIVERY_FEE
+    return extra_price, attribute_total, subtotal, total
 
 
 @router.get("/", response_class=HTMLResponse)
@@ -98,12 +107,8 @@ async def checkout_page(
         raise HTTPException(status_code=404, detail="Product not found")
 
     # Simple summary calculations with attribute extra pricing
-    delivery_fee = 150
     selected_attrs = parse_selected_attributes(attrs)
-    extra_price = calculate_attribute_extra_price(product, selected_attrs)
-    subtotal = (product.price + extra_price) * qty
-    attribute_total = extra_price * qty
-    total = subtotal + delivery_fee
+    extra_price, attribute_total, subtotal, total = _calculate_checkout_totals(product, qty, selected_attrs)
 
     return templates.TemplateResponse(
         request,
@@ -116,7 +121,7 @@ async def checkout_page(
             "extra_price": extra_price,
             "attribute_total": attribute_total,
             "subtotal": subtotal,
-            "delivery_fee": delivery_fee,
+            "delivery_fee": DELIVERY_FEE,
             "total": total,
         },
     )
@@ -140,9 +145,7 @@ async def process_checkout(
     # Validation: Phone Number
     if not validate_ethiopian_phone(buyer_phone):
         selected_attrs = parse_selected_attributes(attributes)
-        extra_price = calculate_attribute_extra_price(product, selected_attrs)
-        subtotal = (product.price + extra_price) * quantity
-        attribute_total = extra_price * quantity
+        extra_price, attribute_total, subtotal, total = _calculate_checkout_totals(product, quantity, selected_attrs)
         return templates.TemplateResponse(
             request,
             "buyer_checkout.html",
@@ -155,13 +158,21 @@ async def process_checkout(
                 "extra_price": extra_price,
                 "attribute_total": attribute_total,
                 "subtotal": subtotal,
-                "delivery_fee": 150,
-                "total": subtotal + 150,
+                "delivery_fee": DELIVERY_FEE,
+                "total": total,
             },
         )
 
     # Normalize phone to 9-digit format before saving
     normalized_phone = normalize_phone(buyer_phone)
+
+    # Truncate long inputs
+    buyer_name = buyer_name[:100]
+    delivery_address = delivery_address[:1000]
+    if quantity < 1:
+        quantity = 1
+    if quantity > 100:
+        quantity = 100
 
     order = await OrderService.create_order(
         db,
@@ -173,6 +184,11 @@ async def process_checkout(
         attributes_selected=attributes,
         store_prefix=product.seller.store_prefix,
     )
+
+    # Store order ID in session for IDOR protection on confirmation page
+    recent_orders = request.session.get("recent_orders", [])
+    recent_orders.append(order.order_id)
+    request.session["recent_orders"] = recent_orders[-10:]  # keep last 10
 
     return RedirectResponse(
         url=f"/order-confirmation/{order.order_id}", status_code=303
@@ -187,13 +203,25 @@ async def order_confirmation(
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
 
+    # IDOR protection: only allow access if this order was placed in current session
+    recent_orders = request.session.get("recent_orders", [])
+    if order.order_id not in recent_orders:
+        raise HTTPException(status_code=403, detail="Access denied")
+
     # Decrypt sensitive data for display (separate variables — DON'T mutate ORM)
-    buyer_phone = decrypt_data(order.buyer_phone)
-    delivery_address = decrypt_data(order.delivery_address)
+    try:
+        buyer_phone = decrypt_data(order.buyer_phone)
+        delivery_address = decrypt_data(order.delivery_address)
+    except ValueError:
+        buyer_phone = "Unable to decrypt"
+        delivery_address = "Unable to decrypt"
 
     # Fetch seller info
     seller = await db.get(Seller, order.seller_id)
-    seller_phone = decrypt_data(seller.phone) if seller else None
+    try:
+        seller_phone = decrypt_data(seller.phone) if seller else None
+    except ValueError:
+        seller_phone = None
 
     return templates.TemplateResponse(
         request,

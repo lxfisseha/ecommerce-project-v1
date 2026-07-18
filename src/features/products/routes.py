@@ -108,7 +108,11 @@ async def add_product(
 
     image_data = []
 
+    ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+
     for i, img in enumerate(valid_images):
+        if img.content_type not in ALLOWED_IMAGE_TYPES:
+            return _form_response(request, f"Image {img.filename} has invalid type ({img.content_type}). Allowed: JPEG, PNG, WebP, GIF.", seller_name, store_name)
         content = await img.read()
         if len(content) > MAX_IMAGE_SIZE:
             return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", seller_name, store_name)
@@ -226,7 +230,14 @@ async def edit_product(
 
     # 2. Handle New Image Uploads (if any)
     if valid_images:
-        # Clear existing images - cascade="all, delete-orphan" handles deletion
+        # Delete old Cloudinary images before clearing
+        from src.utils.storage import CloudinaryService
+        for old_img in product.images:
+            if old_img.image_url:
+                try:
+                    CloudinaryService.delete_image(old_img.image_url)
+                except Exception:
+                    pass
         product.images.clear()
             
         for i, img in enumerate(valid_images):
@@ -303,6 +314,7 @@ async def toggle_stock(
     
     new_status = not product.in_stock
     product = await ProductService.update_product(db, product_id, in_stock=new_status)
+    await db.commit()
     
     if not product:
         raise HTTPException(status_code=404, detail="Product not found after update")

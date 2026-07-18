@@ -54,7 +54,7 @@
             <div class="p-4 flex flex-col gap-2">
                 <h3 class="text-lg font-semibold text-text-main leading-6 truncate">{{ product.name }}</h3>
                 <div class="flex justify-between items-center">
-                    <span class="text-lg font-bold text-primary">{{ "{:,.2f}".format(product.price) }} ETB</span>
+                    <span class="text-lg font-bold text-primary">{{ "{:,.0f}".format(product.price) }} ETB</span>
                     {% include "products/_stock_toggle.html" %}
                 </div>
             </div>

@@ -30,6 +30,13 @@ RATE_LIMIT_RULES: list[tuple[str | None, str, int, int, str]] = [
         60,
         "Too many OTP attempts. Please wait before requesting another code.",
     ),
+    (
+        "POST",
+        "/auth/resend-otp",
+        5,
+        60,
+        "Too many resend attempts. Please wait before requesting another code.",
+    ),
     # Checkout / order submission (10 per 60s)
     (
         "POST",
@@ -104,6 +111,13 @@ class RateLimitMiddleware:
         """
         now = time.time()
         key = (ip, path_prefix)
+
+        # Periodic cleanup of empty buckets to prevent unbounded memory growth
+        if not hasattr(self, '_req_count'):
+            self._req_count = 0
+        self._req_count += 1
+        if self._req_count % 500 == 0:
+            self._store = {k: v for k, v in self._store.items() if v}
 
         if key not in self._store:
             self._store[key] = deque()

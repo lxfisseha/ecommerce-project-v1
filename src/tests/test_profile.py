@@ -88,3 +88,30 @@ async def test_update_profile_duplicate_store_name(current_seller_override):
     )
     assert response.status_code == 200
     assert "Store name already exists" in response.text
+
+
+@pytest.mark.asyncio
+async def test_update_profile_long_fields_truncated(current_seller_override):
+    """Fix 41: long field values must be truncated, not rejected."""
+    csrf_token = get_csrf_token(client)
+    response = client.post(
+        "/dashboard/profile",
+        data={
+            "first_name": "F" * 200,
+            "last_name": "L" * 200,
+            "store_name": "S" * 200,
+            "business_email": "e" * 400 + "@test.com",
+            "business_address": "A" * 400,
+        },
+        headers={"X-CSRF-Token": csrf_token},
+        follow_redirects=False
+    )
+    assert response.status_code == 200
+    assert "Profile updated successfully!" in response.text
+
+    async with maker() as session:
+        res = await session.execute(select(Seller).where(Seller.id == 1))
+        seller = res.scalar_one_or_none()
+        assert len(seller.first_name) <= 50
+        assert len(seller.last_name) <= 50
+        assert len(seller.store_name) <= 100

@@ -124,7 +124,7 @@ class ProductService:
             in_stock=in_stock
         )
         db.add(product)
-        await db.commit()
+        await db.flush()
         
         # Re-fetch with relationships
         return await ProductService.get_product_by_id(db, product.id)
@@ -147,18 +147,26 @@ class ProductService:
                 setattr(product, key, value)
         
         db.add(product)
-        await db.commit()
+        await db.flush()
         
         # Re-fetch with relationships
         return await ProductService.get_product_by_id(db, product.id)
 
     @staticmethod
     async def delete_product(db: AsyncSession, product_id: int) -> bool:
-        # Note: We use get_product_by_id which already filters is_deleted=False
         product = await ProductService.get_product_by_id(db, product_id)
         if not product:
             return False
-        
+
+        # Delete Cloudinary images before soft-deleting
+        from src.utils.storage import CloudinaryService
+        for image in product.images:
+            if image.image_url:
+                try:
+                    CloudinaryService.delete_image(image.image_url)
+                except Exception:
+                    pass  # Best-effort cleanup
+
         product.is_deleted = True
         db.add(product)
         await db.commit()

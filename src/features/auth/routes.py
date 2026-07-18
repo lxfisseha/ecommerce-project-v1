@@ -80,7 +80,8 @@ async def post_verify_otp(
             status_code=404
         )
 
-    # 3. Set Session
+    # 3. Clear old session and regenerate (prevents session fixation)
+    request.session.clear()
     request.session["seller_id"] = seller.id
     request.session["seller_name"] = f"{seller.first_name} {seller.last_name}"
     request.session["store_name"] = seller.store_name
@@ -99,6 +100,14 @@ async def post_resend_otp(
     form = getattr(request.state, "form_data", None) or await request.form()
     phone = form.get("phone")
 
+    if not phone or not validate_ethiopian_phone(phone):
+        return templates.TemplateResponse(
+            request,
+            "auth/otp_partial.html",
+            {"request": request, "phone": phone, "error": "Invalid phone number."},
+            status_code=422
+        )
+
     await AuthService.generate_otp(db, phone)
 
     return templates.TemplateResponse(
@@ -107,7 +116,7 @@ async def post_resend_otp(
         {"request": request, "phone": phone}
     )
 
-@router.get("/logout")
+@router.post("/logout")
 async def logout(request: Request):
     request.session.clear()
     return RedirectResponse(url="/auth/login", status_code=303)

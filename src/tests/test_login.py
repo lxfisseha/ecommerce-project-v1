@@ -91,7 +91,7 @@ async def test_resend_otp():
         )
     assert response.status_code == 200
 
-    with patch("src.utils.sms.AfroMessageService.send_otp_sms", new_callable=AsyncMock, return_value=False):
+    with patch("src.utils.sms.AfroMessageService.send_otp_sms", new_callable=AsyncMock, return_value=True):
         resend_response = client.post(
             "/auth/resend-otp",
             data={"phone": "912345678"},
@@ -111,6 +111,32 @@ async def test_resend_otp():
 
 @pytest.mark.asyncio
 async def test_logout_success():
-    response = client.get("/auth/logout", follow_redirects=False)
+    token, csrf_cookie = _token_cookie(client)
+    response = client.post(
+        "/auth/logout",
+        headers={"X-CSRF-Token": token},
+        cookies={"csrftoken": csrf_cookie},
+        follow_redirects=False
+    )
     assert response.status_code == 303
     assert response.headers["location"] == "/auth/login"
+
+
+@pytest.mark.asyncio
+async def test_logout_get_rejected():
+    """Fix 6: GET /auth/logout must be rejected (POST-only to prevent CSRF logout)."""
+    response = client.get("/auth/logout")
+    assert response.status_code == 405
+
+
+@pytest.mark.asyncio
+async def test_resend_otp_invalid_phone():
+    """Fix 31: resend-otp with invalid phone returns 422."""
+    token, csrf_cookie = _token_cookie(client)
+    response = client.post(
+        "/auth/resend-otp",
+        data={"phone": "12345"},
+        headers={"X-CSRF-Token": token, "X-Forwarded-For": "10.0.0.3"},
+        cookies={"csrftoken": csrf_cookie}
+    )
+    assert response.status_code == 422

@@ -40,22 +40,21 @@ def encrypt_data(data: str) -> str:
     return f.encrypt(data.encode()).decode()
 
 def decrypt_data(encrypted_data: str) -> str:
-    """Decrypts an AES-256 encrypted string"""
+    """Decrypts an AES-256 encrypted string. Raises ValueError on failure."""
     if not encrypted_data:
         return encrypted_data
     f = _get_fernet()
     try:
         return f.decrypt(encrypted_data.encode()).decode()
     except InvalidToken:
-        # Data encrypted with old key — try legacy fallback
         try:
             return legacy_decrypt_data(encrypted_data)
         except Exception:
             logger.error("Legacy decryption also failed for data")
-            return "[encrypted]"
+            raise ValueError("Decryption failed — possible key rotation or data corruption")
     except Exception as e:
         logger.error(f"Decryption failed: {e}")
-        return "[encrypted]" 
+        raise ValueError(f"Decryption failed: {e}")
 
 def legacy_decrypt_data(encrypted_data: str) -> str:
     """Decrypts data encrypted with the legacy Fernet key (SHA256 of SECRET_KEY)"""

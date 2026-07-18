@@ -138,6 +138,12 @@ class OrderService:
         """
         if not store_prefix:
             raise ValueError("store_prefix is required to generate order ID")
+
+        if quantity < 1:
+            raise ValueError("Quantity must be at least 1.")
+        if quantity > 100:
+            raise ValueError("Quantity cannot exceed 100 per order.")
+
         order_id = await OrderService.generate_order_id(db, store_prefix)
 
         # Ensure product relationships are loaded for attribute matching

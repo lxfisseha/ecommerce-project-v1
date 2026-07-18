@@ -28,3 +28,29 @@ async def test_add_product_size_too_large(seller_id_override):
 
     assert response.status_code == 200
     assert "exceeds 5MB limit." in response.text
+
+
+@pytest.mark.asyncio
+async def test_add_product_invalid_file_type(seller_id_override):
+    """Fix 20: file type validation rejects non-image uploads."""
+    token, csrf_cookie = get_csrf_context(client)
+
+    file = {"image": ("malware.exe", BytesIO(b"MZ\x90\x00"), "application/x-executable")}
+
+    data = {
+        "name": "Bad File Product",
+        "price": "100.00",
+        "image_tag_0": "main",
+        "csrf_token": token
+    }
+
+    response = client.post(
+        "/dashboard/products/add",
+        data=data,
+        files=file,
+        cookies={"csrftoken": csrf_cookie},
+        headers={"X-CSRF-Token": token}
+    )
+
+    assert response.status_code == 200
+    assert "invalid type" in response.text

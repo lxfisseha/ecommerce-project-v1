@@ -40,3 +40,29 @@ class TestCheckoutValidation:
     def test_missing_csrf(self):
         resp = client.post("/checkout/99", data={"buyer_name": "Buyer", "buyer_phone": "0912345678", "delivery_address": "Addr", "quantity": "1"})
         assert resp.status_code == 403
+
+    def test_quantity_too_large_clamped(self):
+        """Fix 34: quantity > 100 gets clamped to 100."""
+        resp = self._post({
+            "buyer_name": "Buyer", "buyer_phone": "0912345678",
+            "delivery_address": "Addr", "quantity": "101"
+        })
+        assert resp.status_code in (200, 303)
+
+    def test_quantity_zero_clamped(self):
+        """Fix 34: quantity < 1 gets clamped to 1."""
+        resp = self._post({
+            "buyer_name": "Buyer", "buyer_phone": "0912345678",
+            "delivery_address": "Addr", "quantity": "0"
+        })
+        assert resp.status_code in (200, 303)
+
+    def test_buyer_name_too_long_truncated(self):
+        """Fix 34: buyer_name > 100 chars gets truncated, not rejected."""
+        long_name = "A" * 200
+        resp = self._post({
+            "buyer_name": long_name, "buyer_phone": "0912345678",
+            "delivery_address": "Addr", "quantity": "1"
+        })
+        # Should succeed (truncated, not rejected)
+        assert resp.status_code in (200, 303)

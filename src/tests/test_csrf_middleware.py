@@ -44,3 +44,19 @@ async def test_csrf_otp_resend_requires_token():
         headers={"X-Forwarded-For": _IP}
     )
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_csrf_multipart_requires_token():
+    """Fix 16: multipart/form-data requests must include CSRF token in body."""
+    _, csrf_cookie = get_csrf_context(client)
+    # Send multipart without csrf_token field in body — should be rejected
+    from io import BytesIO
+    response = client.post(
+        "/dashboard/products/add",
+        files={"image": ("test.jpg", BytesIO(b"fake"), "image/jpeg")},
+        data={"name": "Test", "price": "100"},
+        cookies={"csrftoken": csrf_cookie},
+        headers={"X-Forwarded-For": _IP}
+    )
+    assert response.status_code == 403
