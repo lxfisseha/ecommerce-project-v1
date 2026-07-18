@@ -1,0 +1,38 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+  body { font-family: 'Inter', sans-serif; }
+}
+
+@layer utilities {
+  .blur-decoration { pointer-events: none; }
+  [hx-headers] { cursor: pointer; }
+
+  .font-semibold { font-weight: 600; }
+  .font-medium { font-weight: 500; }
+  .font-regular { font-weight: 400; }
+
+  .htmx-indicator {
+    display: none !important;
+  }
+  .htmx-request .htmx-indicator {
+    display: flex !important;
+  }
+  .htmx-request.htmx-indicator {
+    display: flex !important;
+  }
+  .htmx-request .htmx-hide-on-request {
+    display: none !important;
+  }
+
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}

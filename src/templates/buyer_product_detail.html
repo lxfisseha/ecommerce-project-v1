@@ -21,7 +21,7 @@
                 {% set product_images = product.images | map(attribute="image_url") | list %}
                 {% if product_images %}
                     <div class="aspect-square sm:aspect-auto sm:h-[450px] lg:h-[550px] w-full">
-                        <img src="{{ product_images[0] }}" id="main-product-image" alt="{{ product.name }}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
+                        <img src="{{ product_images[0] }}?f_auto,q_auto,w_800" id="main-product-image" alt="{{ product.name }}" width="800" height="800" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
                     </div>
                     
                     <!-- Carousel Navigation Arrows (Figma 2:366 / 2:371) -->
@@ -48,7 +48,7 @@
                 <button onclick="updateMainImage('{{ image.image_url }}', {{ loop.index0 }})" 
                         id="thumb-{{ loop.index0 }}"
                         class="thumb-btn w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0 rounded-xl border-2 transition-all overflow-hidden {% if loop.first %}border-primary{% else %}border-border-main{% endif %}">
-                    <img src="{{ image.image_url }}" alt="Thumbnail" class="w-full h-full object-cover">
+                    <img src="{{ image.image_url }}?f_auto,q_auto,w_160" alt="Thumbnail" width="160" height="160" loading="lazy" decoding="async" class="w-full h-full object-cover">
                 </button>
                 {% endfor %}
             </div>

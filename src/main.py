@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
+from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 from src.middleware.csrf import CustomCSRFMiddleware
 from src.middleware.rate_limit import RateLimitMiddleware
@@ -13,6 +14,7 @@ from src.features.products.routes import router as products_router
 from src.features.buyer.routes import router as buyer_router  # New import
 from sqlalchemy.exc import SQLAlchemyError
 import logging
+import os
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -33,6 +35,11 @@ app.add_middleware(
     secret=derive_key("csrf"),
 )
 app.add_middleware(RateLimitMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=500)
+
+# Mount static files
+static_dir = os.path.join(os.path.dirname(__file__), "static")
+app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 
 # Global Exception Handler
