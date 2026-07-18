@@ -1,0 +1,13 @@
+{
+  "buildCommand": "npm install && npm run build:css",
+  "builds": [
+    {
+      "src": "src/main.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    { "src": "/static/(.*)", "dest": "/src/static/$1" },
+    { "src": "/(.*)", "dest": "/src/main.py" }
+  ]
+}

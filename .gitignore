@@ -11,4 +11,3 @@ build/
 .gemini/
 .vscode/
 node_modules/
-src/static/css/output.css
