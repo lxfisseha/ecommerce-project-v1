@@ -88,7 +88,7 @@
                     {% if seller.featured_image %}
                     <div class="mb-4">
                         <label class="text-sm font-medium text-text-main block mb-2">Current Image</label>
-                        <img src="{{ seller.featured_image }}" alt="Featured Image" class="w-full max-w-md h-auto rounded-lg border border-border-main shadow-sm">
+                        <img src="{{ seller.featured_image | cloudinary(width=800) }}" alt="Featured Image" class="w-full max-w-md h-auto rounded-lg border border-border-main shadow-sm">
                     </div>
                     {% endif %}
                     

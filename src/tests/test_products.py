@@ -1,6 +1,7 @@
 import pytest
 import pytest_asyncio
 from src.features.products.models import Product
+from src.features.products.routes import EAGER
 from sqlmodel import select, delete
 from unittest.mock import patch
 from decimal import Decimal
@@ -45,6 +46,8 @@ async def test_add_product_success(seller_id_override):
 
         assert response.status_code == 303
         assert response.headers["location"] == "/dashboard/products"
+        mock_upload.assert_called_once()
+        assert mock_upload.call_args[1].get("eager") == EAGER
 
 
 @pytest.mark.asyncio
@@ -80,6 +83,46 @@ async def test_edit_product_success(seller_id_override):
         product = result.scalar_one_or_none()
         assert product.name == "Updated Name"
         assert product.price == 75.00
+
+
+@pytest.mark.asyncio
+async def test_edit_product_with_image_upload(seller_id_override):
+    token, csrf_cookie = get_csrf_context(client)
+
+    async with maker() as session:
+        from src.features.products.models import ProductImage
+        product = Product(id=2, seller_id=1, name="Old Product", price=30.0)
+        session.add(product)
+        await session.flush()
+        img = ProductImage(product_id=2, image_url="http://old.cloud/image.png", image_tag="main")
+        session.add(img)
+        await session.commit()
+
+    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
+        mock_upload.return_value = "http://cloudinary.com/new.jpg"
+        file_content = b"new image data"
+        file = {"image": ("new.jpg", BytesIO(file_content), "image/jpeg")}
+
+        data = {
+            "name": "Updated Product",
+            "price": "45.00",
+            "in_stock": "on",
+            "image_tag_0": "main",
+            "csrf_token": token
+        }
+
+        response = client.post(
+            "/dashboard/products/edit/2",
+            data=data,
+            files=file,
+            cookies={"csrftoken": csrf_cookie},
+            headers={"X-CSRF-Token": token},
+            follow_redirects=False
+        )
+
+        assert response.status_code == 303
+        mock_upload.assert_called_once()
+        assert mock_upload.call_args[1].get("eager") == EAGER
 
 
 @pytest.mark.asyncio

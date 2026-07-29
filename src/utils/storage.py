@@ -14,18 +14,14 @@ if settings.CLOUDINARY_URL:
 
 class CloudinaryService:
     @staticmethod
-    def upload_image(file_content: bytes, folder: str = "products") -> str:
-        """
-        Uploads an image to Cloudinary and returns the secure URL.
-        """
+    def upload_image(file_content: bytes, folder: str = "products", eager: list = None) -> str:
         if not cloudinary.config().api_key:
             raise ValueError("Cloudinary is not correctly configured (missing API Key)")
-            
-        result = cloudinary.uploader.upload(
-            file_content,
-            folder=folder,
-            resource_type="image"
-        )
+
+        kwargs = dict(folder=folder, resource_type="image")
+        if eager:
+            kwargs["eager"] = eager
+        result = cloudinary.uploader.upload(file_content, **kwargs)
         return result.get("secure_url")
 
     @staticmethod

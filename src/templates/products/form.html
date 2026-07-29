@@ -36,7 +36,7 @@
                         {% if product and product.images %}
                             {% for img in product.images %}
                                 <div class="relative w-full aspect-square {% if img.image_tag == 'main' %}ring-2 ring-accent{% endif %}">
-                                    <img src="{{ img.image_url }}" class="object-cover w-full h-full rounded-md">
+                                    <img src="{{ img.image_url | cloudinary(width=200) }}" class="object-cover w-full h-full rounded-md">
                                     <select name="image_tag_{{ loop.index0 }}" onclick="event.stopPropagation()" class="absolute top-2 left-2 z-10 appearance-none rounded-full px-2 py-0.5 text-xs font-semibold shadow-sm {% if img.image_tag == 'main' %}bg-primary text-white{% elif img.image_tag == 'gallery' %}bg-info-dark text-white{% else %}bg-white text-text-light border border-border-dark{% endif %}">
                                         <option value="main" {% if img.image_tag == 'main' %}selected{% endif %}>Main</option>
                                         <option value="gallery" {% if img.image_tag == 'gallery' %}selected{% endif %}>Gallery</option>

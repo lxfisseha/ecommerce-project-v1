@@ -9,7 +9,7 @@
         {% if seller and seller.featured_image %}
         <!-- Background Image with Modern Mask -->
         <div class="absolute inset-0 opacity-30">
-            <img src="{{ seller.featured_image }}?f_auto,q_auto,w_1200" 
+            <img src="{{ seller.featured_image | cloudinary(width=1200) }}" 
                  alt="{{ seller.store_name }} Featured Image" 
                  width="1200" height="800"
                  class="w-full h-full object-cover scale-110 blur-[1px]">

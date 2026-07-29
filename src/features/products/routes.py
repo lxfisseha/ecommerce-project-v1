@@ -13,6 +13,12 @@ from sqlmodel import select
 
 router = APIRouter()
 
+EAGER = [
+    {"width": 160, "height": 160, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
+    {"width": 400, "height": 400, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
+    {"width": 800, "height": 800, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
+]
+
 
 def _form_response(request, error=None, seller_name="Seller", store_name="Store", **extra):
     ctx = {"request": request, "seller_name": seller_name, "store_name": store_name}
@@ -155,7 +161,7 @@ async def add_product(
     
     try:
         for content, tag in image_data:
-            image_url = CloudinaryService.upload_image(content)
+            image_url = CloudinaryService.upload_image(content, eager=EAGER)
             new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
             db.add(new_image)
         
@@ -245,7 +251,7 @@ async def edit_product(
             if len(content) > MAX_IMAGE_SIZE:
                 return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", product=product)
             try:
-                image_url = CloudinaryService.upload_image(content)
+                image_url = CloudinaryService.upload_image(content, eager=EAGER)
             except Exception as e:
                 return _form_response(request, f"Failed to upload image {img.filename}: {str(e)}. Please try again.", product=product)
             # Use new index starting from 0 since we cleared existing images

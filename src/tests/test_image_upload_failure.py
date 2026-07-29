@@ -48,7 +48,7 @@ class TestImageUploadFailure:
 
     def test_partial_failure_multiple(self):
         call_count = [0]
-        def flaky_upload(file_content: bytes, folder: str = "products") -> str:
+        def flaky_upload(file_content: bytes, folder: str = "products", **kwargs) -> str:
             call_count[0] += 1
             if call_count[0] == 2:
                 raise HTTPException(status_code=400, detail="Second image failed")

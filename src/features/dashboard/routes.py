@@ -18,6 +18,11 @@ from decimal import Decimal
 
 router = APIRouter()
 
+EAGER = [
+    {"width": 800, "height": 800, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
+    {"width": 1200, "crop": "scale", "quality": "auto:eco", "fetch_format": "auto"},
+]
+
 def _safe_decrypt(data):
     try:
         return decrypt_data(data)
@@ -297,7 +302,7 @@ async def update_profile(
                     "error": "Featured image exceeds 5MB limit."
                 }
             )
-        image_url = CloudinaryService.upload_image(content)
+        image_url = CloudinaryService.upload_image(content, eager=EAGER)
         seller.featured_image = image_url
 
     seller.updated_at = utc_now()
