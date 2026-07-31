@@ -10,7 +10,7 @@ module.exports = {
           DEFAULT: '#333333',
           hover: '#1F1F1F',
         },
-        accent: '#F97316',
+        accent: '#963484',
         danger: '#C44536',
         success: {
           DEFAULT: '#4F8A65',
