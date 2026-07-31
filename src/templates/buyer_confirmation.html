@@ -1,12 +1,12 @@
 {% extends "buyer_base.html" %}
 
-{% block title %}Order Confirmed - AleMart{% endblock %}
+{% block title %}Order Confirmed - Merchies{% endblock %}
 
 {% block buyer_content %}
 <div class="max-w-3xl mx-auto px-4 sm:px-6 py-8">
     <!-- Success Hero Section -->
     <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 bg-success rounded-full mb-4 shadow-lg shadow-accent/20">
+        <div class="inline-flex items-center justify-center w-16 h-16 bg-success rounded-full mb-4 shadow-lg shadow-success/20">
             <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
         </div>
         <h1 class="text-2xl font-bold text-primary mb-1 tracking-tight">Order Confirmed</h1>
@@ -62,7 +62,7 @@
                     </div>
                     <div class="pt-3 border-t border-border-main flex justify-between items-center mt-3">
                         <span class="text-base font-bold text-text-main">Total Paid</span>
-                        <span class="text-xl font-bold text-primary">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
+                        <span class="text-xl font-bold text-accent">{{ "{:,.0f}".format(order.total_amount) }} ETB</span>
                     </div>
                 </div>
             </div>
@@ -108,7 +108,7 @@
                             <span class="text-xs">+251 {{ seller_phone }}</span>
                         </div>
                     {% else %}
-                        <p class="font-bold text-base">AleMart Seller</p>
+                        <p class="font-bold text-base">Merchies Seller</p>
                         <p class="text-xs opacity-90 italic">Contact details will be shared via SMS.</p>
                     {% endif %}
                 </div>

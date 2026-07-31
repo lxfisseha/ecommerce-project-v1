@@ -1,20 +1,19 @@
 {% extends "seller_base.html" %}
 
-{% block title %}Profile - AleMart{% endblock %}
+{% block title %}Profile - Merchies{% endblock %}
 
 {% block seller_content %}
-<div class="py-8">
-    <div class="max-w-4xl mx-auto px-4 sm:px-6">
+<div class="max-w-4xl mx-auto">
         <div class="mb-8">
             <h1 class="text-2xl font-bold text-text-main">Seller Profile</h1>
             <p class="text-text-muted text-sm mt-1">Manage your store and business contact information.</p>
             {% if error %}
-            <div class="mt-4 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
+            <div class="mt-4 p-4 bg-danger/5 text-danger rounded-lg border border-danger/20">
                 {{ error }}
             </div>
             {% endif %}
             {% if message %}
-            <div class="mt-4 p-4 bg-green-50 text-green-700 rounded-lg border border-green-200">
+            <div class="mt-4 p-4 bg-success/10 text-success-dark rounded-lg border border-success/20">
                 {{ message }}
             </div>
             {% endif %}
@@ -107,6 +106,5 @@
                 </button>
             </div>
         </form>
-    </div>
 </div>
 {% endblock %}

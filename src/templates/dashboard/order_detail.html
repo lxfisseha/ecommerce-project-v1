@@ -1,10 +1,10 @@
 {% extends "seller_base.html" %}
 
-{% block title %}Order Details - AleMart{% endblock %}
+{% block title %}Order Details - Merchies{% endblock %}
 
 {% block seller_content %}
 <div class="mb-8">
-    <a href="/dashboard/orders" class="text-text-muted hover:text-primary text-xs font-bold flex items-center gap-2 mb-4 group transition-colors">
+    <a href="/dashboard/orders" class="text-text-muted hover:text-primary text-xs font-bold flex items-center gap-2 mb-4 group transition-colors print:hidden">
         <svg class="w-4 h-4 transition-transform group-hover:-translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
         Back to Orders
     </a>
@@ -13,25 +13,31 @@
             <h1 class="text-2xl font-bold text-text-main">Order {{ order.order_id }}</h1>
             <p class="text-text-muted text-sm">Placed on {{ order.created_at.strftime('%B %d, %Y at %H:%M') }}</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 print:hidden">
             {% if order.status == 'pending' %}
-            <span class="px-4 py-1.5 bg-yellow-50 text-yellow-700 text-xs font-bold rounded-full border border-yellow-100 uppercase tracking-wider">Pending</span>
+            <span class="px-4 py-1.5 bg-warning/10 text-warning text-xs font-bold rounded-full border border-warning/20 uppercase tracking-wider">Pending</span>
             {% elif order.status == 'shipped' %}
-            <span class="px-4 py-1.5 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-100 uppercase tracking-wider">Shipped</span>
+            <span class="px-4 py-1.5 bg-info/10 text-info text-xs font-bold rounded-full border border-info/20 uppercase tracking-wider">Shipped</span>
             {% elif order.status == 'completed' %}
-            <span class="px-4 py-1.5 bg-green-50 text-green-700 text-xs font-bold rounded-full border border-green-100 uppercase tracking-wider">Completed</span>
+            <span class="px-4 py-1.5 bg-success/10 text-success text-xs font-bold rounded-full border border-success/20 uppercase tracking-wider">Completed</span>
             {% else %}
-            <span class="px-4 py-1.5 bg-red-50 text-red-700 text-xs font-bold rounded-full border border-red-100 uppercase tracking-wider">{{ order.status }}</span>
+            <span class="px-4 py-1.5 bg-danger/10 text-danger text-xs font-bold rounded-full border border-danger/20 uppercase tracking-wider">{{ order.status }}</span>
             {% endif %}
         </div>
     </div>
 </div>
 
 {% if error %}
-<div class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 text-sm font-medium">
+<div class="mb-6 p-4 bg-danger/5 border-l-4 border-danger text-danger text-sm font-medium print:hidden">
     {{ error }}
 </div>
 {% endif %}
+
+<!-- Print-only Slip Header -->
+<div class="hidden print:block mb-8 border-b-2 border-primary pb-4">
+    <h2 class="text-xl font-bold text-primary">Merchies</h2>
+    <p class="text-sm text-text-muted">Packing Slip</p>
+</div>
 
 <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
     <!-- Left Column: Details -->
@@ -100,7 +106,7 @@
     </div>
 
     <!-- Right Column: Status Actions -->
-    <div class="lg:col-span-4 space-y-6">
+    <div class="lg:col-span-4 space-y-6 print:hidden">
         <div class="bg-white border border-border-main rounded-2xl p-6 shadow-sm">
             <h3 class="text-base font-bold text-text-main mb-6">Update Status</h3>
             
@@ -119,14 +125,14 @@
                         <button type="submit" name="new_status" value="shipped" class="w-full py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition-all shadow-md">
                             Mark as Shipped
                         </button>
-                        <button type="submit" name="new_status" value="cancelled" class="w-full py-3 bg-white text-red-600 border border-red-100 text-sm font-bold rounded-xl hover:bg-red-50 transition-all">
+                        <button type="submit" name="new_status" value="cancelled" class="w-full py-3 bg-white text-danger border border-danger/20 text-sm font-bold rounded-xl hover:bg-danger/5 transition-all">
                             Cancel Order
                         </button>
                         {% elif order.status == 'shipped' %}
                         <button type="submit" name="new_status" value="completed" class="w-full py-3 bg-primary text-white text-sm font-bold rounded-xl hover:bg-primary-hover transition-all shadow-md">
                             Mark as Completed
                         </button>
-                        <button type="submit" name="new_status" value="cancelled" class="w-full py-3 bg-white text-red-600 border border-red-100 text-sm font-bold rounded-xl hover:bg-red-50 transition-all">
+                        <button type="submit" name="new_status" value="cancelled" class="w-full py-3 bg-white text-danger border border-danger/20 text-sm font-bold rounded-xl hover:bg-danger/5 transition-all">
                             Cancel Order
                         </button>
                         {% endif %}
@@ -144,9 +150,9 @@
             </div>
         </div>
 
-        <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6">
-            <h4 class="text-sm font-bold text-blue-800 mb-2">Internal Note</h4>
-            <p class="text-xs text-blue-700 leading-relaxed">
+        <div class="bg-info/10 border border-info/20 rounded-2xl p-6">
+            <h4 class="text-sm font-bold text-info-dark mb-2">Internal Note</h4>
+            <p class="text-xs text-info-dark leading-relaxed">
                 Contact the buyer at <span class="font-bold">+251 {{ buyer_phone }}</span> before shipping to confirm their availability.
             </p>
         </div>

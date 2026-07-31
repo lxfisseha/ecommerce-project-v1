@@ -5,6 +5,9 @@ module.exports = {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ['Anton SC', 'Inter', 'sans-serif'],
+      },
       colors: {
         primary: {
           DEFAULT: '#333333',
@@ -12,6 +15,7 @@ module.exports = {
         },
         accent: '#963484',
         danger: '#C44536',
+        warning: '#B45309',
         success: {
           DEFAULT: '#4F8A65',
           dark: '#3A694B',

@@ -28,10 +28,10 @@
                        placeholder="912345678"
                        value="{{ phone or '' }}"
                        required
-                       class="w-full pl-14 pr-4 py-[14px] rounded-lg border {% if error %}border-red-500{% else %}border-border-main{% endif %} bg-bg-alt text-text-main text-base placeholder-text-light focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
+                       class="w-full pl-14 pr-4 py-[14px] rounded-lg border {% if error %}border-danger{% else %}border-border-main{% endif %} bg-bg-alt text-text-main text-base placeholder-text-light focus:ring-2 focus:ring-primary focus:border-primary outline-none transition-all">
             </div>
             {% if error %}
-                <p id="error-message" class="text-red-600 text-sm mt-1">{{ error }}</p>
+                <p id="error-message" class="text-danger text-sm mt-1">{{ error }}</p>
             {% endif %}
         </div>
 

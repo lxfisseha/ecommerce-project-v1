@@ -1,11 +1,11 @@
 {% extends "buyer_base.html" %}
 
-{% block title %}Welcome to AleMart{% endblock %}
+{% block title %}Welcome to Merchies{% endblock %}
 
 {% block buyer_content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
     <!-- Hero Section (Redesigned & Contextual) -->
-    <div class="relative min-h-[420px] sm:min-h-[520px] rounded-[32px] overflow-hidden mb-16 bg-text-main flex items-center shadow-2xl">
+    <div class="relative rounded-[32px] overflow-hidden mb-12 bg-text-main flex items-center py-12 sm:py-16 shadow-2xl">
         {% if seller and seller.featured_image %}
         <!-- Background Image with Modern Mask -->
         <div class="absolute inset-0 opacity-30">
@@ -15,26 +15,14 @@
                  class="w-full h-full object-cover scale-110 blur-[1px]">
         </div>
         {% endif %}
-        
-        <!-- Animated Decorative Elements -->
-        <div class="absolute -top-24 -right-24 w-96 h-96 bg-primary/20 rounded-full blur-[120px]"></div>
-        <div class="absolute -bottom-24 -left-24 w-96 h-96 bg-info-dark/10 rounded-full blur-[120px]"></div>
 
         <!-- Content Overlay -->
         <div class="relative z-20 w-full px-6 sm:px-16 flex flex-col items-center sm:items-start text-center sm:text-left">
-            <div class="inline-flex items-center gap-2 px-3 py-1 bg-accent/10 border border-accent rounded-full mb-6">
-                <span class="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-                <span class="text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase">Trusted Ethiopian Seller</span>
-            </div>
             
-            <h1 class="text-4xl sm:text-6xl font-bold text-white mb-6 leading-[1.1] tracking-tight max-w-2xl">
-                Wear Your <span class="text-accent">Story</span>
+            <h1 class="font-display uppercase text-left tracking-wide text-[40px] sm:text-6xl text-white mb-8 leading-[1.1] max-w-2xl">
+                 Discover premium designs inspired by the <span class="text-fuchsia-400 ">stories</span> you love. 
             </h1>
-            
-            <p class="text-lg sm:text-xl text-white/70 mb-10 max-w-lg font-medium leading-relaxed">
-                Discover premium designs inspired by the stories, worlds, and moments you love.
-            </p>
-            
+
             <!-- Modern Search Hub -->
             <div class="w-full max-w-xl">
                 <form action="/shop" method="GET" class="relative group">
@@ -58,10 +46,10 @@
                     </div>
                 </form>
                 <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-4 text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
-                    <span>Popular:</span>
-                    <a href="/shop?q=anime" class="text-white/60 hover:text-accent transition-colors">#Anime</a>
-                    <a href="/shop?q=music" class="text-white/60 hover:text-accent transition-colors">#Music</a>
-                    <a href="/shop?q=movies" class="text-white/60 hover:text-accent transition-colors">#Movies</a>
+                    <span class="text-white/70">Popular:</span>
+                    <a href="/shop?q=anime" class="text-white/90 hover:text-accent transition-colors">#Anime</a>
+                    <a href="/shop?q=music" class="text-white/90 hover:text-accent transition-colors">#Music</a>
+                    <a href="/shop?q=movies" class="text-white/90 hover:text-accent transition-colors">#Movies</a>
                 </div>
             </div>
         </div>

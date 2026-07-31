@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}AleMart{% endblock %}</title>
+    <title>{% block title %}Merchies{% endblock %}</title>
     
     <link rel="stylesheet" href="/static/css/output.css">
     
@@ -12,7 +12,7 @@
 <body class="bg-bg-main min-h-screen relative overflow-x-hidden flex flex-col">
 
     <!-- Global Background Decorations -->
-    <div class="fixed inset-0 pointer-events-none overflow-hidden z-[-1]">
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-[-1] print:hidden">
         <div class="blur-decoration absolute -top-[102px] -left-[128px] w-[512px] h-[410px] bg-primary/5 rounded-full blur-[100px]"></div>
         <div class="blur-decoration absolute bottom-0 -right-[128px] w-[512px] h-[410px] bg-info-dark/5 rounded-full blur-[100px]"></div>
     </div>
@@ -23,17 +23,7 @@
     </main>
 
     <!-- Global Footer -->
-    {% block footer %}
-    <footer class="bg-bg-muted border-t border-border-main py-8 px-6 mt-auto">
-        <div class="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <div class="flex flex-col md:flex-row items-center gap-2 md:gap-4 text-center md:text-left">
-                
-                <span class="text-text-muted text-sm"></span>
-            </div>
-
-        </div>
-    </footer>
-    {% endblock %}
+    {% block footer %}{% endblock %}
 
     {% block scripts %}
     <script src="https://unpkg.com/htmx.org@1.9.10"></script>

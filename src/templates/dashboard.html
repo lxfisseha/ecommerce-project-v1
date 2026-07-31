@@ -1,6 +1,6 @@
 {% extends "seller_base.html" %}
 
-{% block title %}Dashboard - AleMart{% endblock %}
+{% block title %}Dashboard - Merchies{% endblock %}
 
 {% block seller_content %}
 <div class="mb-8">
@@ -18,7 +18,7 @@
         </div>
         <div class="flex items-baseline gap-2">
             <span class="text-3xl font-bold text-text-main">{{ total_orders }}</span>
-            <span class="text-xs font-medium text-green-600">+12%</span>
+            <span class="text-xs font-medium text-success">+12%</span>
         </div>
     </div>
     
@@ -37,7 +37,7 @@
 
     <div class="bg-white p-6 rounded-2xl border border-border-main shadow-sm">
         <div class="flex items-center gap-4 mb-4">
-            <div class="p-2 bg-yellow-50 text-yellow-600 rounded-lg">
+            <div class="p-2 bg-warning/10 text-warning rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
             </div>
             <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Pending</span>
@@ -47,13 +47,13 @@
 
     <div class="bg-white p-6 rounded-2xl border border-border-main shadow-sm">
         <div class="flex items-center gap-4 mb-4">
-            <div class="p-2 bg-blue-50 text-blue-600 rounded-lg">
+            <div class="p-2 bg-info/10 text-info rounded-lg">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
             </div>
             <span class="text-xs font-bold text-text-muted uppercase tracking-wider">Active Products</span>
         </div>
         <div class="text-3xl font-bold text-text-main">{{ active_products_count }}</div>
-        <p class="text-[10px] text-green-600 font-bold uppercase mt-1">Items in stock</p>
+        <p class="text-[10px] text-success font-bold uppercase mt-1">Items in stock</p>
     </div>
 </div>
 
@@ -93,13 +93,13 @@
                     </td>
                     <td class="px-6 py-4 text-center">
                         {% if order.status == 'pending' %}
-                        <span class="px-2.5 py-1 bg-yellow-50 text-yellow-700 text-[10px] font-bold rounded-full border border-yellow-100 uppercase">Pending</span>
+                        <span class="px-2.5 py-1 bg-warning/10 text-warning text-[10px] font-bold rounded-full border border-warning/20 uppercase">Pending</span>
                         {% elif order.status == 'shipped' %}
-                        <span class="px-2.5 py-1 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-full border border-blue-100 uppercase">Shipped</span>
+                        <span class="px-2.5 py-1 bg-info/10 text-info text-[10px] font-bold rounded-full border border-info/20 uppercase">Shipped</span>
                         {% elif order.status == 'completed' %}
-                        <span class="px-2.5 py-1 bg-green-50 text-green-700 text-[10px] font-bold rounded-full border border-green-100 uppercase">Completed</span>
+                        <span class="px-2.5 py-1 bg-success/10 text-success text-[10px] font-bold rounded-full border border-success/20 uppercase">Completed</span>
                         {% else %}
-                        <span class="px-2.5 py-1 bg-red-50 text-red-700 text-[10px] font-bold rounded-full border border-red-100 uppercase">{{ order.status }}</span>
+                        <span class="px-2.5 py-1 bg-danger/10 text-danger text-[10px] font-bold rounded-full border border-danger/20 uppercase">{{ order.status }}</span>
                         {% endif %}
                     </td>
                 </tr>

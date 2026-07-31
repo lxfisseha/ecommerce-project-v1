@@ -1,6 +1,6 @@
 {% extends "buyer_base.html" %}
 
-{% block title %}{{ product.name }} - AleMart{% endblock %}
+{% block title %}{{ product.name }} - Merchies{% endblock %}
 
 {% block mobile_footer %}{% endblock %}
 
@@ -118,7 +118,7 @@
                 {% endif %}
 
                 <!-- Bento-style Info Cards (Figma 4:3101) -->
-                <div class="grid grid-cols-2 gap-3 pt-2">
+                <div class="grid grid-cols-2 gap-3">
                     <div class="bg-bg-alt border border-border-main rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
                         <svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
                         <span class="text-[9px] sm:text-[10px] text-text-muted font-medium uppercase tracking-wider">Delivery</span>
@@ -133,7 +133,7 @@
 
                 <!-- Quantity Selector & Main Action -->
                 <div>
-                    <label class="block text-text-main pt-2 text-sm font-semibold mb-3">Quantity & Action</label>
+                    <label class="block text-text-main text-sm font-semibold mb-3">Quantity</label>
                     <div class="flex items-center gap-2 sm:gap-3">
                         <div class="flex items-center bg-bg-alt border border-border-main rounded-xl p-0.5 h-[52px] sm:h-[58px]">
                             <button onclick="updateQty(-1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-text-main hover:bg-white rounded-lg transition-colors font-bold text-lg">-</button>
@@ -141,7 +141,7 @@
                             <button onclick="updateQty(1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-text-main hover:bg-white rounded-lg transition-colors font-bold text-lg">+</button>
                         </div>
                         
-                        <button onclick="goToCheckout()" class="flex-grow bg-primary text-white h-[52px] sm:h-[58px] rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 hover:bg-primary-hover transition-all active:scale-95 shadow-lg shadow-primary/20 px-4 sm:px-6">
+                        <button onclick="goToCheckout()" class="flex-grow bg-accent text-white h-[52px] sm:h-[58px] rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 hover:bg-primary-hover transition-all active:scale-95 shadow-lg shadow-accent/20 px-4 sm:px-6">
                             <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                             <span>Buy Now</span>
                         </button>
@@ -152,7 +152,7 @@
     </div>
 
     <!-- Details Section (Figma 2:456) -->
-    <div class="mt-16 lg:mt-4 border-t border-border-main pt-12">
+    <div class="mt-16 border-t border-border-main pt-12">
         <div class="flex gap-6 border-b border-border-main mb-8 overflow-x-auto scrollbar-hide">
             <button id="tab-btn-terms" onclick="switchTab('terms')" class="pb-4 border-b-2 border-primary text-primary font-bold text-sm whitespace-nowrap transition-all">Terms And Conditions</button>
             <button id="tab-btn-seller" onclick="switchTab('seller')" class="pb-4 border-b-2 border-transparent text-text-muted font-medium text-sm hover:text-primary transition-all whitespace-nowrap">Seller Information</button>
@@ -209,7 +209,7 @@
 <!-- Mobile Sticky Action Bar (Figma 4:3134) -->
 <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border-main z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
     <div class="p-4 flex">
-        <button onclick="goToCheckout()" class="h-14 flex-1 bg-primary text-white font-bold rounded-xl flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all">
+        <button onclick="goToCheckout()" class="h-14 flex-1 bg-accent text-white font-bold rounded-xl flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all">
             Buy Now
         </button>
     </div>

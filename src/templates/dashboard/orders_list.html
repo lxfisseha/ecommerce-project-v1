@@ -1,6 +1,6 @@
 {% extends "seller_base.html" %}
 
-{% block title %}Manage Orders - AleMart{% endblock %}
+{% block title %}Manage Orders - Merchies{% endblock %}
 
 {% block seller_content %}
 <div class="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -55,13 +55,13 @@
                     </td>
                     <td class="px-6 py-4 text-center">
                         {% if order.status == 'pending' %}
-                        <span class="px-2 py-0.5 bg-yellow-50 text-yellow-700 text-[10px] font-bold rounded-full border border-yellow-100 uppercase">Pending</span>
+                        <span class="px-2 py-0.5 bg-warning/10 text-warning text-[10px] font-bold rounded-full border border-warning/20 uppercase">Pending</span>
                         {% elif order.status == 'shipped' %}
-                        <span class="px-2 py-0.5 bg-blue-50 text-blue-700 text-[10px] font-bold rounded-full border border-blue-100 uppercase">Shipped</span>
+                        <span class="px-2 py-0.5 bg-info/10 text-info text-[10px] font-bold rounded-full border border-info/20 uppercase">Shipped</span>
                         {% elif order.status == 'completed' %}
-                        <span class="px-2 py-0.5 bg-green-50 text-green-700 text-[10px] font-bold rounded-full border border-green-100 uppercase">Completed</span>
+                        <span class="px-2 py-0.5 bg-success/10 text-success text-[10px] font-bold rounded-full border border-success/20 uppercase">Completed</span>
                         {% else %}
-                        <span class="px-2 py-0.5 bg-red-50 text-red-700 text-[10px] font-bold rounded-full border border-red-100 uppercase">{{ order.status }}</span>
+                        <span class="px-2 py-0.5 bg-danger/10 text-danger text-[10px] font-bold rounded-full border border-danger/20 uppercase">{{ order.status }}</span>
                         {% endif %}
                     </td>
                     <td class="px-6 py-4 text-right">
