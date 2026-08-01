@@ -19,6 +19,8 @@
 
     <!-- Right: Actions -->
     <div class="flex-1 flex justify-end items-center gap-2 sm:gap-4">
+        {% include "buyer/_cart_badge.html" %}
+
         <!-- Seller Login Button -->
         <a href="/auth/login" class="hidden md:flex px-3 sm:px-4 py-2 bg-primary text-white rounded-lg text-xs sm:text-sm font-medium hover:bg-primary-hover transition-colors whitespace-nowrap">
             Seller Hub
@@ -38,6 +40,9 @@
     <a href="/" class="{% if request.url.path == '/' %}text-primary font-semibold{% else %}text-text-muted font-medium{% endif %} text-lg break-words">Home</a>
     <a href="/shop" class="{% if request.url.path == '/shop' %}text-primary font-semibold{% else %}text-text-muted font-medium{% endif %} text-lg break-words">Shop</a>
     <a href="/support" class="{% if request.url.path == '/support' %}text-primary font-semibold{% else %}text-text-muted font-medium{% endif %} text-lg break-words">Support</a>
+    <a href="/cart" class="{% if request.url.path == '/cart' %}text-primary font-semibold{% else %}text-text-muted font-medium{% endif %} text-lg break-words">
+        Cart{% if cart_count %} ({{ cart_count }}){% endif %}
+    </a>
     <a href="/auth/login" class="text-text-muted font-medium text-lg break-words">
         Seller Hub
     </a>
@@ -70,6 +75,11 @@
         </svg>
         <span class="text-[10px] font-bold">Support</span>
     </a>
+    <a href="/cart" class="flex flex-col items-center gap-1 {% if request.url.path == '/cart' %}text-primary{% else %}text-text-muted{% endif %}">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+        <span class="text-[10px] font-bold">Cart</span>
+    </a>
 </footer>
 {% endblock %}
 
@@ -77,6 +87,72 @@
     function toggleMobileMenu() {
         const menu = document.getElementById('mobile-menu');
         menu.classList.toggle('hidden');
+    }
+
+    // Detail-page Add to Cart buttons (they contain .btn-checkmark) use a
+    // JS-driven spinner/checkmark feedback that never serializes innerHTML, so
+    // htmx's transient request classes can't get baked in and leave the spinner
+    // visible. The plain listing button keeps the original checkmark flash.
+    function isDetailAddButton(btn) {
+        return !!(btn && btn.hasAttribute('data-flash') && btn.querySelector('.btn-checkmark'));
+    }
+
+    function resetFlashButton(evt) {
+        const btn = evt.detail && evt.detail.elt;
+        if (!isDetailAddButton(btn)) return;
+        btn.classList.remove('is-adding', 'is-flashing');
+        btn.disabled = false;
+        btn.classList.remove('htmx-request');
+        btn.querySelectorAll('.htmx-request').forEach(el => el.classList.remove('htmx-request'));
+    }
+
+    document.body.addEventListener('htmx:beforeRequest', function (evt) {
+        const btn = evt.detail.elt;
+        if (!isDetailAddButton(btn)) return;
+        btn.classList.add('is-adding');
+        btn.disabled = true;
+    });
+
+    document.body.addEventListener('htmx:afterRequest', function (evt) {
+        const btn = evt.detail.elt;
+        if (!btn || !btn.hasAttribute('data-flash')) return;
+        if (isDetailAddButton(btn)) {
+            resetFlashButton(evt);
+            if (!evt.detail.successful) return;
+            btn.classList.add('is-flashing');
+            btn.disabled = true;
+            clearTimeout(btn._flashTimer);
+            btn._flashTimer = setTimeout(() => {
+                btn.classList.remove('is-flashing');
+                btn.disabled = false;
+            }, 1200);
+        } else if (evt.detail.successful) {
+            flashAdded(btn);
+        }
+    });
+
+    // htmx can skip afterRequest if the response handler throws; reset anyway.
+    document.body.addEventListener('htmx:onLoadError', resetFlashButton);
+    document.body.addEventListener('htmx:sendError', resetFlashButton);
+    document.body.addEventListener('htmx:sendAbort', resetFlashButton);
+    document.body.addEventListener('htmx:timeout', resetFlashButton);
+
+    // Original checkmark flash for the plain listing Add button (icon-only, so
+    // the captured innerHTML never contains transient request classes).
+    function flashAdded(btn) {
+        if (!btn) return;
+        if (btn.dataset.original === undefined) btn.dataset.original = btn.innerHTML;
+        btn.disabled = true;
+        btn.style.backgroundColor = '#4F8A65';
+        btn.style.color = '#ffffff';
+        btn.innerHTML = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>';
+        clearTimeout(btn._flashTimer);
+        btn._flashTimer = setTimeout(() => {
+            btn.innerHTML = btn.dataset.original;
+            btn.style.backgroundColor = '';
+            btn.style.color = '';
+            btn.disabled = false;
+        }, 1200);
     }
 </script>
 {% endblock %}

@@ -1,0 +1,15 @@
+{% extends "buyer_base.html" %}
+
+{% block title %}Your Cart - Merchies{% endblock %}
+
+{% block buyer_content %}
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-8">
+    <div class="flex items-center gap-3 mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-text-main">Your Cart</h1>
+        {% if items %}
+        <span class="px-2.5 py-0.5 bg-primary/10 text-primary text-xs font-bold rounded-full border border-primary/25">{{ items|sum(attribute='qty') }} item(s)</span>
+        {% endif %}
+    </div>
+    {% include "buyer/_cart_content.html" %}
+</div>
+{% endblock %}

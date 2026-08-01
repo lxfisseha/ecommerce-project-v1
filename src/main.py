@@ -39,7 +39,20 @@ app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+class CachedStaticFiles(StaticFiles):
+    """Static files are referenced with versioned query strings (?v=...), so they
+    can be cached immutably. ETag/Last-Modified revalidation still applies to
+    any unversioned request."""
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        response = super().file_response(full_path, stat_result, scope, status_code)
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
+app.mount("/static", CachedStaticFiles(directory=static_dir), name="static")
 
 
 # Global Exception Handler

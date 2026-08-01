@@ -25,7 +25,7 @@ A digital storefront and order management system for Ethiopian sellers on platfo
 - **Phone Validation**: Must be Ethiopian format (starts with `09` or `07`, exactly 10 digits).
 - **Order IDs**: Custom sequential format.
 - **Status Flow**: No backward transitions once an order is `completed` or `cancelled`.
-- **OTP**: Expires in 5 minutes; rate-limited to 5 requests per hour.
+- **OTP**: Expires in 5 minutes; rate-limited to 5 requests per minute.
 
 ## Out of Scope (Do NOT implement in v1)
 - Payment integration (Telebirr, Chapa, etc.)

@@ -44,10 +44,11 @@
                         <span class="text-sm font-medium text-text-main">{{ order.buyer_name }}</span>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="max-w-[200px] truncate text-sm text-text-main font-medium">{{ order.product_name }}</div>
+                        {% set first_item = order.items[0] if order.items else none %}
+                        <div class="max-w-[200px] truncate text-sm text-text-main font-medium">{{ first_item.product_name if first_item else '—' }}</div>
                         <p class="text-[10px] text-text-muted">
-                            {% if order.attributes_selected %}{{ order.attributes_selected }} • {% endif %}
-                            Qty: {{ order.quantity }}
+                            {% if order.items|length > 1 %}+{{ order.items|length - 1 }} more • {% endif %}
+                            Qty: {{ order.items|sum(attribute='quantity') }}
                         </p>
                     </td>
                     <td class="px-6 py-4 text-right">

@@ -1,4 +1,5 @@
 import math
+import anyio
 from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -161,7 +162,9 @@ async def add_product(
     
     try:
         for content, tag in image_data:
-            image_url = CloudinaryService.upload_image(content, eager=EAGER)
+            image_url = await anyio.to_thread.run_sync(
+                lambda: CloudinaryService.upload_image(content, eager=EAGER)
+            )
             new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
             db.add(new_image)
         
@@ -241,7 +244,9 @@ async def edit_product(
         for old_img in product.images:
             if old_img.image_url:
                 try:
-                    CloudinaryService.delete_image(old_img.image_url)
+                    await anyio.to_thread.run_sync(
+                        lambda: CloudinaryService.delete_image(old_img.image_url)
+                    )
                 except Exception:
                     pass
         product.images.clear()
@@ -251,7 +256,9 @@ async def edit_product(
             if len(content) > MAX_IMAGE_SIZE:
                 return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", product=product)
             try:
-                image_url = CloudinaryService.upload_image(content, eager=EAGER)
+                image_url = await anyio.to_thread.run_sync(
+                    lambda: CloudinaryService.upload_image(content, eager=EAGER)
+                )
             except Exception as e:
                 return _form_response(request, f"Failed to upload image {img.filename}: {str(e)}. Please try again.", product=product)
             # Use new index starting from 0 since we cleared existing images

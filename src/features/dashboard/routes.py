@@ -1,6 +1,7 @@
 ﻿from fastapi import APIRouter, Request, Depends, HTTPException, Form, UploadFile, File
 from fastapi.responses import RedirectResponse, HTMLResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+import anyio
 from src.database import get_session
 from src.dependencies import require_current_seller
 from src.templates_config import templates
@@ -14,7 +15,9 @@ from src.utils.phone import validate_ethiopian_phone, normalize_phone
 from src.utils.storage import CloudinaryService
 from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select, func, desc
+from sqlalchemy.orm import selectinload
 from decimal import Decimal
+import time
 
 router = APIRouter()
 
@@ -22,6 +25,50 @@ EAGER = [
     {"width": 800, "height": 800, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
     {"width": 1200, "crop": "scale", "quality": "auto:eco", "fetch_format": "auto"},
 ]
+
+# Short TTL cache for the global dashboard aggregate stats. The values only
+# change when new orders/products are created, so a brief cache avoids running
+# 4 aggregate scans on every dashboard load. Cleared between tests via
+# _reset_dashboard_stats_cache().
+_STATS_CACHE_TTL = 30.0
+_stats_cache: dict = {"ts": 0.0, "value": None}
+
+
+def _reset_dashboard_stats_cache() -> None:
+    _stats_cache["ts"] = 0.0
+    _stats_cache["value"] = None
+
+
+async def _get_dashboard_stats(db: AsyncSession) -> dict:
+    now = time.monotonic()
+    cached = _stats_cache["value"]
+    if cached is not None and (now - _stats_cache["ts"]) < _STATS_CACHE_TTL:
+        return cached
+
+    total_orders = (
+        await db.execute(select(func.count(Order.id)))
+    ).scalar() or 0
+    total_sales = (
+        await db.execute(
+            select(func.sum(Order.total_amount)).where(Order.status == "completed")
+        )
+    ).scalar() or Decimal("0.0")
+    pending_orders = (
+        await db.execute(select(func.count(Order.id)).where(Order.status == "pending"))
+    ).scalar() or 0
+    active_products_count = (
+        await db.execute(select(func.count(Product.id)).where(Product.in_stock == True))
+    ).scalar() or 0
+
+    value = {
+        "total_orders": total_orders,
+        "total_sales": total_sales,
+        "pending_orders": pending_orders,
+        "active_products_count": active_products_count,
+    }
+    _stats_cache["ts"] = now
+    _stats_cache["value"] = value
+    return value
 
 def _safe_decrypt(data):
     try:
@@ -35,25 +82,11 @@ async def get_dashboard(
     db: AsyncSession = Depends(get_session),
     seller: Seller = Depends(require_current_seller)
 ):
-    # Calculate Stats
-    # 1. Total Orders
-    total_orders_stmt = select(func.count(Order.id))
-    total_orders = (await db.execute(total_orders_stmt)).scalar() or 0
-
-    # 2. Total Sales (Completed only)
-    total_sales_stmt = select(func.sum(Order.total_amount)).where(Order.status == "completed")
-    total_sales = (await db.execute(total_sales_stmt)).scalar() or Decimal("0.0")
-
-    # 3. Pending Orders
-    pending_orders_stmt = select(func.count(Order.id)).where(Order.status == "pending")
-    pending_orders = (await db.execute(pending_orders_stmt)).scalar() or 0
-
-    # 4. Active Products (Items currently marked as in stock)
-    active_products_stmt = select(func.count(Product.id)).where(Product.in_stock == True)
-    active_products_count = (await db.execute(active_products_stmt)).scalar() or 0
+    # Calculate Stats (cached; recomputed when stale)
+    stats = await _get_dashboard_stats(db)
 
     # Recent Orders
-    recent_orders_stmt = select(Order).order_by(desc(Order.created_at)).limit(5)
+    recent_orders_stmt = select(Order).order_by(desc(Order.created_at)).limit(5).options(selectinload(Order.items))
     recent_orders = (await db.execute(recent_orders_stmt)).scalars().all()
 
     return templates.TemplateResponse(
@@ -63,10 +96,10 @@ async def get_dashboard(
             "request": request,
             "seller_name": f"{seller.first_name} {seller.last_name}",
             "store_name": seller.store_name,
-            "total_orders": total_orders,
-            "total_sales": total_sales,
-            "pending_orders": pending_orders,
-            "active_products_count": active_products_count,
+            "total_orders": stats["total_orders"],
+            "total_sales": stats["total_sales"],
+            "pending_orders": stats["pending_orders"],
+            "active_products_count": stats["active_products_count"],
             "recent_orders": recent_orders
         },
     )
@@ -96,6 +129,7 @@ async def list_orders(
         statement = statement.where(Order.status == status)
     
     statement = statement.order_by(desc(Order.created_at)).offset(offset).limit(per_page)
+    statement = statement.options(selectinload(Order.items))
     result = await db.execute(statement)
     orders = result.scalars().all()
 
@@ -121,7 +155,8 @@ async def order_detail(
     seller: Seller = Depends(require_current_seller)
 ):
     
-    order = await db.get(Order, order_id)
+    order_stmt = select(Order).where(Order.id == order_id).options(selectinload(Order.items))
+    order = (await db.execute(order_stmt)).scalar_one_or_none()
     if not order:
         raise HTTPException(status_code=404, detail="Order not found")
     
@@ -130,7 +165,7 @@ async def order_detail(
     delivery_address = _safe_decrypt(order.delivery_address)
     
     # Fetch audit logs
-    logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at)
+    logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at).limit(100)
     logs = (await db.execute(logs_stmt)).scalars().all()
     
     return templates.TemplateResponse(
@@ -166,12 +201,13 @@ async def update_order_status(
         return RedirectResponse(url=f"/dashboard/orders/{order_id}", status_code=303)
     except ValueError as e:
         # Handle invalid transitions
-        order = await db.get(Order, order_id)
+        order_stmt = select(Order).where(Order.id == order_id).options(selectinload(Order.items))
+        order = (await db.execute(order_stmt)).scalar_one_or_none()
         buyer_phone = _safe_decrypt(order.buyer_phone) if order else "Unknown"
         delivery_address = _safe_decrypt(order.delivery_address) if order else "Unknown"
         
         # Fetch audit logs
-        logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at)
+        logs_stmt = select(OrderStatusLog).where(OrderStatusLog.order_id == order_id).order_by(OrderStatusLog.changed_at).limit(100)
         logs = (await db.execute(logs_stmt)).scalars().all()
         
         return templates.TemplateResponse(
@@ -302,14 +338,13 @@ async def update_profile(
                     "error": "Featured image exceeds 5MB limit."
                 }
             )
-        image_url = CloudinaryService.upload_image(content, eager=EAGER)
+        image_url = await anyio.to_thread.run_sync(lambda: CloudinaryService.upload_image(content, eager=EAGER))
         seller.featured_image = image_url
 
     seller.updated_at = utc_now()
     
     db.add(seller)
     await db.commit()
-    await db.refresh(seller)
 
     # Refresh session name fields so product routes see the update
     request.session["seller_name"] = f"{seller.first_name} {seller.last_name}"

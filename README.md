@@ -12,7 +12,7 @@ A production-grade e-commerce backend for Ethiopian merchants. phone/OTP authent
 
 | Area | Capabilities |
 |------|-------------|
-| **Auth** | Passwordless OTP login via phone + SMS. Session cookies (7 day expiry). Rate-limited (6 POST/min). |
+| **Auth** | Passwordless OTP login via phone + SMS. Session cookies (7 day expiry). Rate-limited (5 POST/min). |
 | **Products** | Full CRUD with image upload, rich attributes (brand, color, size, weight), tag-based categorization, stock toggle. |
 | **Shop** | Public product grid with search, sort (price/name/newest), tag filter, pagination (12/page). Out-of-stock items hidden. |
 | **Checkout** | Anonymous single-item checkout with phone/name/address capture. PII encrypted at rest (AES-256-GCM). |

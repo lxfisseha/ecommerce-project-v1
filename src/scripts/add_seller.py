@@ -4,6 +4,11 @@ from src.features.auth.models import Seller
 from src.utils.crypto import encrypt_phone
 from sqlmodel import select
 
+DEFAULT_FEATURED_IMAGE = (
+    "https://images.unsplash.com/photo-1547949003-9792a18a2601"
+    "?auto=format&fit=crop&q=80&w=1600"
+)
+
 async def add_sample_seller():
     async with async_session_maker() as session:
         # Phone to add
@@ -28,6 +33,8 @@ async def add_sample_seller():
             print(f"Updating existing seller '{seller.store_name}'...")
             seller.phone = encrypt_phone(phone_normalized)
             seller.phone_hash = phone_h
+            seller.featured_image = DEFAULT_FEATURED_IMAGE
+            seller.business_contact_number = phone_normalized
             session.add(seller)
         else:
             print("Creating new sample seller...")
@@ -37,7 +44,9 @@ async def add_sample_seller():
                 store_name="AleMart Demo Store",
                 store_prefix="DEMO",
                 phone=encrypt_phone(phone_normalized),
-                phone_hash=phone_h
+                phone_hash=phone_h,
+                featured_image=DEFAULT_FEATURED_IMAGE,
+                business_contact_number=phone_normalized
             )
             session.add(seller)
         

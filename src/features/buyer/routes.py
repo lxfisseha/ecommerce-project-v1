@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
 from src.templates_config import templates
-from src.features.buyer.services import BuyerProductService
+from src.features.buyer.services import BuyerProductService, CartService
 from src.features.orders.services import (
     OrderService,
     parse_selected_attributes,
@@ -12,6 +12,7 @@ from src.features.orders.services import (
 from typing import Optional, List
 import re
 import math
+from decimal import Decimal
 from sqlmodel import select
 from src.features.auth.models import Seller
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
@@ -29,11 +30,83 @@ def _calculate_checkout_totals(product, quantity, selected_attrs):
     return extra_price, attribute_total, subtotal, total
 
 
+def _calculate_line_total(product, quantity, selected_attrs):
+    extra_price = calculate_attribute_extra_price(product, selected_attrs)
+    line_subtotal = (product.price + extra_price) * quantity
+    return extra_price, line_subtotal
+
+
+async def _load_cart_items(request: Request, db: AsyncSession) -> List[dict]:
+    """
+    Re-fetches cart line items from the DB in a single batched query. Stale or
+    unavailable products are pruned from the session so prices are always
+    current and never trusted.
+    """
+    cart = CartService.get_cart(request)
+    if not cart:
+        return []
+
+    ids = [entry.get("product_id") for entry in cart if isinstance(entry.get("product_id"), int)]
+    products = await BuyerProductService.get_products_by_ids(db, ids)
+    by_id = {product.id: product for product in products}
+
+    lines = []
+    valid = []
+    for entry in cart:
+        product = by_id.get(entry.get("product_id"))
+        if not product:
+            continue
+        qty = max(1, int(entry.get("qty", 1)))
+        attrs = entry.get("attrs")
+        extra_price, line_subtotal = _calculate_line_total(product, qty, parse_selected_attributes(attrs))
+        lines.append(
+            {
+                "index": len(valid),
+                "product": product,
+                "qty": qty,
+                "attrs": attrs,
+                "extra_price": extra_price,
+                "line_subtotal": line_subtotal,
+            }
+        )
+        valid.append(entry)
+
+    if len(valid) != len(cart):
+        request.session["cart"] = {"items": valid}
+    return lines
+
+
+def _cart_totals(lines: List[dict]):
+    subtotal = sum(line["line_subtotal"] for line in lines)
+    delivery_fee = DELIVERY_FEE if lines else Decimal("0.0")
+    return subtotal, delivery_fee, subtotal + delivery_fee
+
+
+async def _render_cart_content(request: Request, db: AsyncSession):
+    lines = await _load_cart_items(request, db)
+    subtotal, delivery_fee, total = _cart_totals(lines)
+    return templates.TemplateResponse(
+        request,
+        "buyer/_cart_content.html",
+        {
+            "request": request,
+            "items": lines,
+            "subtotal": subtotal,
+            "delivery_fee": delivery_fee,
+            "total": total,
+        },
+    )
+
+
 @router.get("/", response_class=HTMLResponse)
 async def home_page(request: Request, db: AsyncSession = Depends(get_session)):
-    # Fetch only latest 8 products for home page
-    products, _ = await BuyerProductService.get_all_active_products(db, limit=8)
-    seller = (await db.execute(select(Seller))).scalars().first()
+    # Fetch only latest 8 products for home page; skip the total-count query.
+    products, _ = await BuyerProductService.get_all_active_products(
+        db, limit=8, include_count=False
+    )
+    seller = (
+        await db.execute(select(Seller).order_by(Seller.updated_at.desc()).limit(1))
+    ).scalars().first()
     return templates.TemplateResponse(
         request, "buyer_home.html", {"request": request, "products": products, "seller": seller}
     )
@@ -82,6 +155,64 @@ async def support_page(request: Request):
     return templates.TemplateResponse(request, "support.html", {"request": request})
 
 
+@router.post("/cart/add/{product_id}")
+async def add_to_cart(
+    request: Request,
+    product_id: int,
+    qty: int = Form(1),
+    attributes: Optional[str] = Form(None),
+    db: AsyncSession = Depends(get_session),
+):
+    product = await BuyerProductService.get_product_by_id(db, product_id)
+    if not product:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    CartService.add(request, product_id, qty, attributes)
+    return templates.TemplateResponse(
+        request,
+        "buyer/_cart_badge.html",
+        {"request": request, "cart_count": CartService.count(request)},
+    )
+
+
+@router.get("/cart", response_class=HTMLResponse)
+async def cart_page(request: Request, db: AsyncSession = Depends(get_session)):
+    lines = await _load_cart_items(request, db)
+    subtotal, delivery_fee, total = _cart_totals(lines)
+    return templates.TemplateResponse(
+        request,
+        "buyer_cart.html",
+        {
+            "request": request,
+            "items": lines,
+            "subtotal": subtotal,
+            "delivery_fee": delivery_fee,
+            "total": total,
+        },
+    )
+
+
+@router.post("/cart/update/{index}")
+async def update_cart_item(
+    request: Request,
+    index: int,
+    qty: int = Form(1),
+    db: AsyncSession = Depends(get_session),
+):
+    CartService.update_qty(request, index, qty)
+    return await _render_cart_content(request, db)
+
+
+@router.post("/cart/remove/{index}")
+async def remove_cart_item(
+    request: Request,
+    index: int,
+    db: AsyncSession = Depends(get_session),
+):
+    CartService.remove(request, index)
+    return await _render_cart_content(request, db)
+
+
 @router.get("/product/{product_id}", response_class=HTMLResponse)
 async def product_detail(
     request: Request, product_id: int, db: AsyncSession = Depends(get_session)
@@ -91,6 +222,87 @@ async def product_detail(
         raise HTTPException(status_code=404, detail="Product not found")
     return templates.TemplateResponse(
         request, "buyer_product_detail.html", {"request": request, "product": product}
+    )
+
+
+@router.get("/checkout", response_class=HTMLResponse)
+async def cart_checkout_page(request: Request, db: AsyncSession = Depends(get_session)):
+    lines = await _load_cart_items(request, db)
+    if not lines:
+        return RedirectResponse(url="/cart", status_code=303)
+
+    subtotal, delivery_fee, total = _cart_totals(lines)
+    return templates.TemplateResponse(
+        request,
+        "buyer_checkout.html",
+        {
+            "request": request,
+            "items": lines,
+            "cart_mode": True,
+            "subtotal": subtotal,
+            "delivery_fee": delivery_fee,
+            "total": total,
+        },
+    )
+
+
+@router.post("/checkout")
+async def process_cart_checkout(
+    request: Request,
+    buyer_name: str = Form(...),
+    buyer_phone: str = Form(...),
+    delivery_address: str = Form(...),
+    db: AsyncSession = Depends(get_session),
+):
+    lines = await _load_cart_items(request, db)
+    if not lines:
+        return RedirectResponse(url="/cart", status_code=303)
+
+    subtotal, delivery_fee, total = _cart_totals(lines)
+
+    # Validation: Phone Number
+    if not validate_ethiopian_phone(buyer_phone):
+        return templates.TemplateResponse(
+            request,
+            "buyer_checkout.html",
+            {
+                "request": request,
+                "items": lines,
+                "cart_mode": True,
+                "subtotal": subtotal,
+                "delivery_fee": delivery_fee,
+                "total": total,
+                "error": "Phone number must be a valid Ethiopian number (e.g., 0912345678 or 912345678)",
+            },
+        )
+
+    # Normalize phone to 9-digit format before saving
+    normalized_phone = normalize_phone(buyer_phone)
+
+    # Truncate long inputs
+    buyer_name = buyer_name[:100]
+    delivery_address = delivery_address[:1000]
+
+    cart_lines = [(line["product"], line["qty"], line["attrs"]) for line in lines]
+    order = await OrderService.create_order_from_cart(
+        db,
+        items=cart_lines,
+        buyer_name=buyer_name,
+        buyer_phone=normalized_phone,
+        delivery_address=delivery_address,
+        store_prefix=lines[0]["product"].seller.store_prefix,
+    )
+
+    # Clear the cart after successful order placement
+    CartService.clear(request)
+
+    # Store order ID in session for IDOR protection on confirmation page
+    recent_orders = request.session.get("recent_orders", [])
+    recent_orders.append(order.order_id)
+    request.session["recent_orders"] = recent_orders[-10:]  # keep last 10
+
+    return RedirectResponse(
+        url=f"/order-confirmation/{order.order_id}", status_code=303
     )
 
 

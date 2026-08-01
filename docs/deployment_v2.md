@@ -216,7 +216,7 @@ SQLite cannot be used for the running app because `src/database.py` sets `statem
 - [ ] AfroMessage sender ID is registered and approved
 - [ ] Telegram bot token is configured as fallback
 - [ ] App is behind HTTPS (Vercel provides this by default)
-- [ ] Rate limits are tuned for expected traffic (`RATE_LIMITS` in `src/middleware/rate_limit.py`)
+- [ ] Rate limits are tuned for expected traffic (`RATE_LIMITS` in `src/middleware/rate_limit.py`). Current defaults: auth endpoints 5 POST/60s, checkout 30 POST/60s, global fallback 600/60s. Buyer-facing limits are kept high because Ethiopian carrier users often share public IPs (CGNAT).
 - [ ] Session cookie `secure` flag is enabled (automatic when request.is_secure)
 - [ ] Alembic migrations have been run against production database
 - [ ] Seller account has been seeded with correct phone number

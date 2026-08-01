@@ -128,5 +128,5 @@ async def test_limit_respect():
 
     response = client.get("/")
     assert response.status_code == 200
-    bulk_count = response.text.count("Bulk Product")
-    assert bulk_count <= 8
+    card_count = response.text.count('href="/product/')
+    assert card_count <= 8

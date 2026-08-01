@@ -23,13 +23,24 @@ def derive_key(purpose: str) -> str:
     return base64.urlsafe_b64encode(raw).decode()
 
 
+_fernet_instance = None
+_legacy_fernet_instance = None
+
+
 def _get_fernet() -> Fernet:
-    return Fernet(derive_key("encryption"))
+    global _fernet_instance
+    if _fernet_instance is None:
+        _fernet_instance = Fernet(derive_key("encryption"))
+    return _fernet_instance
+
 
 def _get_legacy_fernet() -> Fernet:
     """Legacy Fernet key derivation using raw SHA256 of SECRET_KEY (pre-derive_key)"""
-    key_bytes = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
-    return Fernet(base64.urlsafe_b64encode(key_bytes))
+    global _legacy_fernet_instance
+    if _legacy_fernet_instance is None:
+        key_bytes = hashlib.sha256(settings.SECRET_KEY.encode()).digest()
+        _legacy_fernet_instance = Fernet(base64.urlsafe_b64encode(key_bytes))
+    return _legacy_fernet_instance
 
 
 def encrypt_data(data: str) -> str:

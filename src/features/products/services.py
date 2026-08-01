@@ -2,6 +2,7 @@ from typing import List, Optional, Tuple
 from sqlmodel import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
+import anyio
 from decimal import Decimal
 from .models import Product, ProductImage, ProductAttribute, ProductTagLink, Tag
 
@@ -64,18 +65,24 @@ class ProductService:
             await db.flush()
             return
 
-        # Fetch or create tags from DB
+        # Fetch existing tags in one batched query, then create only the missing ones
+        slugs = {name.replace(" ", "-").replace("/", "-") for name in seen_tags}
+        existing = {}
+        if slugs:
+            result = await db.execute(select(Tag).where(Tag.slug.in_(slugs)))
+            existing = {t.slug: t for t in result.scalars().all()}
+
         db_tags = []
-        for slug_name, orig_name in seen_tags.items():
-            slug = slug_name.replace(" ", "-").replace("/", "-")
-            tag_statement = select(Tag).where(Tag.slug == slug)
-            tag_result = await db.execute(tag_statement)
-            db_tag = tag_result.scalar_one_or_none()
-            if not db_tag:
+        for cleaned_name, orig_name in seen_tags.items():
+            slug = cleaned_name.replace(" ", "-").replace("/", "-")
+            db_tag = existing.get(slug)
+            if db_tag is None:
                 db_tag = Tag(name=orig_name, slug=slug)
                 db.add(db_tag)
-                await db.flush()
             db_tags.append(db_tag)
+
+        if any(t.id is None for t in db_tags):
+            await db.flush()
 
         # Sync the tags on the product
         product.tags = db_tags
@@ -163,7 +170,9 @@ class ProductService:
         for image in product.images:
             if image.image_url:
                 try:
-                    CloudinaryService.delete_image(image.image_url)
+                    await anyio.to_thread.run_sync(
+                        lambda: CloudinaryService.delete_image(image.image_url)
+                    )
                 except Exception:
                     pass  # Best-effort cleanup
 
@@ -256,5 +265,4 @@ class ProductService:
         )
         db.add(attr)
         await db.commit()
-        await db.refresh(attr)
         return attr

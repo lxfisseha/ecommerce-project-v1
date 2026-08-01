@@ -48,20 +48,24 @@
                 <h3 class="text-base font-bold text-text-main">Order Summary</h3>
             </div>
             <div class="p-6">
-                <div class="flex gap-6 pb-6 border-b border-border-main mb-6">
-                    <div class="w-24 h-24 bg-bg-alt rounded-xl flex-shrink-0 flex items-center justify-center text-border-main border border-border-main">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                    </div>
-                    <div class="flex-grow">
-                        <div class="flex justify-between items-start mb-2">
-                            <h4 class="font-bold text-text-main text-lg">{{ order.product_name }}</h4>
-                            <span class="font-bold text-text-main">{{ "{:,.0f}".format(order.product_price) }} ETB</span>
+                <div class="space-y-6">
+                    {% for item in order.items %}
+                    <div class="flex gap-6 pb-6 border-b border-border-main {% if loop.last %}mb-6 border-b-0 pb-0{% endif %}">
+                        <div class="w-24 h-24 bg-bg-alt rounded-xl flex-shrink-0 flex items-center justify-center text-border-main border border-border-main">
+                            <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                         </div>
-                        <p class="text-sm text-text-muted mb-1">
-                            {% if order.attributes_selected %}{{ order.attributes_selected }}{% else %}Standard{% endif %}
-                        </p>
-                        <p class="text-sm text-text-muted">Quantity: {{ order.quantity }}</p>
+                        <div class="flex-grow">
+                            <div class="flex justify-between items-start mb-2">
+                                <h4 class="font-bold text-text-main text-lg">{{ item.product_name }}</h4>
+                                <span class="font-bold text-text-main">{{ "{:,.0f}".format(item.product_price) }} ETB</span>
+                            </div>
+                            <p class="text-sm text-text-muted mb-1">
+                                {% if item.attributes_selected %}{{ item.attributes_selected }}{% else %}Standard{% endif %}
+                            </p>
+                            <p class="text-sm text-text-muted">Quantity: {{ item.quantity }}</p>
+                        </div>
                     </div>
+                    {% endfor %}
                 </div>
                 
                 <div class="space-y-3 max-w-xs ml-auto">
@@ -71,7 +75,7 @@
                     </div>
                     <div class="flex justify-between text-sm text-text-muted">
                         <span>Delivery Fee</span>
-                        <span class="font-medium">150 ETB</span>
+                        <span class="font-medium">{{ "{:,.0f}".format(order.delivery_fee) }} ETB</span>
                     </div>
                     <div class="pt-3 border-t border-border-main flex justify-between items-center mt-3">
                         <span class="text-base font-bold text-text-main">Total</span>

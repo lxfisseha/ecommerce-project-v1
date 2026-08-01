@@ -85,6 +85,8 @@ async def _db_setup_teardown():
     app.dependency_overrides[get_session] = override_get_session
     # Clear rate limiter in-memory store between tests
     _clear_rate_limiter(app)
+    from src.features.dashboard.routes import _reset_dashboard_stats_cache
+    _reset_dashboard_stats_cache()
     async with engine.begin() as conn:
         await conn.run_sync(SQLModel.metadata.drop_all)
         await conn.run_sync(SQLModel.metadata.create_all)

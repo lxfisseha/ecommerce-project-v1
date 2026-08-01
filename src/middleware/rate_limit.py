@@ -15,7 +15,8 @@ logger = logging.getLogger(__name__)
 # Rules are checked in order — first match wins.
 # ---------------------------------------------------------------------------
 RATE_LIMIT_RULES: list[tuple[str | None, str, int, int, str]] = [
-    # Auth endpoints — strictest (5 attempts per 60s)
+    # Auth endpoints — strictest (5 attempts per 60s). These are seller-only
+    # (one seller per deployment), so aggressive limits are appropriate.
     (
         "POST",
         "/auth/login",
@@ -37,19 +38,22 @@ RATE_LIMIT_RULES: list[tuple[str | None, str, int, int, str]] = [
         60,
         "Too many resend attempts. Please wait before requesting another code.",
     ),
-    # Checkout / order submission (10 per 60s)
+    # Checkout / order submission (30 per 60s). Buyers on Ethiopian carriers
+    # often share a public IP via CGNAT, so the per-IP budget must tolerate
+    # many legitimate buyers behind one address.
     (
         "POST",
         "/checkout/",
-        10,
+        30,
         60,
         "You've placed too many orders in a short time. Please wait a moment before trying again.",
     ),
-    # Global fallback (120 per 60s)
+    # Global fallback (600 per 60s = 10/s). HTMX browsing fires many requests
+    # (search, filter, sort, pagination) and shared CGNAT IPs amplify them.
     (
         None,
         "/",
-        120,
+        600,
         60,
         "You've sent too many requests. Please slow down and try again shortly.",
     ),
@@ -66,13 +70,13 @@ def _get_client_ip(scope: Scope) -> str:
     return client[0] if client else "unknown"
 
 
-def _match_rule(method: str, path: str) -> tuple[int, int, str] | None:
-    """Return (max_requests, window_seconds, context_message) for the first matching rule."""
+def _match_rule(method: str, path: str) -> tuple[str, int, int, str] | None:
+    """Return (rule_prefix, max_requests, window_seconds, context_message) for the first matching rule."""
     for rule_method, rule_prefix, max_req, window, message in RATE_LIMIT_RULES:
         method_matches = rule_method is None or rule_method == method
         path_matches = path == rule_prefix or path.startswith(rule_prefix)
         if method_matches and path_matches:
-            return max_req, window, message
+            return rule_prefix, max_req, window, message
     return None
 
 
@@ -80,7 +84,7 @@ class RateLimitMiddleware:
     """
     Sliding-window in-memory rate limiter.
 
-    Stores a deque of request timestamps per (ip, rule_prefix) key.
+    Stores a deque of request timestamps per (ip, method, path_prefix) key.
     On each request it evicts timestamps outside the window, then checks
     the count against the limit.
 
@@ -90,8 +94,8 @@ class RateLimitMiddleware:
 
     def __init__(self, app: ASGIApp, template_dir: str | None = None):
         self.app = app
-        # { (ip, path_prefix): deque([timestamp, ...]) }
-        self._store: dict[tuple[str, str], deque] = {}
+        # { (ip, method, path_prefix): deque([timestamp, ...]) }
+        self._store: dict[tuple[str, str, str], deque] = {}
 
         # We render the 429 template manually (without FastAPI's DI) because
         # the middleware sits below the router layer.
@@ -103,14 +107,14 @@ class RateLimitMiddleware:
         )
 
     def _is_rate_limited(
-        self, ip: str, path_prefix: str, max_requests: int, window: int
+        self, ip: str, method: str, path_prefix: str, max_requests: int, window: int
     ) -> tuple[bool, int]:
         """
         Returns (is_limited, retry_after_seconds).
         Mutates the store: evicts old timestamps and appends current one if allowed.
         """
         now = time.time()
-        key = (ip, path_prefix)
+        key = (ip, method, path_prefix)
 
         # Periodic cleanup of empty buckets to prevent unbounded memory growth
         if not hasattr(self, '_req_count'):
@@ -216,6 +220,13 @@ class RateLimitMiddleware:
 
         method = scope.get("method", "GET")
         path = scope.get("path", "/")
+
+        # Static assets are served with immutable cache headers; rate limiting
+        # them would needlessly consume the per-IP budget on CSS/font loads.
+        if path.startswith("/static/"):
+            await self.app(scope, receive, send)
+            return
+
         headers_dict = dict(scope.get("headers", []))
         is_htmx = b"hx-request" in headers_dict
 
@@ -224,17 +235,11 @@ class RateLimitMiddleware:
             await self.app(scope, receive, send)
             return
 
-        max_requests, window, context_message = match
-        # Find the matching prefix for the store key
-        rule_prefix = next(
-            rp
-            for _, rp, _, _, _ in RATE_LIMIT_RULES
-            if path == rp or path.startswith(rp)
-        )
+        rule_prefix, max_requests, window, context_message = match
 
         ip = _get_client_ip(scope)
         limited, retry_after = self._is_rate_limited(
-            ip, rule_prefix, max_requests, window
+            ip, method, rule_prefix, max_requests, window
         )
 
         if limited:

@@ -70,8 +70,8 @@ async def post_verify_otp(
             status_code=400
         )
 
-    # 2. Get Seller
-    seller = await AuthService.get_seller_by_phone(db, phone)
+    # 2. Get Seller (already fetched by verify_otp — no redundant re-query)
+    seller = result.get("seller")
     if not seller:
         return templates.TemplateResponse(
             request,

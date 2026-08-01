@@ -2,24 +2,30 @@
 
 {% block title %}Welcome to Merchies{% endblock %}
 
+{% block head %}
+<link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/anton-sc-latin-400-normal.woff2">
+{% endblock %}
+
 {% block buyer_content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
     <!-- Hero Section (Redesigned & Contextual) -->
-    <div class="relative rounded-[32px] overflow-hidden mb-12 bg-text-main flex items-center py-12 sm:py-16 shadow-2xl">
+    <div class="relative rounded-[32px] overflow-hidden mb-12 bg-text-main flex items-center py-12 sm:py-20 shadow-2xl">
         {% if seller and seller.featured_image %}
-        <!-- Background Image with Modern Mask -->
-        <div class="absolute inset-0 opacity-30">
-            <img src="{{ seller.featured_image | cloudinary(width=1200) }}" 
+        <!-- Background Image -->
+        <div class="absolute inset-0 overflow-hidden opacity-60">
+            <img src="{{ seller.featured_image | cloudinary(width=800) }}" 
                  alt="{{ seller.store_name }} Featured Image" 
-                 width="1200" height="800"
-                 class="w-full h-full object-cover scale-110 blur-[1px]">
+                 width="800" height="533"
+                 class="w-full h-full object-cover">
         </div>
+        <!-- Legibility Scrim -->
+        <div class="absolute inset-0 bg-gradient-to-r from-text-main/50 via-text-main/20 to-transparent"></div>
         {% endif %}
 
         <!-- Content Overlay -->
         <div class="relative z-20 w-full px-6 sm:px-16 flex flex-col items-center sm:items-start text-center sm:text-left">
             
-            <h1 class="font-display uppercase text-left tracking-wide text-[40px] sm:text-6xl text-white mb-8 leading-[1.1] max-w-2xl">
+            <h1 class="font-display uppercase text-left tracking-wide text-[40px] sm:text-6xl text-white mb-8 leading-[1.1] max-w-2xl drop-shadow-lg">
                  Discover premium designs inspired by the <span class="text-fuchsia-400 ">stories</span> you love. 
             </h1>
 
@@ -45,7 +51,7 @@
                         </button>
                     </div>
                 </form>
-                <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-4 text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest">
+                <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-4 text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest drop-shadow-md">
                     <span class="text-white/70">Popular:</span>
                     <a href="/shop?q=anime" class="text-white/90 hover:text-accent transition-colors">#Anime</a>
                     <a href="/shop?q=music" class="text-white/90 hover:text-accent transition-colors">#Music</a>

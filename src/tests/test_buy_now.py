@@ -29,8 +29,8 @@ async def test_order_id_generation():
         order = Order(
             order_id=order_id, seller_id=1, buyer_name="B1", buyer_phone="ENC_P1",
             buyer_phone_hash="HASH_P1", delivery_address="ENC_A1", delivery_address_hash="HASH_A1",
-            product_id=1, product_name="P1", product_price=100, quantity=1,
-            subtotal=100, total_amount=250, created_at=utc_now(), status_updated_at=utc_now(),
+            subtotal=100, delivery_fee=Decimal("150.00"), total_amount=250,
+            created_at=utc_now(), status_updated_at=utc_now(),
         )
         session.add(order)
         await session.commit()
@@ -130,8 +130,7 @@ async def test_order_confirmation_decryption():
             order_id="ET-DECRYPT-20240101-0001", seller_id=1, buyer_name="Abebe",
             buyer_phone=encrypt_data(normalized_phone), buyer_phone_hash=hash_data(normalized_phone),
             delivery_address=encrypt_data(raw_address), delivery_address_hash=hash_data(raw_address),
-            product_id=1, product_name="Test Product", product_price=1000, quantity=1,
-            subtotal=1000, total_amount=1150, status="pending",
+            subtotal=1000, delivery_fee=Decimal("150.00"), total_amount=1150, status="pending",
             created_at=utc_now(), status_updated_at=utc_now(),
         )
         session.add(order)
@@ -170,8 +169,7 @@ async def test_order_confirmation_idor_blocked():
             order_id="ET-IDOR-20240101-0001", seller_id=1, buyer_name="Abebe",
             buyer_phone=encrypt_data(normalized_phone), buyer_phone_hash=hash_data(normalized_phone),
             delivery_address=encrypt_data(raw_address), delivery_address_hash=hash_data(raw_address),
-            product_id=1, product_name="Test Product", product_price=1000, quantity=1,
-            subtotal=1000, total_amount=1150, status="pending",
+            subtotal=1000, delivery_fee=Decimal("150.00"), total_amount=1150, status="pending",
             created_at=utc_now(), status_updated_at=utc_now(),
         )
         session.add(order)
@@ -194,8 +192,7 @@ async def test_order_confirmation_handles_decryption_failure():
             order_id="ET-BADCRYPT-0001", seller_id=1, buyer_name="Abebe",
             buyer_phone="NOT_VALID_BASE64!!!", buyer_phone_hash="hash1",
             delivery_address="ALSO_NOT_VALID!!!", delivery_address_hash="hash2",
-            product_id=1, product_name="Test Product", product_price=1000, quantity=1,
-            subtotal=1000, total_amount=1150, status="pending",
+            subtotal=1000, delivery_fee=Decimal("150.00"), total_amount=1150, status="pending",
             created_at=utc_now(), status_updated_at=utc_now(),
         )
         session.add(order)
@@ -212,8 +209,8 @@ async def test_update_order_status_workflow():
         order = Order(
             order_id="ET-WORKFLOW-0001", seller_id=1, buyer_name="B1",
             buyer_phone="ENC_P1", buyer_phone_hash="HASH_P1", delivery_address="ENC_A1",
-            delivery_address_hash="HASH_A1", product_id=1, product_name="P1",
-            product_price=100, quantity=1, subtotal=100, total_amount=250, status="pending",
+            delivery_address_hash="HASH_A1", subtotal=100, delivery_fee=Decimal("150.00"),
+            total_amount=250, status="pending",
         )
         session.add(order)
         await session.commit()
@@ -231,8 +228,7 @@ async def test_update_order_status_workflow():
         order2 = Order(
             order_id="ET-WORKFLOW-0002", seller_id=1, buyer_name="B2",
             buyer_phone="P2", buyer_phone_hash="HASH_P2", delivery_address="A2",
-            product_id=1, product_name="P1", product_price=100, quantity=1,
-            subtotal=100, total_amount=250, status="pending",
+            subtotal=100, delivery_fee=Decimal("150.00"), total_amount=250, status="pending",
         )
         session.add(order2)
         await session.commit()

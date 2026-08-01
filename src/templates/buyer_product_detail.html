@@ -134,17 +134,32 @@
                 <!-- Quantity Selector & Main Action -->
                 <div>
                     <label class="block text-text-main text-sm font-semibold mb-3">Quantity</label>
-                    <div class="flex items-center gap-2 sm:gap-3">
-                        <div class="flex items-center bg-bg-alt border border-border-main rounded-xl p-0.5 h-[52px] sm:h-[58px]">
+                    <div class="flex flex-col lg:flex-row lg:items-center gap-3">
+                        <div class="flex-shrink-0 self-start lg:self-auto flex items-center bg-bg-alt border border-border-main rounded-xl p-0.5 h-[52px] sm:h-[58px]">
                             <button onclick="updateQty(-1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-text-main hover:bg-white rounded-lg transition-colors font-bold text-lg">-</button>
                             <input type="number" id="quantity" value="1" min="1" max="10" class="w-10 sm:w-12 text-center bg-transparent font-bold text-text-main focus:outline-none text-base sm:text-lg" readonly>
                             <button onclick="updateQty(1)" class="w-10 sm:w-12 h-full flex items-center justify-center text-text-main hover:bg-white rounded-lg transition-colors font-bold text-lg">+</button>
                         </div>
                         
-                        <button onclick="goToCheckout()" class="flex-grow bg-accent text-white h-[52px] sm:h-[58px] rounded-xl font-bold text-base sm:text-lg flex items-center justify-center gap-2 sm:gap-3 hover:bg-primary-hover transition-all active:scale-95 shadow-lg shadow-accent/20 px-4 sm:px-6">
-                            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                            <span>Buy Now</span>
-                        </button>
+                        <div class="flex gap-2 xl:gap-3 w-full lg:w-auto lg:flex-1 lg:min-w-0">
+                            <button hx-post="/cart/add/{{ product.id }}" hx-target="#cart-badge-container" hx-swap="outerHTML"
+                                    hx-vals='js:{qty: getQuantity(), attributes: getAttributesString()}' data-flash="added"
+                                    class="relative flex-1 min-w-0 bg-white border-2 border-primary text-primary h-[52px] sm:h-[58px] rounded-xl font-bold text-sm xl:text-base flex items-center justify-center hover:bg-primary/5 transition-all active:scale-95 disabled:cursor-not-allowed px-3 xl:px-4">
+                                <span class="btn-content inline-flex items-center justify-center gap-2 xl:gap-3">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+                                    <span>Add to Cart</span>
+                                </span>
+                                <svg class="btn-spinner absolute inset-0 m-auto w-5 h-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
+                                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                </svg>
+                                <svg class="btn-checkmark absolute inset-0 m-auto w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </button>
+                            <button onclick="goToCheckout()" class="flex-1 min-w-0 bg-accent text-white h-[52px] sm:h-[58px] rounded-xl font-bold text-sm xl:text-base flex items-center justify-center gap-2 xl:gap-3 hover:bg-primary-hover transition-all active:scale-95 shadow-lg shadow-accent/20 px-3 xl:px-4">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+                                <span>Buy Now</span>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -208,7 +223,20 @@
 
 <!-- Mobile Sticky Action Bar (Figma 4:3134) -->
 <div class="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-border-main z-50 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
-    <div class="p-4 flex">
+    <div class="p-4 flex gap-3">
+        <button hx-post="/cart/add/{{ product.id }}" hx-target="#cart-badge-container" hx-swap="outerHTML"
+                hx-vals='js:{qty: getQuantity(), attributes: getAttributesString()}' data-flash="added"
+                class="relative h-14 flex-1 bg-white border-2 border-primary text-primary font-bold rounded-xl flex items-center justify-center hover:bg-primary/5 active:scale-[0.98] disabled:cursor-not-allowed transition-all">
+            <span class="btn-content inline-flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z"/></svg>
+                <span>Add to Cart</span>
+            </span>
+            <svg class="btn-spinner absolute inset-0 m-auto w-5 h-5 animate-spin text-primary" viewBox="0 0 24 24" fill="none">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <svg class="btn-checkmark absolute inset-0 m-auto w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+        </button>
         <button onclick="goToCheckout()" class="h-14 flex-1 bg-accent text-white font-bold rounded-xl flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all">
             Buy Now
         </button>
@@ -274,12 +302,21 @@
         selectedAttributes[type] = value;
     }
 
-    function goToCheckout() {
-        const qty = document.getElementById('quantity').value;
-        const attrStr = Object.entries(selectedAttributes)
+    function getQuantity() {
+        const qtyInput = document.getElementById('quantity');
+        return qtyInput ? qtyInput.value : '1';
+    }
+
+    function getAttributesString() {
+        return Object.entries(selectedAttributes)
             .map(([k, v]) => `${k}: ${v}`)
             .join(', ');
-        
+    }
+
+    function goToCheckout() {
+        const qty = getQuantity();
+        const attrStr = getAttributesString();
+
         let url = `/checkout/{{ product.id }}?qty=${qty}`;
         if (attrStr) {
             url += `&attrs=${encodeURIComponent(attrStr)}`;

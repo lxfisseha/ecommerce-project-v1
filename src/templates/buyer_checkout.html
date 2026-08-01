@@ -15,11 +15,13 @@
             </div>
             {% endif %}
 
-            <form action="/checkout/{{ product.id }}" method="POST" class="space-y-4">
+            <form action="{% if cart_mode %}/checkout{% else %}/checkout/{{ product.id }}{% endif %}" method="POST" class="space-y-4">
                 <input type="hidden" name="csrf_token" value="{{ request.scope.csrf_token }}">
+                {% if not cart_mode %}
                 <!-- Product Data (Hidden) -->
                 <input type="hidden" name="quantity" value="{{ quantity }}">
                 <input type="hidden" name="attributes" value="{{ attributes }}">
+                {% endif %}
 
                 <div>
                     <label for="buyer_name" class="block text-xs font-medium text-text-muted mb-1.5">Full Name</label>
@@ -60,7 +62,32 @@
         <aside class="lg:w-1/3 space-y-4">
             <div class="bg-bg-alt border border-border-main rounded-xl p-5 sm:p-6 shadow-sm">
                 <h2 class="text-base font-bold text-text-main mb-4">Order Summary</h2>
-                
+
+                {% if cart_mode %}
+                <div class="space-y-4 pb-4 border-b border-border-main mb-4">
+                    {% for item in items %}
+                    <div class="flex gap-3">
+                        <div class="w-16 h-16 bg-bg-muted rounded-lg overflow-hidden flex-shrink-0">
+                            {% if item.product.images %}
+                                <img src="{{ item.product.images[0].image_url | cloudinary(width=160) }}" alt="{{ item.product.name }}" width="160" height="160" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                            {% else %}
+                                <div class="w-full h-full flex items-center justify-center text-border-main">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-grow min-w-0">
+                            <h3 class="font-semibold text-text-main text-xs mb-0.5 leading-tight">{{ item.product.name }}</h3>
+                            <p class="text-[10px] text-text-muted font-medium mb-1">Qty: {{ item.qty }}</p>
+                            {% if item.attrs %}
+                            <p class="text-[10px] text-text-muted mb-1">{{ item.attrs }}</p>
+                            {% endif %}
+                            <p class="font-bold text-accent text-sm">{{ "{:,.0f}".format(item.line_subtotal) }} ETB</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
                 <div class="flex gap-3 pb-4 border-b border-border-main mb-4">
                     <div class="w-16 h-16 bg-bg-muted rounded-lg overflow-hidden flex-shrink-0">
                         {% if product.images %}
@@ -80,6 +107,7 @@
                         <p class="font-bold text-accent text-sm">{{ "{:,.0f}".format(product.price) }} ETB</p>
                     </div>
                 </div>
+                {% endif %}
 
                 <div class="space-y-2">
                     <div class="flex justify-between text-xs text-text-muted">

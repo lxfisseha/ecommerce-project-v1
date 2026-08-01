@@ -130,11 +130,8 @@ async def test_order_terminal_state_lock():
             buyer_phone="ENC_P",
             buyer_phone_hash="HASH_P",
             delivery_address="ENC_A",
-            product_id=10,
-            product_name="Product A",
-            product_price=Decimal("100"),
-            quantity=1,
             subtotal=Decimal("100"),
+            delivery_fee=Decimal("150.00"),
             total_amount=Decimal("250"),
             status="completed"
         )

@@ -5,6 +5,7 @@ from src.features.auth.models import Seller
 from src.utils.datetime import utc_now
 from src.utils.crypto import encrypt_phone, hash_phone
 from src.tests.conftest import client, maker, get_csrf_context, current_seller_override
+from decimal import Decimal
 
 
 @pytest_asyncio.fixture
@@ -14,8 +15,7 @@ async def seeded_order():
             order_id="ET-STATUS-0001", seller_id=1, buyer_name="Buyer",
             buyer_phone="ENC_P", buyer_phone_hash="HASH_P",
             delivery_address="ENC_A", delivery_address_hash="HASH_A",
-            product_id=1, product_name="Product", product_price=100,
-            quantity=1, subtotal=100, total_amount=250, status="pending",
+            subtotal=100, delivery_fee=Decimal("150.00"), total_amount=250, status="pending",
             created_at=utc_now(), status_updated_at=utc_now(),
         )
         session.add(order)
