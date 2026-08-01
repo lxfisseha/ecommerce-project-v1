@@ -48,6 +48,10 @@ def _find_free_port() -> int:
 E2E_PORT = _find_free_port()
 BASE_URL = f"http://localhost:{E2E_PORT}"
 
+# When set, E2E tests run against a deployed (hosted) app instead of the local
+# Uvicorn server + seeded SQLite DB. Used by src/tests/e2e/test_hosted_smoke.py.
+E2E_HOST_BASE_URL = os.environ.get("E2E_HOST_BASE_URL", "").strip()
+
 def _build_engine():
     # NullPool: the seed runs in the main thread's asyncio loop while Uvicorn
     # serves in a different thread/loop. aiosqlite connections are loop-bound,
@@ -260,7 +264,16 @@ class _ServerThread(threading.Thread):
 # ---------------------------------------------------------------------------
 @pytest.fixture(scope="session")
 def _e2e_server():
-    """Start a real HTTP server for the entire E2E test session."""
+    """Start a real HTTP server for the entire E2E test session.
+
+    When E2E_HOST_BASE_URL is set, yield the hosted URL directly instead of
+    seeding a local DB and starting a Uvicorn thread (used by the hosted
+    smoke tests, which are read-only).
+    """
+    if E2E_HOST_BASE_URL:
+        yield E2E_HOST_BASE_URL
+        return
+
     # Seed the database before starting the server
     asyncio.run(_seed_database())
 
@@ -380,6 +393,12 @@ def seller_storage_state(browser, base_url):
     cookies so all seller tests reuse an authenticated context instead of
     burning the /auth/login rate limit on every test.
     """
+    if E2E_HOST_BASE_URL:
+        pytest.skip(
+            "Hosted mode: seller login needs the local seeded DB (OTP is sent "
+            "via real SMS on the hosted app)"
+        )
+
     context = browser.new_context(
         viewport={"width": 1280, "height": 720},
         base_url=base_url,
