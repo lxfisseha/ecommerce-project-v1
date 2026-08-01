@@ -323,7 +323,9 @@ async def test_product_detail_add_to_cart_hx_vals_are_valid():
     # can't keep the spinner visible after the flash.
     assert resp.text.count('class="btn-spinner') == 2
     assert resp.text.count('class="btn-checkmark') == 2
-    assert "htmx-indicator" not in resp.text
+    # CSS is now inlined into base.html, so only assert on markup class usage
+    # (the compiled stylesheet legitimately contains .htmx-indicator rules).
+    assert 'class="htmx-indicator' not in resp.text
     assert "hx-disabled-elt" not in resp.text
 
 
