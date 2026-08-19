@@ -30,7 +30,7 @@ document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
         bar.classList.add('active');
         // Force reflow so the transition restarts from 0
         void bar.offsetWidth;
-        bar.style.width = '30%';
+        bar.style.width = '45%';
         timers.push(setTimeout(() => { bar.style.width = '60%'; }, 200));
         timers.push(setTimeout(() => { bar.style.width = '85%'; }, 1000));
         timers.push(setTimeout(() => { bar.style.width = '92%'; }, 3000));
