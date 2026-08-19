@@ -15,8 +15,8 @@ def test_homepage_loads_with_products(page: Page, base_url: str):
     home = HomePage(page, base_url)
     home.navigate()
 
-    expect(page).to_have_title("Welcome to Merchies")
-    expect(page.locator("h1")).to_contain_text("Discover premium designs")
+    expect(page).to_have_title("Welcome to XCollections")
+    expect(page.locator("h1")).to_contain_text("Discover women's fashion")
 
     # Check navigation links
     nav_links = home.get_nav_links()

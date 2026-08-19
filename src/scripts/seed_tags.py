@@ -11,13 +11,12 @@ from src.features.products.services import ProductService
 
 # Define mapping from keywords in product name to tags list
 TAG_MAPPING = {
-    ("shoe", "jordan", "nike"): ["footwear", "streetwear", "shoes"],
-    ("dress", "scarf", "jacket", "shirt"): ["apparel", "traditional", "clothing"],
-    ("leather", "wallet", "bag", "tote", "messenger"): ["accessories", "leather", "bags"],
-    ("cross", "silver", "pendant"): ["jewelry", "traditional", "silver"],
-    ("coffee", "beans", "jebena"): ["coffee", "traditional", "organic"],
-    ("basket", "storage", "pot", "decor"): ["home", "decor", "handcrafted"],
-    ("tv", "tvv"): ["electronics", "appliances"]
+    ("dress", "kemis", "gown", "skirt", "blouse", "top", "shirt", "jacket"): ["dresses", "apparel", "clothing"],
+    ("shoe", "heels", "pumps", "sandals", "flats", "sneakers", "boots"): ["shoes", "footwear"],
+    ("handbag", "bag", "tote", "crossbody", "clutch", "shoulder", "wallet"): ["bags", "accessories"],
+    ("scarf", "netela", "belt", "jewelry", "necklace", "pendant"): ["accessories", "jewelry"],
+    ("habesha", "kemis", "netela"): ["traditional", "ethiopian"],
+    ("leather", "silk"): ["premium", "leather"]
 }
 
 async def main():

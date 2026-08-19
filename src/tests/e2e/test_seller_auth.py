@@ -14,7 +14,7 @@ def test_seller_login_page_renders(page: Page, base_url: str):
     """The login page shows the phone form."""
     page.goto("/auth/login")
 
-    expect(page).to_have_title("Seller Login - Merchies")
+    expect(page).to_have_title("Seller Login - XCollections")
     expect(page.locator('input[name="phone"]')).to_be_visible()
     expect(page.locator('button[type="submit"]')).to_contain_text("Send OTP")
 

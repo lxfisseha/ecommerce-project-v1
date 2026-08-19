@@ -33,7 +33,7 @@ async def test_search_products_full_page():
     assert "Leather Wallet" in response.text
     assert "Leather Belt" in response.text
     assert "Cotton T-Shirt" not in response.text
-    assert "The Full Collection" in response.text
+    assert "The Fashion Collection" in response.text
 
 
 @pytest.mark.asyncio

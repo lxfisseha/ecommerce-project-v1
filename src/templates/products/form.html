@@ -1,6 +1,6 @@
 {% extends "seller_base.html" %}
 
-{% block title %}{% if product %}Edit Product{% else %}Add New Product{% endif %} - Merchies{% endblock %}
+{% block title %}{% if product %}Edit Product{% else %}Add New Product{% endif %} - XCollections{% endblock %}
 
 {% block seller_content %}
 <div class="max-w-4xl mx-auto">
@@ -9,7 +9,7 @@
                 {% if product %}Edit Product{% else %}Add New Product{% endif %}
             </h1>
             <p class="text-text-muted text-sm sm:text-base leading-6 mt-1">
-                {% if product %}Update your product details and availability.{% else %}Fill in the details to list a new item on Merchies.{% endif %}
+                {% if product %}Update your product details and availability.{% else %}Fill in the details to list a new item on XCollections.{% endif %}
             </p>
             {% if error %}
             <div class="mt-4 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">

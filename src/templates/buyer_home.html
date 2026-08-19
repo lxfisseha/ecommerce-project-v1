@@ -1,6 +1,6 @@
 {% extends "buyer_base.html" %}
 
-{% block title %}Welcome to Merchies{% endblock %}
+{% block title %}Welcome to XCollections{% endblock %}
 
 {% block head %}
 <link rel="preload" as="font" type="font/woff2" crossorigin href="/static/fonts/anton-sc-latin-400-normal.woff2">
@@ -26,7 +26,7 @@
         <div class="relative z-20 w-full px-6 sm:px-16 flex flex-col items-center sm:items-start text-center sm:text-left">
             
             <h1 class="font-display uppercase text-left tracking-wide text-[40px] sm:text-6xl text-white mb-8 leading-[1.1] max-w-2xl drop-shadow-lg">
-                 Discover premium designs inspired by the <span class="text-fuchsia-400 ">stories</span> you love. 
+                Discover women's fashion inspired by <span class="text-fuchsia-400 ">style</span> and tradition. 
             </h1>
 
             <!-- Modern Search Hub -->
@@ -43,7 +43,7 @@
                         </div>
                         <input type="text" 
                                name="q"
-                               placeholder="Search products..." 
+                               placeholder="Search dresses, shoes, bags..." 
                                class="flex-1 min-w-0 px-3 sm:px-4 py-3 bg-transparent border-none text-sm sm:text-base text-text-main focus:outline-none focus:ring-0 placeholder:text-text-muted/40">
                         <button type="submit" class="flex-shrink-0 bg-accent text-white px-5 sm:px-8 py-3 rounded-2xl text-sm font-bold hover:bg-primary transition-all active:scale-95 flex items-center justify-center gap-2 h-full min-h-[44px]">
                             <span class="hidden xs:inline">Explore</span>
@@ -53,9 +53,9 @@
                 </form>
                 <div class="mt-4 flex flex-wrap justify-center sm:justify-start gap-4 text-white/40 text-[10px] sm:text-xs font-bold uppercase tracking-widest drop-shadow-md">
                     <span class="text-white/70">Popular:</span>
-                    <a href="/shop?q=anime" class="text-white/90 hover:text-accent transition-colors">#Anime</a>
-                    <a href="/shop?q=music" class="text-white/90 hover:text-accent transition-colors">#Music</a>
-                    <a href="/shop?q=movies" class="text-white/90 hover:text-accent transition-colors">#Movies</a>
+                    <a href="/shop?q=dress" class="text-white/90 hover:text-accent transition-colors">#Dresses</a>
+                    <a href="/shop?q=shoes" class="text-white/90 hover:text-accent transition-colors">#Shoes</a>
+                    <a href="/shop?q=handbag" class="text-white/90 hover:text-accent transition-colors">#Handbags</a>
                 </div>
             </div>
         </div>

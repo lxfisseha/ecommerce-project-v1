@@ -1,5 +1,5 @@
 """
-Hosted smoke tests — read-only checks against a deployed Merchies app.
+Hosted smoke tests — read-only checks against a deployed XCollections app.
 
 These tests make GET requests only: no DB writes, no SMS, no rate-limit burn,
 so they are safe to run repeatedly after every deploy.
@@ -35,7 +35,7 @@ def test_home_loads(page: Page, base_url: str):
     home = HomePage(page, base_url)
     home.navigate()
 
-    expect(page).to_have_title("Welcome to Merchies")
+    expect(page).to_have_title("Welcome to XCollections")
     expect(home.get_nav_links()["shop"]).to_be_visible()
 
     cards = home.get_product_cards()
@@ -78,7 +78,7 @@ def test_unknown_product_returns_404(page: Page, base_url: str):
 def test_cart_empty_state(page: Page, base_url: str):
     """Cart page shows the empty state for a fresh session."""
     page.goto(f"{base_url}/cart")
-    expect(page).to_have_title("Your Cart - Merchies")
+    expect(page).to_have_title("Your Cart - XCollections")
     expect(page.locator("div#cart-content")).to_be_visible()
     expect(page.locator("body")).to_contain_text("Your cart is empty")
 
@@ -86,7 +86,7 @@ def test_cart_empty_state(page: Page, base_url: str):
 def test_login_page_renders(page: Page, base_url: str):
     """Login page shows phone input and Send OTP button (no submit — SMS)."""
     page.goto(f"{base_url}/auth/login")
-    expect(page).to_have_title("Seller Login - Merchies")
+    expect(page).to_have_title("Seller Login - XCollections")
     expect(page.locator('input[name="phone"]')).to_be_visible()
     expect(page.locator('button[type="submit"]:has-text("Send OTP")')).to_be_visible()
 

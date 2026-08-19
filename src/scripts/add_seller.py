@@ -25,7 +25,7 @@ async def add_sample_seller():
         phone_h = hash_phone(phone_normalized)
         
         # Check if already exists by store_name
-        statement = select(Seller).where(Seller.store_name == "AleMart Demo Store")
+        statement = select(Seller).where(Seller.store_name == "XCollections Demo Store")
         result = await session.execute(statement)
         seller = result.scalar_one_or_none()
         
@@ -41,7 +41,7 @@ async def add_sample_seller():
             seller = Seller(
                 first_name="Fanuel",
                 last_name="Alemu",
-                store_name="AleMart Demo Store",
+                store_name="XCollections Demo Store",
                 store_prefix="DEMO",
                 phone=encrypt_phone(phone_normalized),
                 phone_hash=phone_h,
@@ -51,7 +51,7 @@ async def add_sample_seller():
             session.add(seller)
         
         await session.commit()
-        print(f"Sample seller 'AleMart Demo Store' handled successfully with phone {phone_normalized}.")
+        print(f"Sample seller 'XCollections Demo Store' handled successfully with phone {phone_normalized}.")
 
 if __name__ == "__main__":
     asyncio.run(add_sample_seller())

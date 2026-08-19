@@ -21,7 +21,7 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = FastAPI(
-    title="AleMart Merchant Solution Center",
+    title="XCollections Merchant Solution Center",
     docs_url=None,  # Disable Swagger UI
     redoc_url=None,  # Disable ReDoc
     openapi_url=None,
