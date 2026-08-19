@@ -330,11 +330,11 @@ async def test_product_detail_add_to_cart_hx_vals_are_valid():
 
 
 @pytest.mark.asyncio
-async def test_listing_add_buttons_keep_original_icon_only_markup():
+async def test_listing_add_buttons_have_spinner_and_checkmark():
     for path in ("/", "/shop"):
         resp = client.get(path)
         assert resp.status_code == 200
         assert 'hx-post="/cart/add/' in resp.text
-        assert 'class="btn-spinner' not in resp.text
-        assert 'class="btn-checkmark' not in resp.text
-        assert 'class="btn-content' not in resp.text
+        assert 'class="btn-spinner' in resp.text
+        assert 'class="btn-checkmark' in resp.text
+        assert 'class="btn-content' in resp.text
