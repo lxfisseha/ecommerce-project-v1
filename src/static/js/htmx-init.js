@@ -42,15 +42,24 @@ document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
         }, 400));
     }
 
-    // Regular link clicks
+    // Regular link clicks + buttons with JS navigation
     document.addEventListener('click', function (e) {
-        const link = e.target.closest('a[href]');
-        if (!link) return;
-        // Skip htmx-handled, anchor-only, blank-target, download links
-        if (link.hasAttribute('hx-get') || link.hasAttribute('hx-post')) return;
-        if (link.target === '_blank' || link.hasAttribute('download')) return;
-        const href = link.getAttribute('href');
-        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        const target = e.target.closest('a[href], button[onclick], [onclick]');
+        if (!target) return;
+        // Skip htmx-handled links
+        if (target.hasAttribute('hx-get') || target.hasAttribute('hx-post')) return;
+        // Skip blank targets and downloads
+        if (target.target === '_blank' || target.hasAttribute('download')) return;
+        // For <a> tags, skip anchors, javascript:, empty
+        if (target.tagName === 'A') {
+            const href = target.getAttribute('href');
+            if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+        }
+        // For buttons/elements with onclick containing location, treat as navigation
+        if (target.tagName !== 'A') {
+            const onclick = target.getAttribute('onclick') || '';
+            if (!onclick.includes('location')) return;
+        }
         start();
     });
 
@@ -60,6 +69,12 @@ document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
     });
     document.addEventListener('htmx:afterRequest', function () { complete(); });
     document.addEventListener('htmx:loadError', function () { complete(); });
+
+    // Back/forward navigation
+    window.addEventListener('popstate', start);
+
+    // Fallback: form submissions, JS-initiated navigation not caught above
+    window.addEventListener('beforeunload', start);
 
     // Page load
     window.addEventListener('load', complete);
