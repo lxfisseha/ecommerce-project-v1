@@ -12,6 +12,8 @@ class HomePage:
         form = self.page.locator('form[action="/shop"][method="GET"]')
         form.locator('input[name="q"]').fill(query)
         form.locator('button[type="submit"], input[type="submit"]').first.click()
+        # The progress-bar interceptor defers plain form submits by 2 rAF frames.
+        self.page.wait_for_timeout(300)
         self.page.wait_for_load_state('networkidle')
 
     def get_product_cards(self) -> Locator:
@@ -21,6 +23,8 @@ class HomePage:
 
     def click_shop_all(self) -> None:
         self.page.locator('a[href="/shop"]').first.click()
+        # Link clicks are intercepted by the progress bar (2 rAF deferral).
+        self.page.wait_for_timeout(300)
         self.page.wait_for_load_state('networkidle')
 
     def get_nav_links(self) -> dict[str, Locator]:

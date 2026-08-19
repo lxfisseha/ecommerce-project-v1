@@ -22,7 +22,7 @@ def _place_order(page: Page, base_url: str) -> str:
         phone="933445566",
         address="Piassa, House 77, Addis Ababa",
     )
-    checkout.place_order()
+    checkout.place_order_and_wait()
 
     assert "/order-confirmation/" in page.url
     ref = page.url.rsplit("/", 1)[-1]
@@ -70,7 +70,7 @@ def test_order_status_workflow(page: Page, seller_page: Page, base_url: str):
     expect(seller_page).to_have_url(re.compile(r"/dashboard/orders/\d+"))
 
     expect(seller_page.locator("body")).to_contain_text("Seller Flow Buyer")
-    expect(seller_page.locator("body")).to_contain_text("Wireless Headphones")
+    expect(seller_page.locator("body")).to_contain_text("Elegant Maxi Dress")
     expect(seller_page.locator("button[type='submit'][value='shipped']")).to_be_visible()
 
     # pending -> shipped

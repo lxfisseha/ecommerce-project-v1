@@ -1,3 +1,4 @@
+import re
 import urllib.parse
 from playwright.sync_api import Page
 
@@ -27,7 +28,15 @@ class CheckoutPage:
 
     def place_order(self) -> None:
         self.page.locator('button[type="submit"]:has-text("Place Order")').click()
+        # The progress-bar interceptor defers plain form submits by 2 rAF
+        # frames, so give it a moment before waiting on the network.
+        self.page.wait_for_timeout(300)
         self.page.wait_for_load_state('networkidle')
+
+    def place_order_and_wait(self) -> None:
+        """Click Place Order and wait for the confirmation page to load."""
+        self.place_order()
+        self.page.wait_for_url(re.compile(r"/order-confirmation/"), timeout=20_000)
 
     def get_error_message(self) -> str:
         error_loc = self.page.locator('.error-message, .invalid-feedback')

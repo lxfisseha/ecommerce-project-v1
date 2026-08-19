@@ -83,9 +83,12 @@ document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
         if (!form.checkValidity()) return;
         e.preventDefault();
         start();
+        const submitter = e.submitter || null;
         afterPaint(() => {
             resubmitting = true;
-            form.requestSubmit();
+            // Pass the originating submitter so a button carrying form data
+            // (e.g. name="new_status" on the order status form) isn't dropped.
+            form.requestSubmit(submitter);
         });
     });
 

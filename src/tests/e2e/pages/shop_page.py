@@ -43,6 +43,16 @@ class ShopPage:
     def get_product_count(self) -> int:
         return self.page.locator('div#product-grid-container a[href^="/product/"]').count()
 
+    def get_product_ids(self, count: int = 1) -> List[str]:
+        """Return up to `count` product ids from the first shop page."""
+        self.navigate()
+        ids: List[str] = []
+        for link in self.page.locator('div#product-grid-container a[href^="/product/"]').all()[:count]:
+            href = link.get_attribute("href")
+            if href:
+                ids.append(href.split("/")[-1])
+        return ids
+
     def click_product(self, name_or_index: Union[str, int]) -> None:
         if isinstance(name_or_index, int):
             self.page.locator('div#product-grid-container a[href^="/product/"]').nth(name_or_index).click()

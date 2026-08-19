@@ -118,9 +118,10 @@ async def _seed_database():
         # --- Tags ---
         tags = {}
         for tag_name, tag_slug in [
-            ("Electronics", "electronics"),
-            ("Clothing", "clothing"),
+            ("Dresses", "dresses"),
             ("Shoes", "shoes"),
+            ("Handbags", "handbags"),
+            ("Accessories", "accessories"),
         ]:
             tag = Tag(name=tag_name, slug=tag_slug)
             session.add(tag)
@@ -129,31 +130,31 @@ async def _seed_database():
 
         # --- Products (15 in-stock + 2 out-of-stock) ---
         products_data = [
-            ("Wireless Headphones", Decimal("2500.00"), True, "electronics", "Premium wireless headphones with noise cancellation"),
-            ("Running Shoes", Decimal("3200.00"), True, "shoes", "Lightweight running shoes for daily training"),
-            ("Leather Jacket", Decimal("4500.00"), True, "clothing", "Genuine leather jacket, slim fit"),
-            ("Smart Watch", Decimal("5000.00"), True, "electronics", "Fitness tracker with heart rate monitor"),
-            ("Cotton T-Shirt", Decimal("800.00"), True, "clothing", "100% cotton crew neck t-shirt"),
-            ("Bluetooth Speaker", Decimal("1800.00"), True, "electronics", "Portable speaker with deep bass"),
-            ("Denim Jeans", Decimal("2200.00"), True, "clothing", "Classic fit denim jeans"),
-            ("USB-C Cable", Decimal("350.00"), True, "electronics", "Fast charging braided cable"),
-            ("Canvas Sneakers", Decimal("1500.00"), True, "shoes", "Casual canvas sneakers"),
-            ("Hoodie Sweatshirt", Decimal("1600.00"), True, "clothing", "Warm fleece hoodie"),
-            ("Phone Case", Decimal("450.00"), True, "electronics", "Shockproof clear phone case"),
-            ("Backpack", Decimal("2800.00"), True, "clothing", "Water-resistant laptop backpack"),
-            ("Earbuds", Decimal("1200.00"), True, "electronics", "True wireless earbuds"),
-            ("Sandals", Decimal("900.00"), True, "shoes", "Comfortable slip-on sandals"),
-            ("Polo Shirt", Decimal("1100.00"), True, "clothing", "Classic polo shirt"),
+            ("Elegant Maxi Dress", Decimal("2500.00"), True, "dresses", "Flowing maxi dress with a modern silhouette"),
+            ("Modern Habesha Dress", Decimal("3200.00"), True, "dresses", "Handwoven traditional Ethiopian dress"),
+            ("Printed Floral Dress", Decimal("1800.00"), True, "dresses", "Lightweight floral print summer dress"),
+            ("Silk Evening Gown", Decimal("4500.00"), True, "dresses", "Elegant silk gown for special occasions"),
+            ("Chiffon Blouse", Decimal("1200.00"), True, "dresses", "Sheer chiffon blouse, office ready"),
+            ("Elegant High Heel Shoes", Decimal("2200.00"), True, "shoes", "Statement high heels for evenings out"),
+            ("Comfortable Ballet Flats", Decimal("1500.00"), True, "shoes", "Classic ballet flats, all-day comfort"),
+            ("Trendy Sneaker Shoes", Decimal("1600.00"), True, "shoes", "Casual sneakers for everyday wear"),
+            ("Fashion Sandal Shoes", Decimal("1200.00"), True, "shoes", "Strappy fashion sandals for warm days"),
+            ("Leather Ankle Boots", Decimal("2800.00"), True, "shoes", "Genuine leather ankle boots"),
+            ("Leather Handbag", Decimal("3000.00"), True, "handbags", "Spacious genuine leather handbag"),
+            ("Elegant Clutch Bag", Decimal("1500.00"), True, "handbags", "Sleek clutch for nights out"),
+            ("Canvas Tote Bag", Decimal("800.00"), True, "handbags", "Everyday canvas tote, roomy and light"),
+            ("Silk Fashion Scarf", Decimal("600.00"), True, "accessories", "Soft silk scarf with a classic print"),
+            ("Pearl Necklace", Decimal("900.00"), True, "accessories", "Timeless pearl necklace"),
             # Out-of-stock products
-            ("Sold Out Gadget", Decimal("9999.00"), False, "electronics", "This product is out of stock"),
-            ("Unavailable Shoes", Decimal("5000.00"), False, "shoes", "These shoes are unavailable"),
+            ("Sold Out Evening Dress", Decimal("9999.00"), False, "dresses", "This product is out of stock"),
+            ("Unavailable High Heels", Decimal("5000.00"), False, "shoes", "These shoes are unavailable"),
         ]
 
         from src.utils.datetime import utc_now
         from datetime import timedelta
 
         # Assign staggered created_at timestamps so the product list's
-        # created_at DESC ordering is deterministic: Wireless Headphones
+        # created_at DESC ordering is deterministic: Elegant Maxi Dress
         # (id 1) is the newest and appears on page 1, older products fall
         # onto later pages.
         base_time = utc_now() - timedelta(hours=len(products_data))
@@ -339,6 +340,18 @@ def page(browser, base_url):
     yield pg
     pg.close()
     context.close()
+
+
+@pytest.fixture
+def skip_hosted():
+    """Skip a test in hosted mode (read-only smoke checks against the deploy).
+
+    Tests that need the local seeded SQLite DB (OTP reading, deterministic
+    seeded products/attributes) can't run against the deployed app.
+    """
+    if E2E_HOST_BASE_URL:
+        pytest.skip("Local seeded DB only; not applicable in hosted mode")
+    yield
 
 
 # ---------------------------------------------------------------------------

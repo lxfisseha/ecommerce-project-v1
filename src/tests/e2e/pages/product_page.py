@@ -11,9 +11,14 @@ class ProductPage:
     def get_name(self) -> str:
         return self.page.locator('h1').first.inner_text().strip()
 
-    def get_price(self) -> str:
-        # Assuming the price is in a prominent element like .price or similar
-        return self.page.locator('.price, [data-testid="price"]').first.inner_text().strip()
+    def get_price(self) -> int:
+        # The main price on the detail page contains "ETB" (the header logo's
+        # text-accent span does not).
+        import re
+        text = self.page.locator('span.text-accent:has-text("ETB")').first.inner_text()
+        m = re.search(r"([\d,]+)", text)
+        assert m, f"Could not parse price from: {text!r}"
+        return int(m.group(1).replace(",", ""))
 
     def set_quantity(self, n: int) -> None:
         # The quantity input is readonly (desktop + mobile sticky bars each render

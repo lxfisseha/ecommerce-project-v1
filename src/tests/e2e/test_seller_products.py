@@ -24,8 +24,8 @@ def test_products_list_renders(seller_page: Page, base_url: str):
     expect(seller_page.locator('a[href="/dashboard/products/add"]')).to_contain_text(
         "Add New Product"
     )
-    expect(seller_page.locator("body")).to_contain_text("Wireless Headphones")
-    expect(seller_page.locator("body")).to_contain_text("Running Shoes")
+    expect(seller_page.locator("body")).to_contain_text("Elegant Maxi Dress")
+    expect(seller_page.locator("body")).to_contain_text("Elegant High Heel Shoes")
 
 
 @pytest.mark.e2e
@@ -34,14 +34,14 @@ def test_products_search_filters_list(seller_page: Page, base_url: str):
     seller_page.goto("/dashboard/products")
 
     search_box = seller_page.locator('input[name="search"]')
-    search_box.fill("Wireless")
+    search_box.fill("Dress")
     search_box.dispatch_event("keyup")
 
     expect(seller_page.locator("#product-list-content")).to_contain_text(
-        "Wireless Headphones"
+        "Elegant Maxi Dress"
     )
     expect(seller_page.locator("#product-list-content")).not_to_contain_text(
-        "Running Shoes"
+        "Elegant High Heel Shoes"
     )
 
 
@@ -77,13 +77,13 @@ def test_edit_product_flow(seller_page: Page, base_url: str):
     seller_page.goto("/dashboard/products/edit/2")
 
     name_input = seller_page.locator('input[name="name"]')
-    expect(name_input).to_have_value("Running Shoes")
-    name_input.fill("Running Shoes V2")
+    expect(name_input).to_have_value("Modern Habesha Dress")
+    name_input.fill("Modern Habesha Dress V2")
     seller_page.locator('button[type="submit"]:has-text("Save Product")').click()
 
     expect(seller_page).to_have_url(re.compile(r"/dashboard/products/?$"))
     expect(seller_page.locator("#product-list-content")).to_contain_text(
-        "Running Shoes V2"
+        "Modern Habesha Dress V2"
     )
 
 

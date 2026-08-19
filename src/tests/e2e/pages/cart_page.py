@@ -38,6 +38,8 @@ class CartPage:
 
     def proceed_to_checkout(self) -> None:
         self.page.locator('a[href="/checkout"]').first.click()
+        # Same rAF deferral as place_order — let the interceptor navigate.
+        self.page.wait_for_timeout(300)
         self.page.wait_for_load_state('networkidle')
 
     def is_empty(self) -> bool:

@@ -46,7 +46,7 @@ def test_login_unknown_seller_shows_error(page: Page, base_url: str):
 
 
 @pytest.mark.e2e
-def test_login_wrong_otp_shows_error(page: Page, base_url: str):
+def test_login_wrong_otp_shows_error(skip_hosted, page: Page, base_url: str):
     """Submitting an incorrect OTP shows the remaining-attempts error."""
     page.goto("/auth/login")
 
