@@ -100,6 +100,13 @@ async def _db_setup_teardown():
         await conn.run_sync(SQLModel.metadata.drop_all)
 
 
+@pytest.fixture(autouse=True)
+def _disable_cheat_pin(monkeypatch):
+    """Keep OTP tests deterministic: cheat PIN disabled unless a test enables it."""
+    from src.config import settings
+    monkeypatch.setattr(settings, "AUTH_CHEAT_PIN", "")
+
+
 def _clear_rate_limiter(app_instance):
     """Walk the ASGI middleware stack and clear the rate limiter store."""
     stack = getattr(app_instance, 'middleware_stack', None)

@@ -13,6 +13,10 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
+    # Debug/demo bypass: when set, this PIN verifies OTP without a code check.
+    # Leave empty in production.
+    AUTH_CHEAT_PIN: str = ""
+
     # SMS / External
     AFROMESSAGES_API_KEY: str = ""
     AFROMESSAGES_SENDER: str = ""

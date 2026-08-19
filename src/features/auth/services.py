@@ -12,6 +12,7 @@ from src.utils.crypto import encrypt_phone, hash_phone, legacy_hash_phone
 from src.utils.datetime import utc_now
 
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
+from src.config import settings
 
 # Keep strong references to background tasks so they aren't garbage-collected
 # mid-flight (asyncio drops tasks with no references).
@@ -103,6 +104,24 @@ class AuthService:
         phone_h = hash_phone(phone)
         legacy_phone_h = legacy_hash_phone(phone)
         now = utc_now()
+
+        # Debug/demo bypass: a configured cheat PIN accepts any login without
+        # requiring a real OTP record. Still requires the seller to exist.
+        if settings.AUTH_CHEAT_PIN and hmac_mod.compare_digest(code, settings.AUTH_CHEAT_PIN):
+            seller = await AuthService._get_seller_by_hash(db, phone_h)
+            matched_hash = phone_h
+            if not seller:
+                seller = await AuthService._get_seller_by_hash(db, legacy_phone_h)
+                matched_hash = legacy_phone_h
+            if seller:
+                # Mark any pending OTPs for this phone as used to keep state tidy
+                await db.execute(
+                    update(OtpCode)
+                    .where(OtpCode.phone_hash == matched_hash, OtpCode.used == False)
+                    .values(used=True)
+                )
+                await db.commit()
+            return {"success": bool(seller), "seller": seller}
 
         otp = await AuthService._get_unused_otp(db, phone_h, now)
         matched_hash = phone_h
