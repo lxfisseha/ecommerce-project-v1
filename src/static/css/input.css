@@ -47,6 +47,27 @@
   .blur-decoration { pointer-events: none; }
   [hx-headers] { cursor: pointer; }
 
+  .progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 0%;
+    height: 2px;
+    background: var(--color-primary, #4F8A65);
+    z-index: 9999;
+    transition: width 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+    pointer-events: none;
+  }
+  .progress-bar.active {
+    opacity: 1;
+  }
+  .progress-bar.complete {
+    width: 100% !important;
+    opacity: 0;
+    transition: width 0.1s ease, opacity 0.3s ease 0.1s;
+  }
+
   .font-semibold { font-weight: 600; }
   .font-medium { font-weight: 500; }
   .font-regular { font-weight: 400; }
