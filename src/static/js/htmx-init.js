@@ -27,6 +27,7 @@ document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
         bar.classList.add('active');
         // Force reflow so the transition restarts from 0
         void bar.offsetWidth;
+        bar.style.width = '10%';
         timers.push(setTimeout(() => { bar.style.width = '60%'; }, 10));
         timers.push(setTimeout(() => { bar.style.width = '85%'; }, 1500));
         timers.push(setTimeout(() => { bar.style.width = '92%'; }, 4000));
@@ -69,6 +70,12 @@ document.body.addEventListener('htmx:beforeOnLoad', function (evt) {
     });
     document.addEventListener('htmx:afterRequest', function () { complete(); });
     document.addEventListener('htmx:loadError', function () { complete(); });
+
+    // Form submissions (Explore button, etc.)
+    document.addEventListener('submit', function (e) {
+        if (e.target.hasAttribute('hx-post') || e.target.hasAttribute('hx-get')) return;
+        start();
+    });
 
     // Back/forward navigation
     window.addEventListener('popstate', start);
