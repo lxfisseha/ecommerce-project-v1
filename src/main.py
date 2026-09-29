@@ -81,6 +81,11 @@ app.include_router(products_router, prefix="/dashboard/products", tags=["product
 app.include_router(buyer_router, tags=["buyer"])  # New router for buyer-facing pages
 
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
+
 @app.get("/")
 async def root_redirect():
     from fastapi.responses import RedirectResponse
