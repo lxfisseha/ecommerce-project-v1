@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     AFROMESSAGES_SENDER: str = ""
     AFROMESSAGES_FROM: str = ""
     AFROMESSAGES_CALLBACK: str = ""
-    CLOUDINARY_URL: str
+    CLOUDINARY_URL: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
