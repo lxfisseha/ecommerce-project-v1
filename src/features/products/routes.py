@@ -9,7 +9,7 @@ from src.templates_config import templates
 from .services import ProductService
 from .models import ProductImage
 from src.dependencies import require_seller_id
-from src.utils.storage import CloudinaryService
+from src.utils.storage import LocalStorage
 from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select
 

@@ -5,6 +5,7 @@ from sqlalchemy.orm import selectinload
 import anyio
 from decimal import Decimal
 from .models import Product, ProductImage, ProductAttribute, ProductTagLink, Tag
+from src.utils.storage import LocalStorage
 
 class ProductService:
     @staticmethod
@@ -165,8 +166,8 @@ class ProductService:
         if not product:
             return False
 
-        # Delete MinIO images before soft-deleting
-        storage = MinioStorage()
+        # Delete local filesystem images before soft-deleting
+        storage = LocalStorage()
         for image in product.images:
             if image.object_name:
                 try:

@@ -1,90 +1,100 @@
-from minio import Minio
-from minio.error import S3Error
 from src.config import settings
 import uuid
 from datetime import timedelta
+from pathlib import Path
+import os
+import shutil
 
 
-class MinioStorage:
-    """MinIO storage service for self-hosted image storage."""
+class LocalStorage:
+    """Local filesystem storage service for self-hosted images."""
 
     def __init__(self):
-        self.client = Minio(
-            endpoint=settings.MINIO_ENDPOINT.replace("http://", "").replace("https://", ""),
-            access_key=settings.MINIO_ACCESS_KEY or settings.MINIO_ROOT_USER,
-            secret_key=settings.MINIO_SECRET_KEY or settings.MINIO_ROOT_PASSWORD,
-            secure=settings.MINIO_ENDPOINT.startswith("https"),
-        )
-        self.bucket = settings.MINIO_BUCKET
-        self._ensure_bucket()
+        self.base_path = Path(settings.MEDIA_ROOT) if hasattr(settings, 'MEDIA_ROOT') else Path("/app/media")
+        self.base_path.mkdir(parents=True, exist_ok=True)
 
-    def _ensure_bucket(self):
-        """Create bucket if it doesn't exist."""
-        try:
-            if not self.client.bucket_exists(self.bucket):
-                self.client.make_bucket(self.bucket)
-        except S3Error as e:
-            # Bucket might already exist
-            if e.code != "BucketAlreadyOwnedByYou":
-                raise
-
-    def presigned_put_url(self, filename: str, content_type: str, folder: str = "products") -> tuple[str, str]:
+    def save(self, file_content: bytes, filename: str, folder: str = "products") -> str:
         """
-        Generate a presigned PUT URL for direct browser-to-MinIO upload.
-        Returns (upload_url, object_name).
+        Save file to local filesystem.
+        Returns object_name (relative path from media root).
         """
         ext = filename.split(".")[-1].lower() if "." in filename else "jpg"
-        object_name = f"{folder}/originals/{uuid.uuid4()}.{ext}"
+        unique_name = f"{uuid.uuid4()}.{ext}"
+        relative_path = f"{folder}/originals/{unique_name}"
+        full_path = self.base_path / relative_path
+        
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_bytes(file_content)
+        
+        return relative_path
 
-        url = self.client.presigned_put_object(
-            bucket_name=self.bucket,
-            object_name=object_name,
-            expires=timedelta(hours=1),
-        )
-        return url, object_name
+    def save_upload(self, upload_file, folder: str = "products") -> str:
+        """
+        Save UploadFile to local filesystem.
+        Returns object_name (relative path from media root).
+        """
+        ext = "jpg"
+        if hasattr(upload_file, 'filename') and upload_file.filename:
+            ext = upload_file.filename.split(".")[-1].lower() if "." in upload_file.filename else "jpg"
+        
+        unique_name = f"{uuid.uuid4()}.{ext}"
+        relative_path = f"products/originals/{unique_name}"
+        full_path = self.base_path / relative_path
+        
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(full_path, "wb") as f:
+            content = upload_file.file.read()
+            f.write(content)
+        
+        return relative_path
 
-    def presigned_get_url(self, object_name: str) -> str:
-        """Generate a presigned GET URL for an object."""
-        return self.client.presigned_get_object(
-            bucket_name=self.bucket,
-            object_name=object_name,
-            expires=timedelta(hours=1),
-        )
+    def get_path(self, object_name: str) -> Path:
+        """Get full filesystem path for an object."""
+        return self.base_path / object_name
+
+    def get_url(self, object_name: str) -> str:
+        """Get local filesystem URL for an object."""
+        return f"/media/{object_name}"
 
     def delete(self, object_name: str) -> bool:
-        """Delete an object from MinIO."""
+        """Delete an object from local filesystem."""
         try:
-            self.client.remove_object(self.bucket, object_name)
-            return True
-        except S3Error:
+            full_path = self.base_path / object_name
+            if full_path.exists():
+                full_path.unlink()
+                return True
+            return False
+        except Exception:
             return False
 
     def delete_prefix(self, prefix: str) -> int:
         """Delete all objects with a given prefix. Returns count deleted."""
         try:
-            objects = self.client.list_objects(self.bucket, prefix=prefix, recursive=True)
+            prefix_path = self.base_path / prefix
             count = 0
-            for obj in objects:
-                self.client.remove_object(self.bucket, obj.object_name)
-                count += 1
+            if prefix_path.exists():
+                for file_path in prefix_path.rglob("*"):
+                    if file_path.is_file():
+                        file_path.unlink()
+                        count += 1
+                # Remove empty directories
+                for dir_path in sorted(prefix_path.rglob("*"), key=lambda p: len(p.parts), reverse=True):
+                    if dir_path.is_dir() and not any(dir_path.iterdir()):
+                        dir_path.rmdir()
             return count
-        except S3Error:
+        except Exception:
             return 0
 
     def object_exists(self, object_name: str) -> bool:
         """Check if an object exists."""
-        try:
-            self.client.stat_object(self.bucket, object_name)
-            return True
-        except S3Error:
-            return False
+        return (self.base_path / object_name).exists()
 
 
 # Backward compatibility - CloudinaryService for gradual migration
 class CloudinaryService:
     @staticmethod
     def upload_image(file_content: bytes, folder: str = "products", eager: list = None) -> str:
-        raise NotImplementedError("Cloudinary is deprecated. Use MinioStorage.presigned_put_url for direct uploads.")
+        raise NotImplementedError("Cloudinary is deprecated. Use LocalStorage for direct uploads.")
 
     @staticmethod
     def delete_image(public_id: str):

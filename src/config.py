@@ -29,13 +29,8 @@ class Settings(BaseSettings):
     CLOUDINARY_API_SECRET: str = ""
     CLOUDINARY_URL: str = ""
 
-    # MinIO (self-hosted image storage)
-    MINIO_ENDPOINT: str = "http://minio:9000"
-    MINIO_BUCKET: str = "xcollections"
-    MINIO_ROOT_USER: str = ""
-    MINIO_ROOT_PASSWORD: str = ""
-    MINIO_ACCESS_KEY: str = ""
-    MINIO_SECRET_KEY: str = ""
+    # Local filesystem storage (self-hosted images)
+    MEDIA_ROOT: str = "/app/media"
 
     # imgproxy (self-hosted image processing)
     IMGPROXY_URL: str = "http://imgproxy:8080"

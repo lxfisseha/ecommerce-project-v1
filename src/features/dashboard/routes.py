@@ -12,7 +12,7 @@ from src.features.products.models import Product
 from src.utils.crypto import decrypt_data
 from src.utils.datetime import utc_now
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
-from src.utils.storage import MinioStorage
+from src.utils.storage import LocalStorage
 from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select, func, desc
 from sqlalchemy.orm import selectinload
