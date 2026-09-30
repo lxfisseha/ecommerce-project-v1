@@ -159,20 +159,18 @@ class ProductService:
         # Re-fetch with relationships
         return await ProductService.get_product_by_id(db, product.id)
 
-    @staticmethod
+@staticmethod
     async def delete_product(db: AsyncSession, product_id: int) -> bool:
         product = await ProductService.get_product_by_id(db, product_id)
         if not product:
             return False
 
-        # Delete Cloudinary images before soft-deleting
-        from src.utils.storage import CloudinaryService
+        # Delete MinIO images before soft-deleting
+        storage = MinioStorage()
         for image in product.images:
-            if image.image_url:
+            if image.object_name:
                 try:
-                    await anyio.to_thread.run_sync(
-                        lambda: CloudinaryService.delete_image(image.image_url)
-                    )
+                    storage.delete(image.object_name)
                 except Exception:
                     pass  # Best-effort cleanup
 

@@ -23,11 +23,22 @@ class Settings(BaseSettings):
     AFROMESSAGES_FROM: str = ""
     AFROMESSAGES_CALLBACK: str = ""
 
-    # Cloudinary (optional - for image uploads)
+    # Cloudinary (legacy - keeping for migration)
     CLOUDINARY_CLOUD_NAME: str = ""
     CLOUDINARY_API_KEY: str = ""
     CLOUDINARY_API_SECRET: str = ""
     CLOUDINARY_URL: str = ""
+
+    # MinIO (self-hosted image storage)
+    MINIO_ENDPOINT: str = "http://minio:9000"
+    MINIO_BUCKET: str = "xcollections"
+    MINIO_ROOT_USER: str = ""
+    MINIO_ROOT_PASSWORD: str = ""
+    MINIO_ACCESS_KEY: str = ""
+    MINIO_SECRET_KEY: str = ""
+
+    # imgproxy (self-hosted image processing)
+    IMGPROXY_URL: str = "http://imgproxy:8080"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

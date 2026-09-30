@@ -4,16 +4,24 @@
         <a href="/product/{{ product.id }}" class="absolute inset-0 z-[1]" aria-label="{{ product.name }}"></a>
         <!-- Product Image Area -->
         <div class="aspect-square bg-bg-muted relative overflow-hidden">
-            {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | map(attribute="image_url") | first %}
+            {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | first %}
             {% if not display_image %}
-                {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | map(attribute="image_url") | first %}
+                {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | first %}
             {% endif %}
             {% if not display_image and product.images %}
-                {% set display_image = product.images | map(attribute="image_url") | first %}
+                {% set display_image = product.images | first %}
             {% endif %}
 
             {% if display_image %}
-            <img src="{{ display_image | cloudinary(width=400) }}" alt="{{ product.name }}" width="400" height="400" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            <picture>
+                <source srcset="
+                    {{ display_image.object_name | self_hosted(160) }} 160w,
+                    {{ display_image.object_name | self_hosted(400) }} 400w,
+                    {{ display_image.object_name | self_hosted(800) }} 800w
+                  " sizes="(max-width: 480px) 160px, (max-width: 768px) 400px, 800px"
+                  type="image/webp">
+                <img src="{{ display_image.object_name | self_hosted(400) }}" alt="{{ product.name }}" width="400" height="400" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+            </picture>
             {% else %}
             <div class="w-full h-full flex items-center justify-center">
                 <svg class="w-10 h-10 text-border-main" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>

@@ -4,6 +4,7 @@ import os
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from markupsafe import Markup
+from src.config import settings
 
 
 def csrf_token_context_processor(request: Request):
@@ -17,6 +18,7 @@ def cart_count_context_processor(request: Request):
 
 
 def cloudinary_url(url: str, width: int = 0, height: int = 0, quality: str = "auto:eco") -> str:
+    """Legacy Cloudinary URL builder - kept for backward compatibility."""
     parts = url.split("/upload/")
     if len(parts) != 2:
         return url
@@ -26,6 +28,20 @@ def cloudinary_url(url: str, width: int = 0, height: int = 0, quality: str = "au
     if height:
         transforms += f",h_{height},c_fill"
     return f"{parts[0]}/upload/{transforms}/{parts[1]}"
+
+
+def self_hosted_image_url(url: str, width: int = 0, height: int = 0) -> str:
+    """Generate URL for self-hosted images via imgproxy."""
+    if not url or url.startswith("http"):
+        return url
+    base = settings.IMGPROXY_URL or "https://img.xcollections.duckdns.org"
+    transforms = []
+    if width:
+        transforms.append(f"w_{width}")
+    if height:
+        transforms.append(f"h_{height}")
+    transforms.append("f:webp")
+    return f"{base}/{','.join(transforms)}/{url}"
 
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -51,4 +67,5 @@ templates = Jinja2Templates(
     context_processors=[csrf_token_context_processor, cart_count_context_processor]
 )
 templates.env.filters["cloudinary"] = cloudinary_url
+templates.env.filters["self_hosted"] = self_hosted_image_url
 templates.env.filters["inline_css"] = inline_css

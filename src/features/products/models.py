@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import Optional, List
 from sqlmodel import Field, SQLModel, Relationship
 from decimal import Decimal
+import sqlalchemy as sa
 
 class ProductTagLink(SQLModel, table=True):
     __tablename__ = "product_tag_links"
@@ -44,7 +45,12 @@ class ProductImage(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     product_id: int = Field(foreign_key="products.id", index=True)
-    image_url: str
+    image_url: str = ""
+    object_name: str = ""
+    processed_urls: Optional[dict] = Field(default=None, sa_type=sa.JSON)
+    processing_status: str = Field(default="pending", max_length=20)  # pending, processing, completed, failed
+    processing_error: Optional[str] = Field(default=None, sa_type=sa.Text)
+    processed_at: Optional[datetime] = Field(default=None)
     image_tag: str = Field(default="gallery", max_length=20) # main, thumbnail, gallery
     display_order: int = Field(default=0)
     created_at: datetime = Field(default_factory=utc_now)

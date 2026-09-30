@@ -1,5 +1,6 @@
 import math
 import anyio
+import uuid
 from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -162,10 +163,21 @@ async def add_product(
     
     try:
         for content, tag in image_data:
-            image_url = await anyio.to_thread.run_sync(
-                lambda: CloudinaryService.upload_image(content, eager=EAGER)
+            storage = MinioStorage()
+            # For product images, we'll use a presigned URL approach
+            # For simplicity in the create flow, we'll upload directly
+            ext = "jpg"  # default
+            # Determine extension from content type
+            if hasattr(img, 'content_type'):
+                ext = img.content_type.split('/')[-1] if img.content_type else 'jpg'
+            object_name = f"products/{product.id}/originals/{uuid.uuid4()}.jpg"
+            storage.client.put_object(
+                bucket_name=storage.bucket,
+                object_name=object_name,
+                data=content,
+                length=len(content),
             )
-            new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
+            new_image = ProductImage(product_id=product.id, object_name=object_name, image_tag=tag)
             db.add(new_image)
         
         await db.commit()
@@ -238,17 +250,12 @@ async def edit_product(
             db.add(img)
 
     # 2. Handle New Image Uploads (if any)
-    if valid_images:
-        # Delete old Cloudinary images before clearing
-        from src.utils.storage import CloudinaryService
+if valid_images:
+        # Delete old MinIO images before clearing
+        storage = MinioStorage()
         for old_img in product.images:
-            if old_img.image_url:
-                try:
-                    await anyio.to_thread.run_sync(
-                        lambda: CloudinaryService.delete_image(old_img.image_url)
-                    )
-                except Exception:
-                    pass
+            if old_img.object_name:
+                storage.delete(old_img.object_name)
         product.images.clear()
             
         for i, img in enumerate(valid_images):
@@ -256,14 +263,17 @@ async def edit_product(
             if len(content) > MAX_IMAGE_SIZE:
                 return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", product=product)
             try:
-                image_url = await anyio.to_thread.run_sync(
-                    lambda: CloudinaryService.upload_image(content, eager=EAGER)
+                object_name = f"products/{product_id}/originals/{uuid.uuid4()}.jpg"
+                storage.client.put_object(
+                    bucket_name=storage.bucket,
+                    object_name=object_name,
+                    data=content,
+                    length=len(content),
                 )
             except Exception as e:
                 return _form_response(request, f"Failed to upload image {img.filename}: {str(e)}. Please try again.", product=product)
-            # Use new index starting from 0 since we cleared existing images
             tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
-            new_image = ProductImage(product_id=product.id, image_url=image_url, image_tag=tag)
+            new_image = ProductImage(product_id=product.id, object_name=object_name, image_tag=tag)
             product.images.append(new_image)
 
     # 3. Process and save attributes

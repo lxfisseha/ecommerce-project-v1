@@ -12,7 +12,7 @@ from src.features.products.models import Product
 from src.utils.crypto import decrypt_data
 from src.utils.datetime import utc_now
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
-from src.utils.storage import CloudinaryService
+from src.utils.storage import MinioStorage
 from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select, func, desc
 from sqlalchemy.orm import selectinload
@@ -308,38 +308,62 @@ async def update_profile(
     seller.business_contact_number = normalized_contact
     
     if featured_image and featured_image.filename:
-        ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-        if featured_image.content_type not in ALLOWED_IMAGE_TYPES:
-            decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
-            return templates.TemplateResponse(
-                request,
-                "dashboard/profile.html",
-                {
-                    "request": request,
-                    "seller": seller,
-                    "decrypted_phone": decrypted_phone,
-                    "seller_name": f"{seller.first_name} {seller.last_name}",
-                    "store_name": seller.store_name,
-                    "error": f"Invalid file type ({featured_image.content_type}). Allowed: JPEG, PNG, WebP, GIF."
-                }
-            )
-        content = await featured_image.read()
-        if len(content) > MAX_IMAGE_SIZE:
-            decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
-            return templates.TemplateResponse(
-                request,
-                "dashboard/profile.html",
-                {
-                    "request": request,
-                    "seller": seller,
-                    "decrypted_phone": decrypted_phone,
-                    "seller_name": f"{seller.first_name} {seller.last_name}",
-                    "store_name": seller.store_name,
-                    "error": "Featured image exceeds 5MB limit."
-                }
-            )
-        image_url = await anyio.to_thread.run_sync(lambda: CloudinaryService.upload_image(content, eager=EAGER))
-        seller.featured_image = image_url
+            ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
+            if featured_image.content_type not in ALLOWED_IMAGE_TYPES:
+                decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
+                return templates.TemplateResponse(
+                    request,
+                    "dashboard/profile.html",
+                    {
+                        "request": request,
+                        "seller": seller,
+                        "decrypted_phone": decrypted_phone,
+                        "seller_name": f"{seller.first_name} {seller.last_name}",
+                        "store_name": seller.store_name,
+                        "error": f"Invalid file type ({featured_image.content_type}). Allowed: JPEG, PNG, WebP, GIF."
+                    }
+                )
+            content = await featured_image.read()
+            if len(content) > MAX_IMAGE_SIZE:
+                decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
+                return templates.TemplateResponse(
+                    request,
+                    "dashboard/profile.html",
+                    {
+                        "request": request,
+                        "seller": seller,
+                        "decrypted_phone": decrypted_phone,
+                        "seller_name": f"{seller.first_name} {seller.last_name}",
+                        "store_name": seller.store_name,
+                        "error": "Featured image exceeds 5MB limit."
+                    }
+                )
+            # Upload to MinIO via presigned URL approach - for profile images we upload directly
+            storage = MinioStorage()
+            object_name = f"sellers/{seller.id}/featured/{featured_image.filename}"
+            try:
+                storage.client.put_object(
+                    bucket_name=storage.bucket,
+                    object_name=object_name,
+                    data=featured_image.file,
+                    length=len(content),
+                    content_type=featured_image.content_type,
+                )
+                seller.featured_image = f"{object_name}"
+            except Exception as e:
+                decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
+                return templates.TemplateResponse(
+                    request,
+                    "dashboard/profile.html",
+                    {
+                        "request": request,
+                        "seller": seller,
+                        "decrypted_phone": decrypted_phone,
+                        "seller_name": f"{seller.first_name} {seller.last_name}",
+                        "store_name": seller.store_name,
+                        "error": f"Failed to upload image: {str(e)}"
+                    }
+                )
 
     seller.updated_at = utc_now()
     
