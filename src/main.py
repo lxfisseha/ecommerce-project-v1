@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
@@ -15,27 +16,67 @@ from src.features.buyer.routes import router as buyer_router  # New import
 from sqlalchemy.exc import SQLAlchemyError
 import logging
 import os
+import sys
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan manager with startup validation."""
+    # Startup validation
+    _validate_startup_config()
+    logger.info("Startup validation passed")
+    yield
+    # Shutdown
+    logger.info("Application shutdown")
+
+
+def _validate_startup_config() -> None:
+    """Validate critical configuration at startup. Fail fast if critical config is missing."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Critical: Required for core functionality
+    if not settings.SECRET_KEY or len(settings.SECRET_KEY) < 32:
+        errors.append("SECRET_KEY must be at least 32 characters")
+
+    if not settings.DATABASE_URL:
+        errors.append("DATABASE_URL is required")
+
+    # Critical: Auth/SMS
+    if not settings.AFROMESSAGES_API_KEY:
+        errors.append("AFROMESSAGES_API_KEY is required for OTP SMS")
+
+    # Optional but recommended: Cloudinary for image uploads
+    if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_KEY or not settings.CLOUDINARY_API_SECRET:
+        warnings.append("Cloudinary not fully configured (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) - image uploads will fail")
+
+    # Optional: Cheat PIN (should be empty in production)
+    if settings.AUTH_CHEAT_PIN:
+        warnings.append("AUTH_CHEAT_PIN is set - disable in production")
+
+    # Report warnings
+    for w in warnings:
+        logger.warning(f"Config warning: {w}")
+
+    # Fail fast on errors
+    if errors:
+        logger.error("Startup validation failed:")
+        for e in errors:
+            logger.error(f"  - {e}")
+        sys.exit(1)
+
 
 app = FastAPI(
     title="XCollections Merchant Solution Center",
     docs_url=None,  # Disable Swagger UI
     redoc_url=None,  # Disable ReDoc
     openapi_url=None,
+    lifespan=lifespan,
 )
-
-# Middleware stack (applied in reverse order — last added runs first)
-# Each middleware gets a purpose-specific key derived from the master SECRET_KEY
-app.add_middleware(SessionMiddleware, secret_key=derive_key("session"))
-app.add_middleware(
-    CustomCSRFMiddleware,
-    secret=derive_key("csrf"),
-)
-app.add_middleware(RateLimitMiddleware)
-app.add_middleware(GZipMiddleware, minimum_size=500)
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
@@ -53,6 +94,17 @@ class CachedStaticFiles(StaticFiles):
 
 
 app.mount("/static", CachedStaticFiles(directory=static_dir), name="static")
+
+
+# Middleware stack (applied in reverse order — last added runs first)
+# Each middleware gets a purpose-specific key derived from the master SECRET_KEY
+app.add_middleware(SessionMiddleware, secret_key=derive_key("session"))
+app.add_middleware(
+    CustomCSRFMiddleware,
+    secret=derive_key("csrf"),
+)
+app.add_middleware(RateLimitMiddleware)
+app.add_middleware(GZipMiddleware, minimum_size=500)
 
 
 # Global Exception Handler
@@ -83,7 +135,28 @@ app.include_router(buyer_router, tags=["buyer"])  # New router for buyer-facing 
 
 @app.get("/health")
 async def health_check():
-    return {"status": "ok"}
+    """Health check with dependency verification."""
+    from src.database import async_session_maker
+    from sqlalchemy import text
+    from src.config import settings
+
+    # Check database connectivity
+    db_ok = False
+    try:
+        async with async_session_maker() as session:
+            await session.execute(text("SELECT 1"))
+            db_ok = True
+    except Exception as e:
+        logger.error(f"Health check DB failed: {e}")
+
+    # Check critical config
+    config_ok = bool(settings.AFROMESSAGES_API_KEY and settings.SECRET_KEY and settings.DATABASE_URL)
+
+    return {
+        "status": "ok" if db_ok and config_ok else "degraded",
+        "database": "connected" if db_ok else "disconnected",
+        "config": "complete" if config_ok else "incomplete",
+    }
 
 
 @app.get("/")
