@@ -22,6 +22,11 @@ class Settings(BaseSettings):
     AFROMESSAGES_SENDER: str = ""
     AFROMESSAGES_FROM: str = ""
     AFROMESSAGES_CALLBACK: str = ""
+
+    # Cloudinary (optional - for image uploads)
+    CLOUDINARY_CLOUD_NAME: str = ""
+    CLOUDINARY_API_KEY: str = ""
+    CLOUDINARY_API_SECRET: str = ""
     CLOUDINARY_URL: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
