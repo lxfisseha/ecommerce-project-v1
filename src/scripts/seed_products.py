@@ -12,6 +12,7 @@ from src.database import async_session_maker
 from src.features.auth.models import Seller
 from src.features.orders.models import Order, OrderItem, OrderStatusLog
 from src.features.products.models import Product, ProductAttribute, ProductImage, ProductTagLink, Tag
+from src.features.products.services import delete_image_files
 from src.utils.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
@@ -250,13 +251,27 @@ def _find_template(name):
 
 
 async def reset_database(session):
-    """Delete all catalog + demo order rows in FK-safe order."""
+    """
+    Delete all catalog + demo order rows in FK-safe order.
+
+    Image files are removed too. Deleting the rows alone would orphan every
+    original and variant on disk, since nothing else maps a file back to the
+    row that referenced it.
+    """
     for table in (OrderStatusLog, OrderItem, Order):
         result = await session.execute(select(table))
         rows = result.scalars().all()
         for row in rows:
             await session.delete(row)
     await session.flush()
+
+    images = (await session.execute(select(ProductImage))).scalars().all()
+    for image in images:
+        try:
+            delete_image_files(image)
+        except Exception as exc:
+            logger.warning("Could not remove files for image %s: %s", image.id, exc)
+
     for table in (ProductTagLink, ProductImage, ProductAttribute, Product):
         result = await session.execute(select(table))
         rows = result.scalars().all()

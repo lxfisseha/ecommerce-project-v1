@@ -8,6 +8,7 @@ from decimal import Decimal
 from pathlib import Path
 from .models import Product, ProductImage, ProductAttribute, ProductTagLink, Tag
 from src.constants import VARIANT_PREFIX
+from src.scripts.process_images import SIZES
 from src.utils.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
@@ -18,8 +19,10 @@ def delete_image_files(image: ProductImage) -> None:
     Remove an image's stored original and every generated variant.
 
     Variants live under a different prefix than the original, so deleting by
-    object_name alone would leak four WebP files per image. Falls back to the
-    conventional variant prefix when processed_urls was never written.
+    object_name alone would leak four WebP files per image. When
+    processed_urls was never written, the variant files are still addressed by
+    the width in their key, so they are unlisted directly: delete_prefix
+    matches directories, and this prefix is a filename stem.
     """
     storage = LocalStorage()
 
@@ -28,7 +31,9 @@ def delete_image_files(image: ProductImage) -> None:
         for key in variants.values():
             storage.delete(key)
     elif image.object_name:
-        storage.delete_prefix(f"{VARIANT_PREFIX}/{Path(image.object_name).stem}")
+        stem = Path(image.object_name).stem
+        for width in SIZES.values():
+            storage.delete(f"{VARIANT_PREFIX}/{stem}_{width}w.webp")
 
     if image.object_name:
         storage.delete(image.object_name)
