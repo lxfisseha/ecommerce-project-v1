@@ -1,3 +1,10 @@
-yourstore.com {
+xcollections.duckdns.org {
+    encode zstd gzip
+
+    # Product images and generated WebP variants. The worker writes into the
+    # same volume, so cache aggressively; keys are content-addressed by uuid.
+    @media path /media/*
+    header @media Cache-Control "public, max-age=31536000, immutable"
+
     reverse_proxy app:8000
 }

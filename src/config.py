@@ -26,8 +26,8 @@ class Settings(BaseSettings):
     # Local filesystem storage (self-hosted images)
     MEDIA_ROOT: str = "/app/media"
 
-    # imgproxy (self-hosted image processing)
-    IMGPROXY_URL: str = "http://imgproxy:8080"
+    # Redis (RQ queue for background image processing)
+    REDIS_URL: str = "redis://redis:6379"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

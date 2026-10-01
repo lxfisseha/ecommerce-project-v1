@@ -21,11 +21,6 @@ import time
 
 router = APIRouter()
 
-EAGER = [
-    {"width": 800, "height": 800, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
-    {"width": 1200, "crop": "scale", "quality": "auto:eco", "fetch_format": "auto"},
-]
-
 # Short TTL cache for the global dashboard aggregate stats. The values only
 # change when new orders/products are created, so a brief cache avoids running
 # 4 aggregate scans on every dashboard load. Cleared between tests via

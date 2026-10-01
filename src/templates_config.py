@@ -4,7 +4,6 @@ import os
 from fastapi.templating import Jinja2Templates
 from fastapi import Request
 from markupsafe import Markup
-from src.config import settings
 
 
 def csrf_token_context_processor(request: Request):
@@ -17,31 +16,37 @@ def cart_count_context_processor(request: Request):
     return {"cart_count": CartService.count(request)}
 
 
-def cloudinary_url(url: str, width: int = 0, height: int = 0, quality: str = "auto:eco") -> str:
-    """Legacy Cloudinary URL builder - kept for backward compatibility."""
-    parts = url.split("/upload/")
-    if len(parts) != 2:
-        return url
-    transforms = f"f_auto,q_{quality}"
-    if width:
-        transforms += f",w_{width}"
-    if height:
-        transforms += f",h_{height},c_fill"
-    return f"{parts[0]}/upload/{transforms}/{parts[1]}"
+_MEDIA_PREFIX = "/media"
+
+# Variant name -> pixel width, mirroring SIZES in src.scripts.process_images
+_VARIANT_BY_WIDTH = {160: "thumb", 400: "medium", 800: "large"}
+_VARIANT_WIDTHS = sorted(_VARIANT_BY_WIDTH)
 
 
-def self_hosted_image_url(url: str, width: int = 0, height: int = 0) -> str:
-    """Generate URL for self-hosted images via imgproxy."""
-    if not url or url.startswith("http"):
-        return url
-    base = settings.IMGPROXY_URL or "https://img.xcollections.duckdns.org"
-    transforms = []
-    if width:
-        transforms.append(f"w_{width}")
-    if height:
-        transforms.append(f"h_{height}")
-    transforms.append("f:webp")
-    return f"{base}/{','.join(transforms)}/{url}"
+def _nearest_variant(width: int) -> str:
+    """Smallest generated width that covers the request, else the largest."""
+    for candidate in _VARIANT_WIDTHS:
+        if candidate >= width:
+            return _VARIANT_BY_WIDTH[candidate]
+    return _VARIANT_BY_WIDTH[_VARIANT_WIDTHS[-1]]
+
+
+def media_url(image, width: int = 400) -> str:
+    """
+    URL for a ProductImage at the nearest pre-generated width.
+
+    Falls back to the stored original until the worker has written variants,
+    so a freshly uploaded image is visible immediately. Also accepts a bare
+    object key, for columns like seller.featured_image that have no variants.
+    """
+    if not image:
+        return ""
+    if isinstance(image, str):
+        return f"{_MEDIA_PREFIX}/{image}"
+
+    variants = getattr(image, "processed_urls", None) or {}
+    key = variants.get(_nearest_variant(width)) or getattr(image, "object_name", "")
+    return f"{_MEDIA_PREFIX}/{key}" if key else ""
 
 
 _PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -66,6 +71,5 @@ templates = Jinja2Templates(
     directory="src/templates",
     context_processors=[csrf_token_context_processor, cart_count_context_processor]
 )
-templates.env.filters["cloudinary"] = cloudinary_url
-templates.env.filters["self_hosted"] = self_hosted_image_url
+templates.env.filters["media_url"] = media_url
 templates.env.filters["inline_css"] = inline_css

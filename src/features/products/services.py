@@ -3,9 +3,35 @@ from sqlmodel import select, delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 import anyio
+import logging
 from decimal import Decimal
+from pathlib import Path
 from .models import Product, ProductImage, ProductAttribute, ProductTagLink, Tag
+from src.constants import VARIANT_PREFIX
 from src.utils.storage import LocalStorage
+
+logger = logging.getLogger(__name__)
+
+
+def delete_image_files(image: ProductImage) -> None:
+    """
+    Remove an image's stored original and every generated variant.
+
+    Variants live under a different prefix than the original, so deleting by
+    object_name alone would leak three WebP files per image. Falls back to the
+    conventional variant prefix when processed_urls was never written.
+    """
+    storage = LocalStorage()
+
+    variants = image.processed_urls or {}
+    if variants:
+        for key in variants.values():
+            storage.delete(key)
+    elif image.object_name:
+        storage.delete_prefix(f"{VARIANT_PREFIX}/{Path(image.object_name).stem}")
+
+    if image.object_name:
+        storage.delete(image.object_name)
 
 class ProductService:
     @staticmethod
@@ -166,14 +192,13 @@ class ProductService:
         if not product:
             return False
 
-        # Delete local filesystem images before soft-deleting
-        storage = LocalStorage()
+        # Delete local filesystem images (originals + generated variants) before
+        # soft-deleting. Best-effort: a missing file must not block the delete.
         for image in product.images:
-            if image.object_name:
-                try:
-                    storage.delete(image.object_name)
-                except Exception:
-                    pass  # Best-effort cleanup
+            try:
+                delete_image_files(image)
+            except Exception as exc:
+                logger.warning("Could not remove files for image %s: %s", image.id, exc)
 
         product.is_deleted = True
         db.add(product)

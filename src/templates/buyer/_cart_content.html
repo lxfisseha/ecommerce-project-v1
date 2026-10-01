@@ -10,12 +10,12 @@
                     {% set img_obj = item.product.images[0] %}
                     <picture>
                         <source srcset="
-                            {{ img_obj.object_name | self_hosted(160) }} 160w,
-                            {{ img_obj.object_name | self_hosted(400) }} 400w,
-                            {{ img_obj.object_name | self_hosted(800) }} 800w
+                            {{ img_obj | media_url(160) }} 160w,
+                            {{ img_obj | media_url(400) }} 400w,
+                            {{ img_obj | media_url(800) }} 800w
                           " sizes="(max-width: 480px) 160px, (max-width: 768px) 400px, 800px"
                           type="image/webp">
-                        <img src="{{ img_obj.object_name | self_hosted(400) }}" alt="{{ item.product.name }}" width="160" height="160" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        <img src="{{ img_obj | media_url(400) }}" alt="{{ item.product.name }}" width="160" height="160" loading="lazy" decoding="async" class="w-full h-full object-cover">
                     </picture>
                     {% else %}
                         <div class="w-full h-full flex items-center justify-center text-border-main">

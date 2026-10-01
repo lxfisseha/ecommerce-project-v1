@@ -13,7 +13,7 @@
         {% if seller and seller.featured_image %}
         <!-- Background Image -->
         <div class="absolute inset-0 overflow-hidden opacity-60">
-            <img src="{{ seller.featured_image | cloudinary(width=800) }}" 
+            <img src="{{ seller.featured_image | media_url(800) }}" 
                  alt="{{ seller.store_name }} Featured Image" 
                  width="800" height="533"
                  class="w-full h-full object-cover">

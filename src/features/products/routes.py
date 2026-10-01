@@ -1,25 +1,40 @@
 import math
 import anyio
+import logging
 import uuid
 from fastapi import APIRouter, Request, Depends, HTTPException, Query
 from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database import get_session
 from src.templates_config import templates
-from .services import ProductService
+from .services import ProductService, delete_image_files
 from .models import ProductImage
 from src.dependencies import require_seller_id
 from src.utils.storage import LocalStorage
 from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select
 
+logger = logging.getLogger(__name__)
+
 router = APIRouter()
 
-EAGER = [
-    {"width": 160, "height": 160, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
-    {"width": 400, "height": 400, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
-    {"width": 800, "height": 800, "crop": "fill", "quality": "auto:eco", "fetch_format": "auto"},
-]
+
+def _enqueue_variants(image_ids):
+    """
+    Queue WebP variant generation for freshly stored images.
+
+    Never raises: a queue outage must not fail the upload, since the
+    originals are already committed and templates fall back to them.
+    """
+    from src.scripts.process_images import enqueue_image_processing
+
+    for image_id in image_ids:
+        if not image_id:
+            continue
+        try:
+            enqueue_image_processing(image_id)
+        except Exception as exc:
+            logger.warning("Could not enqueue variant generation for image %s: %s", image_id, exc)
 
 
 def _form_response(request, error=None, seller_name="Seller", store_name="Store", **extra):
@@ -162,17 +177,22 @@ async def add_product(
         return _form_response(request, f"Failed to create product: {str(e)}", seller_name, store_name)
     
     try:
+        new_image_ids = []
         for content, tag, content_type in image_data:
             storage = LocalStorage()
             ext = content_type.split("/")[-1] if content_type else "jpg"
             object_name = storage.save(content, f"{uuid.uuid4()}.{ext}", folder="products")
             new_image = ProductImage(product_id=product.id, object_name=object_name, image_tag=tag)
             db.add(new_image)
-        
+            await db.flush()
+            new_image_ids.append(new_image.id)
+
         await db.commit()
     except Exception as e:
         await db.rollback()
         return _form_response(request, f"Failed to upload images: {str(e)}. Please try again.", seller_name, store_name)
+
+    _enqueue_variants(new_image_ids)
 
     return RedirectResponse(url="/dashboard/products", status_code=303)
 
@@ -239,22 +259,24 @@ async def edit_product(
             db.add(img)
 
     # 2. Handle New Image Uploads (if any)
+    new_image_ids = []
     if valid_images:
-        # Delete old local images before clearing
-        storage = LocalStorage()
+        # Remove old originals and their generated variants before clearing
         for old_img in product.images:
             if old_img.object_name:
-                storage.delete(old_img.object_name)
+                delete_image_files(old_img)
         product.images.clear()
-            
+
+        storage = LocalStorage()
         for i, img in enumerate(valid_images):
             content = await img.read()
             if len(content) > MAX_IMAGE_SIZE:
                 return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", product=product)
+            ext = img.content_type.split("/")[-1] if img.content_type else "jpg"
             try:
                 object_name = storage.save(
                     content,
-                    f"{uuid.uuid4()}.jpg",
+                    f"{uuid.uuid4()}.{ext}",
                     folder="products",
                 )
             except Exception as e:
@@ -262,6 +284,8 @@ async def edit_product(
             tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
             new_image = ProductImage(product_id=product.id, object_name=object_name, image_tag=tag)
             product.images.append(new_image)
+            await db.flush()
+            new_image_ids.append(new_image.id)
 
     # 3. Process and save attributes
     attr_types = form.getlist("attr_type[]")
@@ -295,6 +319,8 @@ async def edit_product(
         db, product_id, name=name, description=description, price=float(price), in_stock=in_stock
     )
     await db.commit()
+
+    _enqueue_variants(new_image_ids)
 
     return RedirectResponse(url="/dashboard/products", status_code=303)
 

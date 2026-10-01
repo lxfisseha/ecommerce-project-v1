@@ -9,6 +9,8 @@ services:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     expose:
       - "8000"
+    volumes:
+      - media_data:/app/media
     depends_on:
       postgres:
         condition: service_healthy
@@ -32,6 +34,8 @@ services:
     environment:
       - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}
     command: ["rq", "worker", "-u", "redis://redis:6379"]
+    volumes:
+      - media_data:/app/media
     depends_on:
       redis:
         condition: service_started
@@ -55,23 +59,6 @@ services:
     networks:
       - backend
 
-  imgproxy:
-    image: darthsim/imgproxy:latest
-    restart: unless-stopped
-    environment:
-      IMGPROXY_BIND: ":8080"
-      IMGPROXY_LOCAL_FILESYSTEM_ROOT: /images
-      IMGPROXY_ALLOWED_SOURCES: "local"
-      IMGPROXY_WEBP_QUALITY: "80"
-      IMGPROXY_AVIF_QUALITY: "50"
-      IMGPROXY_MAX_SRC_RESOLUTION: "4096"
-    volumes:
-      - media_data:/images
-    expose:
-      - "8080"
-    networks:
-      - backend
-
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -84,7 +71,6 @@ services:
       - caddy_config:/config
     depends_on:
       - app
-      - imgproxy
     networks:
       - backend
 

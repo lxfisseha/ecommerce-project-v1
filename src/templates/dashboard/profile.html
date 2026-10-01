@@ -87,15 +87,7 @@
                     {% if seller.featured_image %}
                     <div class="mb-4">
                         <label class="text-sm font-medium text-text-main block mb-2">Current Image</label>
-                        <picture>
-                            <source srcset="
-                                {{ seller.featured_image | self_hosted(160) }} 160w,
-                                {{ seller.featured_image | self_hosted(400) }} 400w,
-                                {{ seller.featured_image | self_hosted(800) }} 800w
-                              " sizes="(max-width: 480px) 160px, (max-width: 768px) 400px, 800px"
-                              type="image/webp">
-                            <img src="{{ seller.featured_image | self_hosted(800) }}" alt="Featured Image" class="w-full max-w-md h-auto rounded-lg border border-border-main shadow-sm">
-                        </picture>
+                        <img src="{{ seller.featured_image | media_url(800) }}" alt="Featured Image" class="w-full max-w-md h-auto rounded-lg border border-border-main shadow-sm">
                     </div>
                     {% endif %}
                     

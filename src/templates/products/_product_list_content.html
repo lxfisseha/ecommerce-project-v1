@@ -11,23 +11,23 @@
         {% for product in products %}
         <div id="product-{{ product.id }}" class="bg-white rounded-xl border border-border-main overflow-hidden flex flex-col group transition-shadow hover:shadow-md relative">
             <div class="aspect-square bg-bg-muted relative overflow-hidden">
-                {% set display_image = product.images | selectattr("image_tag", "equalto", "thumbnail") | map(attribute="image_url") | first %}
+                {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | first %}
                 {% if not display_image %}
-                    {% set display_image = product.images | selectattr("image_tag", "equalto", "main") | map(attribute="image_url") | first %}
+                    {% set display_image = product.images | selectattr("image_tag", "equalto", "gallery") | first %}
                 {% endif %}
                 {% if not display_image and product.images %}
-                    {% set display_image = product.images | selectattr("image_tag", "equalto", "gallery") | map(attribute="image_url") | first %}
+                    {% set display_image = product.images | first %}
                 {% endif %}
 
                 {% if display_image %}
                 <picture>
                     <source srcset="
-                        {{ display_image.object_name | self_hosted(160) }} 160w,
-                        {{ display_image.object_name | self_hosted(400) }} 400w,
-                        {{ display_image.object_name | self_hosted(800) }} 800w
+                        {{ display_image | media_url(160) }} 160w,
+                        {{ display_image | media_url(400) }} 400w,
+                        {{ display_image | media_url(800) }} 800w
                       " sizes="(max-width: 480px) 160px, (max-width: 768px) 400px, 800px"
                       type="image/webp">
-                    <img src="{{ display_image.object_name | self_hosted(200) }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    <img src="{{ display_image | media_url(400) }}" alt="{{ product.name }}" class="w-full h-full object-cover">
                 </picture>
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center">

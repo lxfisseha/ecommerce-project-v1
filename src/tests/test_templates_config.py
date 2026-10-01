@@ -1,40 +1,48 @@
-from src.templates_config import cloudinary_url
+from types import SimpleNamespace
 
-CLOUDINARY_URL = "https://res.cloudinary.com/dpimwr1pr/image/upload/v123/products/img.png"
+from src.templates_config import media_url
 
 
-class TestCloudinaryUrlFilter:
+def _image(object_name, processed_urls=None):
+    return SimpleNamespace(object_name=object_name, processed_urls=processed_urls)
 
-    def test_width_only(self):
-        result = cloudinary_url(CLOUDINARY_URL, width=400)
-        expected = "https://res.cloudinary.com/dpimwr1pr/image/upload/f_auto,q_auto:eco,w_400/v123/products/img.png"
-        assert result == expected
 
-    def test_width_and_height(self):
-        result = cloudinary_url(CLOUDINARY_URL, width=160, height=160)
-        expected = "https://res.cloudinary.com/dpimwr1pr/image/upload/f_auto,q_auto:eco,w_160,h_160,c_fill/v123/products/img.png"
-        assert result == expected
+VARIANTS = {
+    "thumb": "processed/products/abc_160w.webp",
+    "medium": "processed/products/abc_400w.webp",
+    "large": "processed/products/abc_800w.webp",
+}
 
-    def test_custom_quality(self):
-        result = cloudinary_url(CLOUDINARY_URL, width=800, quality="80")
-        expected = "https://res.cloudinary.com/dpimwr1pr/image/upload/f_auto,q_80,w_800/v123/products/img.png"
-        assert result == expected
 
-    def test_no_width(self):
-        result = cloudinary_url(CLOUDINARY_URL)
-        expected = "https://res.cloudinary.com/dpimwr1pr/image/upload/f_auto,q_auto:eco/v123/products/img.png"
-        assert result == expected
+class TestMediaUrl:
 
-    def test_non_cloudinary_url(self):
-        url = "https://example.com/img.jpg"
-        result = cloudinary_url(url, width=400)
-        assert result == url
+    def test_exact_variant_widths(self):
+        img = _image("products/originals/abc.jpg", VARIANTS)
+        assert media_url(img, 160) == "/media/processed/products/abc_160w.webp"
+        assert media_url(img, 400) == "/media/processed/products/abc_400w.webp"
+        assert media_url(img, 800) == "/media/processed/products/abc_800w.webp"
 
-    def test_url_without_upload(self):
-        url = "https://res.cloudinary.com/dpimwr1pr/image/private/v123/img.png"
-        result = cloudinary_url(url, width=200)
-        assert result == url
+    def test_width_snaps_up_to_next_variant(self):
+        img = _image("products/originals/abc.jpg", VARIANTS)
+        assert media_url(img, 200) == "/media/processed/products/abc_400w.webp"
+        assert media_url(img, 401) == "/media/processed/products/abc_800w.webp"
 
-    def test_empty_url(self):
-        result = cloudinary_url("", width=400)
-        assert result == ""
+    def test_width_above_largest_snaps_down(self):
+        img = _image("products/originals/abc.jpg", VARIANTS)
+        assert media_url(img, 4000) == "/media/processed/products/abc_800w.webp"
+
+    def test_falls_back_to_original_while_pending(self):
+        img = _image("products/originals/abc.jpg", None)
+        assert media_url(img, 400) == "/media/products/originals/abc.jpg"
+
+    def test_falls_back_when_variant_missing(self):
+        img = _image("products/originals/abc.jpg", {"thumb": VARIANTS["thumb"]})
+        assert media_url(img, 800) == "/media/products/originals/abc.jpg"
+
+    def test_bare_object_key(self):
+        assert media_url("sellers/1/featured/hero.jpg", 800) == "/media/sellers/1/featured/hero.jpg"
+
+    def test_empty_inputs(self):
+        assert media_url(None) == ""
+        assert media_url("") == ""
+        assert media_url(_image("")) == ""

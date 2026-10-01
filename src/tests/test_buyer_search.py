@@ -12,7 +12,11 @@ async def seed_products():
         p2 = Product(id=2, seller_id=1, name="Cotton T-Shirt", description="100% cotton", price=300.0, in_stock=True)
         p3 = Product(id=3, seller_id=1, name="Leather Belt", description="Strong belt", price=250.0, in_stock=True)
         p4 = Product(id=4, seller_id=1, name="Sold Out Item", description="Not available", price=100.0, in_stock=False)
-        img1 = ProductImage(product_id=1, image_url="http://example.com/wallet.jpg", image_tag="main")
+        img1 = ProductImage(
+            product_id=1,
+            object_name="products/originals/wallet.jpg",
+            image_tag="main",
+        )
         session.add_all([p1, p2, p3, p4, img1])
         await session.commit()
 
@@ -103,7 +107,7 @@ async def test_search_partial_match():
 async def test_search_render_details():
     response = client.get("/shop?q=Wallet", headers={"HX-Request": "true"})
     assert response.status_code == 200
-    assert "http://example.com/wallet.jpg" in response.text
+    assert "/media/products/originals/wallet.jpg" in response.text
     assert "500" in response.text
     assert "ETB" in response.text
     assert "Buy Now" in response.text

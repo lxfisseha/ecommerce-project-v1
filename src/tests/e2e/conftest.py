@@ -215,18 +215,25 @@ class _ServerThread(threading.Thread):
     def run(self):
         from src.main import app
         from src.database import get_session
-        from src.utils.storage import CloudinaryService
+        from src.utils.storage import LocalStorage
         from src.utils.sms import AfroMessageService
 
-        # E2E has no real Cloudinary credentials. Stub upload/delete so the
-        # seller product add/edit/delete flows run against the real UI without
-        # making network calls.
-        CloudinaryService.upload_image = staticmethod(
-            lambda content, folder="products", eager=None: (
-                "https://placehold.co/400x400/e2e8f0/64748b?text=E2E"
-            )
-        )
-        CloudinaryService.delete_image = staticmethod(lambda public_id: None)
+        # E2E should not write real image files or enqueue variant jobs. Stub
+        # storage so the seller product add/edit/delete flows run against the
+        # real UI without touching MEDIA_ROOT or Redis.
+        counter = {"n": 0}
+
+        def _fake_save(self, file_content: bytes, filename: str, folder: str = "products") -> str:
+            counter["n"] += 1
+            return f"{folder}/originals/e2e_{counter['n']}.jpg"
+
+        LocalStorage.save = _fake_save
+        LocalStorage.read = lambda self, object_name: b""
+        LocalStorage.delete = lambda self, object_name: True
+        LocalStorage.delete_prefix = lambda self, prefix: 0
+
+        from src.features.products import routes as product_routes
+        product_routes._enqueue_variants = lambda image_ids: None
 
         # Never hit the real SMS provider from tests; the OTP is read straight
         # from SQLite anyway.

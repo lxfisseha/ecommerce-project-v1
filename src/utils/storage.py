@@ -1,9 +1,6 @@
 from src.config import settings
 import uuid
-from datetime import timedelta
 from pathlib import Path
-import os
-import shutil
 
 
 class LocalStorage:
@@ -53,8 +50,22 @@ class LocalStorage:
         return self.base_path / object_name
 
     def get_url(self, object_name: str) -> str:
-        """Get local filesystem URL for an object."""
+        """Local filesystem URL for an object."""
         return f"/media/{object_name}"
+
+    def read(self, object_name: str) -> bytes:
+        """Read an object's bytes. Raises FileNotFoundError if absent."""
+        return (self.base_path / object_name).read_bytes()
+
+    def write(self, object_name: str, data: bytes) -> str:
+        """
+        Write bytes to an exact object key, creating parent directories.
+        Returns the object_name.
+        """
+        full_path = self.base_path / object_name
+        full_path.parent.mkdir(parents=True, exist_ok=True)
+        full_path.write_bytes(data)
+        return object_name
 
     def delete(self, object_name: str) -> bool:
         """Delete an object from local filesystem."""

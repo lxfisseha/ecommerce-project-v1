@@ -80,6 +80,7 @@ app = FastAPI(
 
 # Mount static files
 static_dir = os.path.join(os.path.dirname(__file__), "static")
+media_dir = settings.MEDIA_ROOT
 
 
 class CachedStaticFiles(StaticFiles):
@@ -94,6 +95,7 @@ class CachedStaticFiles(StaticFiles):
 
 
 app.mount("/static", CachedStaticFiles(directory=static_dir), name="static")
+app.mount("/media", CachedStaticFiles(directory=media_dir, check_dir=False), name="media")
 
 
 # Middleware stack (applied in reverse order — last added runs first)
