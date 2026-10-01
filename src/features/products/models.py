@@ -45,7 +45,6 @@ class ProductImage(SQLModel, table=True):
     
     id: Optional[int] = Field(default=None, primary_key=True)
     product_id: int = Field(foreign_key="products.id", index=True)
-    image_url: str = ""
     object_name: str = ""
     processed_urls: Optional[dict] = Field(default=None, sa_type=sa.JSON)
     processing_status: str = Field(default="pending", max_length=20)  # pending, processing, completed, failed

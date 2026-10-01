@@ -93,7 +93,7 @@ async def test_edit_product_with_image_upload(seller_id_override):
         product = Product(id=2, seller_id=1, name="Old Product", price=30.0)
         session.add(product)
         await session.flush()
-        img = ProductImage(product_id=2, image_url="http://old.cloud/image.png", image_tag="main")
+        img = ProductImage(product_id=2, object_name="products/originals/old_image.png", image_tag="main")
         session.add(img)
         await session.commit()
 

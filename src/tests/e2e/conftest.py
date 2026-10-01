@@ -174,7 +174,7 @@ async def _seed_database():
             # Add a placeholder image so templates don't break
             img = ProductImage(
                 product_id=product.id,
-                image_url="https://placehold.co/400x400/e2e8f0/64748b?text=Test",
+                object_name="products/originals/e2e_placeholder.jpg",
                 image_tag="main",
             )
             session.add(img)

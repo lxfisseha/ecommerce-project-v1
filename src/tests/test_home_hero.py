@@ -6,8 +6,8 @@ from src.features.auth.models import Seller
 from src.utils.datetime import utc_now
 from src.tests.conftest import client, maker
 
-SELLER1_IMG = "https://res.cloudinary.com/dpimwr1pr/image/upload/v1/hero_old.jpg"
-SELLER3_IMG = "https://res.cloudinary.com/dpimwr1pr/image/upload/v1/hero_new.jpg"
+SELLER1_IMG = "sellers/1/featured/hero_old.jpg"
+SELLER3_IMG = "sellers/3/featured/hero_new.jpg"
 
 
 @pytest.mark.asyncio

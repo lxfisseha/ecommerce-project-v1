@@ -1,6 +1,8 @@
 import argparse
 import asyncio
+import logging
 import random
+import urllib.request
 from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
@@ -10,6 +12,9 @@ from src.database import async_session_maker
 from src.features.auth.models import Seller
 from src.features.orders.models import Order, OrderItem, OrderStatusLog
 from src.features.products.models import Product, ProductAttribute, ProductImage, ProductTagLink, Tag
+from src.utils.storage import LocalStorage
+
+logger = logging.getLogger(__name__)
 
 # Each template: (name, description, [prices], {attribute_type: [(value, extra_price), ...]})
 product_templates = [
@@ -264,6 +269,29 @@ async def reset_database(session):
     await session.commit()
 
 
+def _store_seed_image(url: str, index: int) -> str | None:
+    """
+    Download a sample image into local storage and return its object key.
+
+    Seeded products go through the same storage as real uploads, so their
+    image URLs are resolvable and the worker can generate variants for them.
+    Returns None if the download fails, which leaves the product imageless
+    rather than aborting the whole seed.
+    """
+    try:
+        request = urllib.request.Request(url, headers={"User-Agent": "xcollections-seed/1.0"})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            data = response.read()
+    except Exception as exc:
+        logger.warning("Could not fetch seed image %s: %s", url, exc)
+        return None
+
+    if not data:
+        return None
+
+    return LocalStorage().save(data, f"seed_{index}.jpg", folder="products")
+
+
 async def seed_products(reset: bool = False):
     async with async_session_maker() as session:
         if reset:
@@ -282,6 +310,8 @@ async def seed_products(reset: bool = False):
         total_to_add = 25
         print(f"Adding {total_to_add} sample products...")
 
+        pending_images = []
+
         for i in range(total_to_add):
             template_index = random.randint(0, len(product_templates) - 1)
             template = product_templates[template_index]
@@ -299,14 +329,18 @@ async def seed_products(reset: bool = False):
             session.add(product)
             await session.flush()  # Get product ID
 
-            # Add one main image (matching the template type)
-            img_url = images[template_index]
-            img = ProductImage(
-                product_id=product.id,
-                image_url=img_url,
-                image_tag="main",
-            )
-            session.add(img)
+            # Add one main image (matching the template type), stored locally
+            # and queued for variant generation exactly like a real upload.
+            object_name = _store_seed_image(images[template_index], i)
+            if object_name:
+                img = ProductImage(
+                    product_id=product.id,
+                    object_name=object_name,
+                    image_tag="main",
+                )
+                session.add(img)
+                await session.flush()
+                pending_images.append(img.id)
 
             # Add attributes (Size, Color, etc.)
             for attr_type, value, extra_price in _attribute_rows(template):
@@ -321,6 +355,19 @@ async def seed_products(reset: bool = False):
 
         await session.commit()
         print(f"Successfully added {total_to_add} products.")
+
+        # Generate WebP variants for the seeded images, same as an upload.
+        from src.scripts.process_images import enqueue_image_processing
+
+        queued = 0
+        for image_id in pending_images:
+            try:
+                enqueue_image_processing(image_id)
+                queued += 1
+            except Exception as exc:
+                logger.warning("Could not enqueue image %s: %s", image_id, exc)
+        if queued:
+            print(f"Queued {queued} images for variant generation.")
 
 
 async def backfill_attributes():
