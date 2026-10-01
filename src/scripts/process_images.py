@@ -2,7 +2,7 @@
 Background image processing worker.
 
 On upload the app stores the original and enqueues a job here. The job
-resizes the original to 3 WebP variants (160/400/800) with Pillow, writes
+resizes the original to 4 WebP variants (160/256/400/800) with Pillow, writes
 them next to it, and records their keys on the ProductImage row. Templates
 read those keys, so the browser never waits on a resize.
 """
@@ -19,15 +19,28 @@ from src.utils.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
 
-# Variant name -> width in pixels
+# Variant name -> width in pixels. Must stay in step with
+# _VARIANT_BY_WIDTH in src/templates_config.py, which maps a requested width
+# back to a variant name; a mismatch makes media_url silently fall through to
+# the original. test_image_sizes.py asserts the two match.
 SIZES = {
-    "thumb": 160,
+    "icon": 160,
+    "small": 256,
     "medium": 400,
     "large": 800,
 }
 
+# Per-tier WebP quality. Lower is fine for the small tiers because they are
+# displayed at 64-216px, where compression artefacts are not resolvable. The
+# 800w hero stays high because q80->65 shows on fabric texture.
+VARIANT_QUALITY = {
+    "icon": 65,
+    "small": 70,
+    "medium": 75,
+    "large": 80,
+}
+
 OUTPUT_FORMAT = "WEBP"
-OUTPUT_QUALITY = 80
 
 
 def _flatten_to_rgb(img: Image.Image) -> Image.Image:
@@ -67,7 +80,12 @@ def generate_variants(image_data: bytes, stem: str, storage: LocalStorage) -> di
         resized = img.resize((width, height), Image.Resampling.LANCZOS)
 
         buffer = io.BytesIO()
-        resized.save(buffer, format=OUTPUT_FORMAT, quality=OUTPUT_QUALITY, method=6)
+        resized.save(
+            buffer,
+            format=OUTPUT_FORMAT,
+            quality=VARIANT_QUALITY[name],
+            method=6,
+        )
         buffer.seek(0)
 
         key = f"{VARIANT_PREFIX}/{stem}_{width}w.webp"

@@ -18,8 +18,10 @@ def cart_count_context_processor(request: Request):
 
 _MEDIA_PREFIX = "/media"
 
-# Variant name -> pixel width, mirroring SIZES in src.scripts.process_images
-_VARIANT_BY_WIDTH = {160: "thumb", 400: "medium", 800: "large"}
+# Variant name -> pixel width, mirroring SIZES in src.scripts.process_images.
+# If the two drift apart, media_url falls through to the stored original with
+# no error, so test_image_sizes.py asserts they match exactly.
+_VARIANT_BY_WIDTH = {160: "icon", 256: "small", 400: "medium", 800: "large"}
 _VARIANT_WIDTHS = sorted(_VARIANT_BY_WIDTH)
 
 

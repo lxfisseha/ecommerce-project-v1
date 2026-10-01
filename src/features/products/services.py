@@ -18,7 +18,7 @@ def delete_image_files(image: ProductImage) -> None:
     Remove an image's stored original and every generated variant.
 
     Variants live under a different prefix than the original, so deleting by
-    object_name alone would leak three WebP files per image. Falls back to the
+    object_name alone would leak four WebP files per image. Falls back to the
     conventional variant prefix when processed_urls was never written.
     """
     storage = LocalStorage()

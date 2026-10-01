@@ -23,6 +23,7 @@
                 <picture>
                     <source srcset="
                         {{ display_image | media_url(160) }} 160w,
+                        {{ display_image | media_url(256) }} 256w,
                         {{ display_image | media_url(400) }} 400w,
                         {{ display_image | media_url(800) }} 800w
                       " sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 300px"
