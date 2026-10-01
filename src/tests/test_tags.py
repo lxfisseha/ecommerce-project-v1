@@ -47,8 +47,8 @@ async def test_product_tag_creation_and_sync():
 async def test_add_product_route_with_tags(seller_id_override):
     token, csrf_cookie = get_csrf_context(client)
 
-    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
-        mock_upload.return_value = "http://cloudinary.com/test.jpg"
+    with patch("src.utils.storage.LocalStorage.save") as mock_upload:
+        mock_upload.return_value = "products/originals/test.jpg"
         file = {"image": ("test.jpg", BytesIO(b"fake image content"), "image/jpeg")}
 
         data = {

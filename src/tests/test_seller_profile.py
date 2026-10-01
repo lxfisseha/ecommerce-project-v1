@@ -11,8 +11,8 @@ from src.tests.conftest import client, maker, current_seller_override, get_csrf_
 async def test_update_profile_with_featured_image(current_seller_override):
     token, csrf_cookie = get_csrf_context(client)
 
-    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
-        mock_upload.return_value = "http://cloudinary.com/featured_test.jpg"
+    with patch("src.utils.storage.LocalStorage.save") as mock_upload:
+        mock_upload.return_value = "sellers/1/featured/featured_test.jpg"
 
         file_content = b"fake image content"
         file = {"featured_image": ("hero.jpg", BytesIO(file_content), "image/jpeg")}
@@ -38,4 +38,4 @@ async def test_update_profile_with_featured_image(current_seller_override):
             res = await session.execute(select(Seller).where(Seller.id == 1))
             seller = res.scalar_one_or_none()
             assert seller.first_name == "Updated"
-            assert seller.featured_image == "http://cloudinary.com/featured_test.jpg"
+            assert seller.featured_image == "sellers/1/featured/featured_test.jpg"

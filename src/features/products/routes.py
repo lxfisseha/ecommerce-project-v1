@@ -126,7 +126,7 @@ async def add_product(
             return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", seller_name, store_name)
         
         tag = image_tags.get(f"image_tag_{i}", "main" if i == 0 else "gallery")
-        image_data.append((content, tag))
+        image_data.append((content, tag, img.content_type))
 
     try:
         product = await ProductService.create_product(
@@ -162,21 +162,10 @@ async def add_product(
         return _form_response(request, f"Failed to create product: {str(e)}", seller_name, store_name)
     
     try:
-        for content, tag in image_data:
-            storage = MinioStorage()
-            # For product images, we'll use a presigned URL approach
-            # For simplicity in the create flow, we'll upload directly
-            ext = "jpg"  # default
-            # Determine extension from content type
-            if hasattr(img, 'content_type'):
-                ext = img.content_type.split('/')[-1] if img.content_type else 'jpg'
-            object_name = f"products/{product.id}/originals/{uuid.uuid4()}.jpg"
-            storage.client.put_object(
-                bucket_name=storage.bucket,
-                object_name=object_name,
-                data=content,
-                length=len(content),
-            )
+        for content, tag, content_type in image_data:
+            storage = LocalStorage()
+            ext = content_type.split("/")[-1] if content_type else "jpg"
+            object_name = storage.save(content, f"{uuid.uuid4()}.{ext}", folder="products")
             new_image = ProductImage(product_id=product.id, object_name=object_name, image_tag=tag)
             db.add(new_image)
         
@@ -250,9 +239,9 @@ async def edit_product(
             db.add(img)
 
     # 2. Handle New Image Uploads (if any)
-if valid_images:
-        # Delete old MinIO images before clearing
-        storage = MinioStorage()
+    if valid_images:
+        # Delete old local images before clearing
+        storage = LocalStorage()
         for old_img in product.images:
             if old_img.object_name:
                 storage.delete(old_img.object_name)
@@ -263,12 +252,10 @@ if valid_images:
             if len(content) > MAX_IMAGE_SIZE:
                 return _form_response(request, f"Image {img.filename} exceeds 5MB limit.", product=product)
             try:
-                object_name = f"products/{product_id}/originals/{uuid.uuid4()}.jpg"
-                storage.client.put_object(
-                    bucket_name=storage.bucket,
-                    object_name=object_name,
-                    data=content,
-                    length=len(content),
+                object_name = storage.save(
+                    content,
+                    f"{uuid.uuid4()}.jpg",
+                    folder="products",
                 )
             except Exception as e:
                 return _form_response(request, f"Failed to upload image {img.filename}: {str(e)}. Please try again.", product=product)

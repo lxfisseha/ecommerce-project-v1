@@ -30,16 +30,16 @@ class TestImageUploadFailure:
             headers={"X-CSRF-Token": self.token}
         )
 
-    def test_cloudinary_rejects(self):
-        with patch("src.utils.storage.CloudinaryService.upload_image") as mock:
+    def test_storage_rejects(self):
+        with patch("src.utils.storage.LocalStorage.save") as mock:
             mock.side_effect = HTTPException(status_code=400, detail="Upload rejected")
             file = {"image": ("bad.jpg", BytesIO(b"data"), "image/jpeg")}
             resp = self._post(files=file)
             assert resp.status_code == 200
             assert "upload" in resp.text.lower() or "image" in resp.text.lower()
 
-    def test_cloudinary_timeout(self):
-        with patch("src.utils.storage.CloudinaryService.upload_image") as mock:
+    def test_storage_timeout(self):
+        with patch("src.utils.storage.LocalStorage.save") as mock:
             mock.side_effect = HTTPException(status_code=504, detail="Upload timed out")
             file = {"image": ("slow.jpg", BytesIO(b"data"), "image/jpeg")}
             resp = self._post(files=file)
@@ -48,13 +48,12 @@ class TestImageUploadFailure:
 
     def test_partial_failure_multiple(self):
         call_count = [0]
-        def flaky_upload(file_content: bytes, folder: str = "products", **kwargs) -> str:
+        def flaky_upload(file_content: bytes, filename: str = "img.jpg", **kwargs) -> str:
             call_count[0] += 1
             if call_count[0] == 2:
                 raise HTTPException(status_code=400, detail="Second image failed")
-            from src.utils.storage import CloudinaryService
-            return CloudinaryService.upload_image(file_content, folder)
-        with patch("src.utils.storage.CloudinaryService.upload_image", side_effect=flaky_upload):
+            return f"products/originals/flaky_{call_count[0]}.jpg"
+        with patch("src.utils.storage.LocalStorage.save", side_effect=flaky_upload):
             files = [
                 ("images", ("a.jpg", BytesIO(b"a"), "image/jpeg")),
                 ("images", ("b.jpg", BytesIO(b"b"), "image/jpeg")),

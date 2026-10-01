@@ -23,12 +23,6 @@ class Settings(BaseSettings):
     AFROMESSAGES_FROM: str = ""
     AFROMESSAGES_CALLBACK: str = ""
 
-    # Cloudinary (legacy - keeping for migration)
-    CLOUDINARY_CLOUD_NAME: str = ""
-    CLOUDINARY_API_KEY: str = ""
-    CLOUDINARY_API_SECRET: str = ""
-    CLOUDINARY_URL: str = ""
-
     # Local filesystem storage (self-hosted images)
     MEDIA_ROOT: str = "/app/media"
 

@@ -338,18 +338,15 @@ async def update_profile(
                         "error": "Featured image exceeds 5MB limit."
                     }
                 )
-            # Upload to MinIO via presigned URL approach - for profile images we upload directly
-            storage = MinioStorage()
-            object_name = f"sellers/{seller.id}/featured/{featured_image.filename}"
+            # Upload featured image to local filesystem storage
+            storage = LocalStorage()
             try:
-                storage.client.put_object(
-                    bucket_name=storage.bucket,
-                    object_name=object_name,
-                    data=featured_image.file,
-                    length=len(content),
-                    content_type=featured_image.content_type,
+                object_name = storage.save(
+                    content,
+                    featured_image.filename,
+                    folder=f"sellers/{seller.id}/featured",
                 )
-                seller.featured_image = f"{object_name}"
+                seller.featured_image = object_name
             except Exception as e:
                 decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
                 return templates.TemplateResponse(

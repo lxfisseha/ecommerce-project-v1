@@ -1,7 +1,6 @@
 import pytest
 import pytest_asyncio
 from src.features.products.models import Product
-from src.features.products.routes import EAGER
 from sqlmodel import select, delete
 from unittest.mock import patch
 from decimal import Decimal
@@ -20,8 +19,8 @@ async def test_list_products_unauthenticated():
 async def test_add_product_success(seller_id_override):
     token, csrf_cookie = get_csrf_context(client)
 
-    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
-        mock_upload.return_value = "http://cloudinary.com/test.jpg"
+    with patch("src.utils.storage.LocalStorage.save") as mock_upload:
+        mock_upload.return_value = "products/originals/test.jpg"
 
         file_content = b"fake image content"
         file = {"image": ("test.jpg", BytesIO(file_content), "image/jpeg")}
@@ -47,7 +46,7 @@ async def test_add_product_success(seller_id_override):
         assert response.status_code == 303
         assert response.headers["location"] == "/dashboard/products"
         mock_upload.assert_called_once()
-        assert mock_upload.call_args[1].get("eager") == EAGER
+        assert mock_upload.call_args[0][0] == file_content
 
 
 @pytest.mark.asyncio
@@ -98,8 +97,8 @@ async def test_edit_product_with_image_upload(seller_id_override):
         session.add(img)
         await session.commit()
 
-    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
-        mock_upload.return_value = "http://cloudinary.com/new.jpg"
+    with patch("src.utils.storage.LocalStorage.save") as mock_upload:
+        mock_upload.return_value = "products/originals/new.jpg"
         file_content = b"new image data"
         file = {"image": ("new.jpg", BytesIO(file_content), "image/jpeg")}
 
@@ -122,7 +121,7 @@ async def test_edit_product_with_image_upload(seller_id_override):
 
         assert response.status_code == 303
         mock_upload.assert_called_once()
-        assert mock_upload.call_args[1].get("eager") == EAGER
+        assert mock_upload.call_args[0][0] == file_content
 
 
 @pytest.mark.asyncio
@@ -156,8 +155,8 @@ async def test_toggle_stock_success(seller_id_override):
 async def test_add_product_with_dynamic_attributes(seller_id_override):
     token, csrf_cookie = get_csrf_context(client)
 
-    with patch("src.utils.storage.CloudinaryService.upload_image") as mock_upload:
-        mock_upload.return_value = "http://cloudinary.com/test.jpg"
+    with patch("src.utils.storage.LocalStorage.save") as mock_upload:
+        mock_upload.return_value = "products/originals/test.jpg"
 
         file = {"image": ("test.jpg", BytesIO(b"fake"), "image/jpeg")}
 
@@ -205,7 +204,7 @@ async def test_delete_product_success(seller_id_override):
         session.add(product)
         await session.commit()
 
-    with patch("src.utils.storage.CloudinaryService.delete_image") as mock_delete:
+    with patch("src.utils.storage.LocalStorage.delete") as mock_delete:
         response = client.delete(
             "/dashboard/products/1",
             cookies={"csrftoken": csrf_cookie},

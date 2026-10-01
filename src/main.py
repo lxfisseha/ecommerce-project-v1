@@ -50,9 +50,9 @@ def _validate_startup_config() -> None:
     if not settings.AFROMESSAGES_API_KEY:
         errors.append("AFROMESSAGES_API_KEY is required for OTP SMS")
 
-    # Optional but recommended: Cloudinary for image uploads
-    if not settings.CLOUDINARY_CLOUD_NAME or not settings.CLOUDINARY_API_KEY or not settings.CLOUDINARY_API_SECRET:
-        warnings.append("Cloudinary not fully configured (CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET) - image uploads will fail")
+    # Images are stored on the local filesystem
+    if not settings.MEDIA_ROOT:
+        errors.append("MEDIA_ROOT is required for local image storage")
 
     # Optional: Cheat PIN (should be empty in production)
     if settings.AUTH_CHEAT_PIN:

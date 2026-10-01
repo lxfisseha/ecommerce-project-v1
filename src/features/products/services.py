@@ -160,7 +160,7 @@ class ProductService:
         # Re-fetch with relationships
         return await ProductService.get_product_by_id(db, product.id)
 
-@staticmethod
+    @staticmethod
     async def delete_product(db: AsyncSession, product_id: int) -> bool:
         product = await ProductService.get_product_by_id(db, product_id)
         if not product:

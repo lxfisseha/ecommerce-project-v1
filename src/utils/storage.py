@@ -88,14 +88,3 @@ class LocalStorage:
     def object_exists(self, object_name: str) -> bool:
         """Check if an object exists."""
         return (self.base_path / object_name).exists()
-
-
-# Backward compatibility - CloudinaryService for gradual migration
-class CloudinaryService:
-    @staticmethod
-    def upload_image(file_content: bytes, folder: str = "products", eager: list = None) -> str:
-        raise NotImplementedError("Cloudinary is deprecated. Use LocalStorage for direct uploads.")
-
-    @staticmethod
-    def delete_image(public_id: str):
-        pass  # No-op for backward compatibility
