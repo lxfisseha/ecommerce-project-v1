@@ -36,7 +36,7 @@ A central command center for managing your entire store.
 Create, edit, and organize your product catalog:
 
 - **Add products** with name, description, price, stock quantity, and category
-- **Upload product images** — multiple images per product with Cloudinary hosting
+- **Upload product images** — multiple images per product, stored locally, with 160/400/800 WebP variants generated in the background
 - **Set product attributes** — brand, color, size, weight per item
 - **Tag products** for easy categorization and filtering
 - **Toggle stock status** — mark items as in stock or out of stock

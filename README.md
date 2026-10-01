@@ -1,10 +1,10 @@
-# StoreLedger — Single-Seller E-Commerce Platform
+# XCollections — Single-Seller E-Commerce Platform
 
 A production-grade e-commerce backend for Ethiopian merchants. phone/OTP authentication, product catalog with image management, order lifecycle with state-machine enforcement, anonymous checkout, and a seller dashboard — all served via server-rendered HTML with HTMX interactivity.
 
-**Stack:** Python 3.12 · FastAPI · PostgreSQL (asyncpg/SQLModel) · Jinja2 · HTMX · TailwindCSS · Cloudinary · AfroMessage SMS
+**Stack:** Python 3.12 · FastAPI · PostgreSQL (asyncpg/SQLModel) · Jinja2 · HTMX · TailwindCSS · Docker (Caddy) · Redis/RQ · Pillow · AfroMessage SMS
 
-**Status:** v1.0 — feature-complete, 95 passing tests, deployed on Vercel + Supabase.
+**Status:** v1.0 — feature-complete, 154 passing tests, deployed on Docker with Caddy terminating TLS.
 
 ---
 
@@ -28,50 +28,51 @@ Full feature breakdown → [docs/features_v2.md](docs/features_v2.md)
 
 ### Prerequisites
 
-- Python 3.12+
-- PostgreSQL 16+ (or Supabase account)
-- Cloudinary account (image hosting)
+- Docker + Docker Compose (for the standard deployment)
+- PostgreSQL 16+ (bundled as a compose service)
 - AfroMessage API key (SMS) — optional for local dev
+
+Images need no third-party account: they are stored on the local filesystem
+and resized in a background worker.
 
 ### Installation
 
 ```bash
 # Clone and enter
-git clone <repo-url> && cd storeledger
+git clone <repo-url> && cd xcollections
 
-# Create virtual environment
+# Configure environment
+cp .env.example .env
+# Edit .env: SECRET_KEY, POSTGRES_PASSWORD, AFROMESSAGES_API_KEY
+
+# Build and start the full stack (app, worker, postgres, redis, caddy)
+docker compose up -d
+
+# Apply migrations
+docker compose exec app alembic upgrade head
+
+# Seed a store and a sample catalog
+docker compose exec app python src/scripts/add_seller.py
+docker compose exec app python src/scripts/seed_products.py
+```
+
+The app is served on https://localhost with a self-signed Caddy certificate.
+
+### Run without Docker
+
+```bash
 python -m venv .venv
 .venv\Scripts\activate    # Windows
 source .venv/bin/activate # macOS/Linux
 
-# Install dependencies
 pip install -r requirements.txt
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your credentials (see docs/deployment_v2.md)
-```
-
-### Database Setup
-
-```bash
-# Create the database
-createdb storeledger
-
-# Run migrations
 alembic upgrade head
-
-# Seed a seller account
-python -c "from src.scripts.seed import seed_seller; seed_seller()"
-```
-
-### Run
-
-```bash
+python src/scripts/add_seller.py
 uvicorn src.main:app --reload --port 8765
 ```
 
-Open http://localhost:8765 — the login page renders. Use the phone number you seeded to log in via OTP.
+Without Redis there is no worker, so uploads keep their original file and
+templates serve that until you start `rq worker` yourself.
 
 ---
 
@@ -94,13 +95,34 @@ Open http://localhost:8765 — the login page renders. Use the phone number you 
                    │    └────────┬────────┘                     │
                    └─────────────┼───────────────────────────────┘
                                  │
-                    ┌────────────▼────────────┐
-                    │     PostgreSQL 16        │
-                    │  (Supabase / asyncpg)    │
-                    └─────────────────────────┘
+                     ┌────────────▼────────────┐
+                     │     PostgreSQL 16        │
+                     │       (asyncpg)          │
+                     └─────────────────────────┘
+
+        ┌────────────────────────┐        ┌──────────────────────────┐
+        │  Worker (RQ) + Pillow  │◄──►Redis│   Storage: local volume │
+        │  writes 3 WebP sizes   │        │   media_data:/app/media │
+        └────────────────────────┘        └───────────┬──────────────┘
+                                                       │ served at /media
+                                                       ▼
+                                              Caddy (TLS, cache headers)
 ```
 
-External services: **Cloudinary** (image upload/serve), **AfroMessage** (SMS OTP + order notifications), **Telegram** (fallback OTP delivery).
+External services: **AfroMessage** (SMS OTP + order notifications), **Telegram** (fallback OTP delivery). Images are self-hosted — originals are written to a Docker volume and a background worker generates 160/400/800 WebP variants into the same volume, which Caddy serves with immutable cache headers.
+
+### Image pipeline
+
+```
+upload ──► products/originals/<uuid>.<ext>   (written synchronously)
+       └─► enqueue RQ job
+              └─► worker: Pillow resize ──► processed/products/<uuid>_{160,400,800}w.webp
+                                            recorded in product_images.processed_urls
+```
+
+Templates resolve an image through the `media_url` filter, which picks the nearest generated width and falls back to the original while a job is still pending. Deleting a product removes both the original and its variants.
+
+`MEDIA_ROOT` must be a persistent volume. With Compose, `media_data` is already mounted into both `app` and `worker`; if you override it, mount the same volume in both or the worker will not see uploads.
 
 Full architecture → [docs/architecture_v2.md](docs/architecture_v2.md)
 
@@ -141,21 +163,39 @@ pytest src/tests/ --cov=src --cov-report=term-missing
 pytest src/tests/ -q -k auth
 ```
 
-**95 tests** across auth, products, orders, checkout, CSRF, rate limiting, concurrency, and seller onboarding. SQLite in-memory via session override in conftest.py.
+**154 tests** across auth, products, orders, checkout, CSRF, rate limiting, concurrency, seller onboarding, and the image pipeline. SQLite in-memory via session override in conftest.py.
 
 ---
 
 ## Deployment
 
-The app is designed for **Vercel (serverless)** with **Supabase PostgreSQL**. Key environment variables:
+The app runs as a set of Docker Compose services. Caddy terminates TLS and proxies to the app. Key environment variables:
 
 | Variable | Required | Description |
 |----------|----------|-------------|
 | `SECRET_KEY` | Yes | 32+ byte key for sessions + CSRF |
-| `DATABASE_URL` | Yes | PostgreSQL async connection string |
-| `CLOUDINARY_URL` | Yes | Cloudinary API URL |
+| `POSTGRES_PASSWORD` | Yes | Database password |
 | `AFROMESSAGES_API_KEY` | No | AfroMessage SMS API key |
 | `AFROMESSAGES_FROM` | No | SMS sender ID |
+| `MEDIA_ROOT` | No | Image storage root, defaults to `/app/media` |
+| `REDIS_URL` | No | RQ queue, defaults to `redis://redis:6379` |
+| `AUTH_CHEAT_PIN` | No | Skip OTP. **Development only — never set in production.** |
+
+The `media_data` volume must be owned by uid 999, which is the app's user in the image:
+
+```bash
+docker run --rm -v xcollections_media_data:/m caddy:2-alpine chown -R 999:999 /m
+```
+
+### Operations
+
+```bash
+docker compose ps                          # service health
+docker compose logs -f app                 # app log
+docker compose logs -f worker              # job log
+docker compose exec app alembic upgrade head
+docker compose exec app python -m src.scripts.process_images <image_id>   # re-run one image
+```
 
 Full deployment guide → [docs/deployment_v2.md](docs/deployment_v2.md)
 
@@ -173,9 +213,9 @@ src/
 │   ├── csrf.py             # Double-submit cookie CSRF
 │   └── rate_limit.py       # In-memory sliding window limiter
 ├── utils/
-│   ├── templates.py        # Jinja2 environment
-│   ├── encryption.py       # AES-256-GCM PII encryption
-│   └── response.py         # Response helpers (HX-Redirect, etc.)
+│   ├── storage.py          # LocalStorage: read/write/delete image files
+│   ├── crypto.py           # AES-256-GCM PII encryption
+│   └── phone.py            # Ethiopian phone normalisation
 ├── features/
 │   ├── auth/               # Login, OTP, session
 │   ├── buyer/              # Home, shop, checkout, order confirmation
@@ -183,23 +223,22 @@ src/
 │   ├── orders/             # Order service + state machine
 │   └── products/           # Product CRUD, image upload
 ├── scripts/
-│   └── seed.py             # Seller seeding utility
+│   ├── process_images.py   # RQ worker: generates 160/400/800 WebP variants
+│   ├── add_seller.py       # Sample seller
+│   └── seed_products.py    # Sample catalog (downloads images locally)
 ├── templates/              # Jinja2 templates
 │   ├── base.html           # Public layout
-│   ├── seller_base.html    # Dashboard layout
-│   ├── login_partial.html  # Login page
-│   ├── 404.html            # Not found
-│   └── 500.html            # Server error
-└── tests/                  # 15 files, 95 tests
+│   ├── buyer/              # Shop, product detail, checkout partials
+│   ├── dashboard/          # Seller dashboard templates
+│   └── products/           # Product form + list partials
+└── tests/                  # 154 tests
     ├── conftest.py         # Shared fixtures + session override
-    ├── test_auth*.py       # Auth flow tests
+    ├── test_image_processing.py    # Variant widths, WebP output, transparency
+    ├── test_media_content_type.py  # /media content types + cache headers
+    ├── test_templates_config.py    # media_url filter behaviour
     ├── test_products*.py   # Product CRUD tests
     ├── test_orders*.py     # Order lifecycle tests
-    ├── test_shop*.py       # Buyer grid tests
-    ├── test_checkout*.py   # Checkout flow tests
-    ├── test_csrf.py        # CSRF protection tests
-    ├── test_rate_limiter.py # Rate limit tests
-    └── test_onboarding.py  # Seller setup tests
+    └── test_csrf.py        # CSRF protection tests
 ```
 
 ---

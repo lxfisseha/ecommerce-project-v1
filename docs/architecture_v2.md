@@ -1,6 +1,6 @@
 # Architecture
 
-System architecture, component relationships, request lifecycle, and data flow for the StoreLedger platform.
+System architecture, component relationships, request lifecycle, and data flow for the XCollections platform.
 
 ---
 
@@ -35,7 +35,7 @@ System architecture, component relationships, request lifecycle, and data flow f
                         │
 ┌───────────────────────▼──────────────────────────────────┐
 │                    Data Store                              │
-│  PostgreSQL 16 (Supabase) · asyncpg driver                │
+│  PostgreSQL 17 · asyncpg driver                          │
 │  Alembic migrations · 12 versions                         │
 └──────────────────────────────────────────────────────────┘
 ```
@@ -249,17 +249,18 @@ src/features/
 │   ├── __init__.py
 │   ├── routes.py       # GET/POST /dashboard/products/add,
 │   │                   # GET/POST /dashboard/products/{id}/edit,
-│   │                   # POST /dashboard/products/{id}/delete,
-│   │                   # POST /dashboard/products/{id}/toggle-stock,
-│   │                   # POST /dashboard/products/{id}/upload-image,
-│   │                   # POST /dashboard/products/{id}/delete-image,
-│   │                   # POST /dashboard/products/{id}/set-main-image
-│   ├── services.py     # (Cloudinary image upload logic inline in routes)
+│   │                   # DELETE /dashboard/products/{id},
+│   │                   # POST /dashboard/products/{id}/toggle-stock
+│   │                   # (image upload lives here; it enqueues variant
+│   │                   #  generation after committing the new rows)
+│   ├── services.py     # ProductService + delete_image_files()
 │   └── models.py       # Product, ProductImage, ProductAttribute,
 │                       # Tag, ProductTagLink
 │
 └── scripts/
-    └── seed.py         # seed_seller() utility
+    ├── process_images.py  # RQ worker: 160/400/800 WebP variants via Pillow
+    ├── add_seller.py      # seed_seller() utility
+    └── seed_products.py   # sample catalog
 ```
 
 ---
@@ -267,16 +268,20 @@ src/features/
 ## External Service Integrations
 
 ```
-┌─────────────────┐
-│   Cloudinary     │  Image storage and CDN
-│                  │  - Product image upload (image_tag parameter)
-│                  │  - Automatic deletion on product delete
-│                  │  - Public URL generation for templates
-│  Library:        │
-│  cloudinary      │
-│  (cloudinary-)   │
-│  python SDK      │
-└─────────────────┘
+┌──────────────────────┐
+│  Local storage       │  Originals + generated variants on a Docker volume
+│  (media_data)        │  - Synchronous write of products/originals/<uuid>.<ext>
+│                      │  - Worker writes processed/products/<uuid>_{160,400,800}w.webp
+│                      │  - Served at /media with immutable cache headers
+│  Library:            │
+│  Pillow              │
+└──────────────────────┘
+
+┌──────────────────┐
+│  Redis + RQ      │  Background queue for image variant generation
+│                  │  - Job enqueued after the image row is committed
+│                  │  - processing_status tracks pending/completed/failed
+└──────────────────┘
 
 ┌──────────────────┐
 │  AfroMessage SMS │  SMS delivery for OTP and order notifications

@@ -1,8 +1,8 @@
 # Database Schema
 
-Entity relationships, table schemas, and migration history for StoreLedger.
+Entity relationships, table schemas, and migration history for XCollections.
 
-**Database:** PostgreSQL 16 via Supabase (asyncpg driver)
+**Database:** PostgreSQL 17 (asyncpg driver)
 **ORM:** SQLModel (built on SQLAlchemy 2.0)
 **Migrations:** Alembic (12 versions)
 
@@ -142,16 +142,24 @@ Core product catalog entity.
 
 ### ProductImage
 
-Product images hosted on Cloudinary.
+Originals stored on the local filesystem, with generated variants recorded here.
 
 | Column | Type | Constraints | Notes |
 |--------|------|-------------|-------|
 | `id` | INTEGER | PK, autoincrement | |
-| `product_id` | UUID | FK → product.id, ON DELETE CASCADE | Parent product |
-| `image_url` | VARCHAR(500) | NOT NULL | Cloudinary URL |
-| `public_id` | VARCHAR(200) | NOT NULL | Cloudinary public_id (for deletion) |
-| `is_main` | BOOLEAN | NOT NULL, default FALSE | Primary display image |
-| `tag` | VARCHAR(100) | NULLABLE | Image tag for organization |
+| `product_id` | INTEGER | FK → products.id, ON DELETE CASCADE | Parent product |
+| `object_name` | VARCHAR | NOT NULL | Key of the original, relative to `MEDIA_ROOT`, e.g. `products/originals/<uuid>.jpg` |
+| `processed_urls` | JSON | NULLABLE | `{thumb, medium, large}` → keys of generated WebP variants. NULL until the worker finishes |
+| `processing_status` | VARCHAR(20) | NOT NULL, default `pending` | `pending` → `processing` → `completed`/`failed` |
+| `processing_error` | TEXT | NULLABLE | Set when processing fails |
+| `processed_at` | TIMESTAMP | NULLABLE | When variants were written |
+| `image_tag` | VARCHAR(20) | NOT NULL, default `gallery` | `main` or `gallery` |
+| `display_order` | INTEGER | NOT NULL, default 0 | Sort order within a product |
+| `created_at` | TIMESTAMP | NOT NULL | |
+
+Variant keys live under a different prefix than the original, so deleting an
+image must clear `processed_urls` as well as `object_name`. See
+`delete_image_files` in `src/features/products/services.py`.
 
 ---
 

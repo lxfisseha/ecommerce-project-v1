@@ -55,8 +55,8 @@ Ethiopian sellers on Telegram/Instagram lack structured e-commerce tools → ine
 ## Tech Stack (Fixed)
 - **Backend**: FastAPI (async)
 - **Frontend**: Jinja2 templates + HTMX + TailwindCSS
-- **Database**: PostgreSQL (Supabase free tier)
-- **Image storage**: Cloudinary (free tier)
+- **Database**: PostgreSQL 17 (Docker compose service)
+- **Image storage**: Local filesystem (Docker volume), 3 WebP variants generated per upload
 - **SMS**: Afromessages (free tier)
 - **Hosting**: Render/Railway (free tier)
 
@@ -110,7 +110,7 @@ Ethiopian sellers on Telegram/Instagram lack structured e-commerce tools → ine
 ---
 
 ## Key Constraints & Mitigations
-- Use only **free tiers** (GitHub, Render, Supabase, Cloudinary)
+- Use only **free tiers** and self-hosted open source components
 - Compress images to <200KB; lazy loading
 - Retry SMS on failure (3 attempts)
 - Daily DB backups + CSV export for seller

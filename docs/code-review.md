@@ -71,7 +71,7 @@ No `Content-Security-Policy`, `X-Frame-Options`, or `Strict-Transport-Security` 
 ### Issues
 
 - No caching layer. Every product page hit queries the database.
-- No image optimization strategy beyond Cloudinary defaults.
+- No image optimization strategy beyond generating three fixed WebP widths on upload.
 
 ---
 
@@ -179,8 +179,8 @@ Clean, well-documented, handles all Ethiopian phone formats. No international su
 ### `src/utils/sms.py` — **7/10**
 `print()` replaced with `logger.info()`. Inconsistent client creation: `_dispatch_sms` creates a new `httpx.AsyncClient()` per call, but `send_order_notifications_sms` reuses one.
 
-### `src/utils/storage.py` — **6/10**
-Duplicate imports removed. `CloudinaryService.delete_image` checks config but `__init__` calls `cloudinary.uploader.destroy` without checking — raises unhandled exception if Cloudinary isn't configured. `upload_image` raises `ValueError` (should be `RuntimeError`). No error handling on the Cloudinary API call.
+### `src/utils/storage.py` — **8/10**
+Was a Cloudinary wrapper with an unhandled-exception path when credentials were missing. Now `LocalStorage` over the filesystem: no credentials, no network failure mode. `delete` and `delete_prefix` swallow exceptions by design so cleanup never blocks a delete; `read` raises `FileNotFoundError` so the worker's failure is visible in `processing_error`.
 
 ### `src/features/auth/routes.py` — **8/10**
 Clean HTMX partial responses. `get_login` returns 200 when already logged in — should redirect to `/dashboard`. `post_login` always shows OTP page on SMS failure. Lazy imports moved to module level.
@@ -192,7 +192,7 @@ OTP generation uses `secrets.randbelow`. Verification increments `attempts` and 
 Cascading deletes for images/attributes. Correct many-to-many via `ProductTagLink`. `price` uses `Decimal(places=2, gt=0)`.
 
 ### `src/features/products/services.py` — **8/10**
-Methods renamed for single-vendor consistency. `seller_id` WHERE clauses removed. Soft-delete pattern. Missing: batch operations, Cloudinary image cleanup on delete.
+Methods renamed for single-vendor consistency. `seller_id` WHERE clauses removed. Soft-delete pattern. Missing: batch operations. Image cleanup on delete is handled by `delete_image_files`, which clears both the original and its generated variants.
 
 ### `src/features/products/routes.py` — **8/10**
 Pagination on `list_products`. All routes use `require_seller_id`. Seller info read from session. Ownership checks removed (single-vendor). `_form_response()` helper deduplicates error handling. Magic numbers replaced. Image tag indexing is fragile (0-based `form.getlist` vs edit form's separate index).

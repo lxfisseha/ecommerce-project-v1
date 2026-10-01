@@ -324,7 +324,7 @@ Create a new product (multipart/form-data — file upload).
 | `color` | string | No | Color attribute |
 | `size` | string | No | Size attribute |
 | `weight` | decimal | No | Weight attribute |
-| `image` | file | No | Product image (Cloudinary upload) |
+| `image` | file | No | Product image, stored locally. WebP variants are generated asynchronously; the response does not wait for them |
 | `csrf_token` | string | Yes | CSRF token |
 
 ```
@@ -360,18 +360,15 @@ Response: 404 — Product not found or not owned
 
 ---
 
-### POST `/dashboard/products/{product_id}/delete`
+### DELETE `/dashboard/products/{product_id}`
 
-Delete a product and its Cloudinary images.
+Delete a product, its stored originals, and its generated WebP variants.
 
-**Form Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `csrf_token` | string | Yes | CSRF token |
+No body required. Used by the HTMX delete control in the product list.
 
 ```
-Response: 302 — Redirect to /dashboard/products
+Response: 200 — Empty body (HTMX removes the row)
+Response: 404 — Product not found
 ```
 
 ---
@@ -392,56 +389,55 @@ Response: 302 — Redirect to /dashboard/products
 
 ---
 
-### POST `/dashboard/products/{product_id}/upload-image`
+### POST `/dashboard/products/{product_id}/edit`
 
-Upload additional product image to Cloudinary.
-
-**Form Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `image` | file | Yes | Image file |
-| `tag` | string | No | Image tag for organization |
-
-```
-Response: 302 — Redirect to edit page
-```
-
----
-
-### POST `/dashboard/products/{product_id}/delete-image`
-
-Delete a specific product image from Cloudinary and DB.
+Edit a product. Submitting new images replaces the existing ones: the old
+originals and their generated variants are removed from storage first.
 
 **Form Body:**
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `image_id` | int | Yes | ProductImage ID |
+| `name` | string | Yes | Product name |
+| `price` | decimal | Yes | Price |
+| `description` | string | No | Description |
+| `in_stock` | checkbox | No | Stock toggle |
+| `image` | file | No | Replacement image(s) |
+| `image_tag_{i}` | string | No | Tag per image (`main`/`gallery`) |
+| `attr_type[]` / `attr_value[]` / `attr_price[]` | string | No | Dynamic attributes |
 | `csrf_token` | string | Yes | CSRF token |
 
 ```
-Response: 302 — Redirect to edit page
+Response: 303 — Redirect to /dashboard/products
 ```
 
 ---
 
-### POST `/dashboard/products/{product_id}/set-main-image`
+### DELETE `/dashboard/products/{product_id}`
 
-Set a product image as the main/primary display image.
-
-**Form Body:**
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `image_id` | int | Yes | ProductImage ID |
-| `csrf_token` | string | Yes | CSRF token |
+Soft-delete a product and remove its image files.
 
 ```
-Response: 302 — Redirect to edit page
+Response: 200 — Empty body (HTMX swaps the row out)
+Response: 404 — Product not found
 ```
 
 ---
+
+### POST `/dashboard/products/{product_id}/toggle-stock`
+
+Toggle a product in or out of stock. No body required.
+
+```
+Response: 200 — Rendered _stock_toggle.html partial
+```
+
+---
+
+Image tags are changed by submitting the edit form with one
+`image_tag_{i}` field per image; there is no separate set-main-image or
+delete-image endpoint. Replacing the images on edit removes the previous
+files and their variants.
 
 ### GET `/dashboard/profile`
 

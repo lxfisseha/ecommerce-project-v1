@@ -63,7 +63,7 @@ class OrderService:
         # validate, encrypt PII, generate order_id, create Order + OrderStatusLog, send SMS
 ```
 
-**Where this pattern breaks:** Product image upload logic (Cloudinary API calls) lives directly in the route handler rather than a service layer. This is an inconsistency.
+**Where this pattern breaks:** Product image upload logic lives directly in the route handler rather than a service layer. The write itself is three lines against `LocalStorage`, but the decision to enqueue variant generation, and the variant-aware cleanup on delete, are the kind of rules that belong in a service.
 
 ---
 
@@ -194,7 +194,7 @@ Note: Encryption is applied at the application layer via Pydantic validators, no
 
 - **Database:** SQLite in-memory (`aiosqlite`)
 - **Session override:** `conftest.py` overrides `get_session` dependency
-- **External services:** All mocked (Cloudinary, AfroMessage, Telegram)
+- **External services:** All mocked (image storage, AfroMessage, Telegram)
 - **Rate limiting:** Disabled in tests (separate test file for rate limiter)
 
 ```python
@@ -309,7 +309,7 @@ return HTMLResponse(
 | Session management | Via `request.state.seller` (set by middleware) |
 | IDs | UUID for primary keys, custom `order_id` for public reference |
 | Templates | Jinja2 with `templates` global in `src/utils/templates.py` |
-| Static assets | Cloudinary URLs (no local static files) |
+| Static assets | Served by Caddy from the `media_data` volume at `/media` |
 | Configuration | Pydantic `BaseSettings` from `.env` |
 | Response types | HTML via Jinja2 templates, `RedirectResponse`, or HTMX-specific headers |
 
@@ -317,7 +317,7 @@ return HTMLResponse(
 
 ## Known Technical Debt
 
-1. **Cloudinary logic in routes** — Image upload/delete calls are in the product route handler rather than a service
+1. **Image storage logic in routes** — Upload and delete calls are in the product route handler rather than a service
 2. **In-memory session store** — Sessions are lost on server restart; suitable for single-instance but not horizontal scaling
 3. **No persistent rate limit store** — Rate limit counters reset on restart; attackers can bypass by cycling IPs
 4. **Inline encryption validator** — PII encryption is triggered by a Pydantic model validator, making it implicit
