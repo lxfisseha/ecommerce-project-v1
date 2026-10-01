@@ -85,12 +85,42 @@ media_dir = settings.MEDIA_ROOT
 
 
 class CachedStaticFiles(StaticFiles):
-    """Static files are referenced with versioned query strings (?v=...), so they
-    can be cached immutably. ETag/Last-Modified revalidation still applies to
-    any unversioned request."""
+    """
+    Serve static assets with an explicit content type where the host cannot infer one.
+
+    Content type is derived from mimetypes, whose database is empty in the slim
+    container, so .woff2 came back as application/octet-stream. That is not
+    merely wrong: browsers enforcing the strict font MIME policy reject a font
+    served under that type and fall back to a system face for the whole page
+    view, which looks identical to a font that failed to download.
+
+    Set here rather than only in Caddyfile because the origin is what decides
+    the type; an override at the proxy has to replace an already-sent header,
+    which is a fragile thing to rely on for correctness.
+    """
+
+    #: Types the container cannot resolve on its own.
+    EXTRA_TYPES = {
+        ".woff2": "font/woff2",
+        ".woff": "font/woff",
+        ".webp": "image/webp",
+        ".avif": "image/avif",
+        ".svg": "image/svg+xml",
+    }
 
     def file_response(self, full_path, stat_result, scope, status_code=200):
-        response = super().file_response(full_path, stat_result, scope, status_code)
+        suffix = os.path.splitext(full_path)[1].lower()
+        media_type = self.EXTRA_TYPES.get(suffix)
+        if media_type is not None:
+            response = FileResponse(
+                full_path,
+                status_code=status_code,
+                media_type=media_type,
+                stat_result=stat_result,
+            )
+        else:
+            response = super().file_response(full_path, stat_result, scope, status_code)
+
         response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
         return response
 

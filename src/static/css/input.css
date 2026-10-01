@@ -2,41 +2,69 @@
 @tailwind components;
 @tailwind utilities;
 
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-  src: url('/static/fonts/inter-latin-ext.woff2?v=1') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
+/* Font URLs deliberately carry no ?v= query string.
+
+   The @font-face src and any <link rel="preload"> href for the same file must
+   be byte-identical or they become separate cache keys: the browser cannot
+   match the preload to the font request and downloads the file twice. That is
+   what made every preloaded font cost double here. Fonts are served
+   immutable (max-age=31536000), so the version query bought nothing. If you
+   add a query string back, add it to both sides. */
 
 @font-face {
   font-family: 'Inter';
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
-  src: url('/static/fonts/inter-latin.woff2?v=1') format('woff2');
+  src: url('/static/fonts/inter-latin.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
 
+/* Anton SC, the display face. font-display: swap rather than optional because
+   optional only allows a ~100ms block period and never swaps afterwards, so a
+   slow connection silently kept Inter for the whole page view and a reload
+   changed which font rendered. The fallback below is metric-matched, so
+   swapping no longer shifts layout. */
 @font-face {
   font-family: 'Anton SC';
   font-style: normal;
   font-weight: 400;
-  font-display: optional;
-  src: url('/static/fonts/anton-sc-latin-ext-400-normal.woff2?v=1') format('woff2');
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-
-@font-face {
-  font-family: 'Anton SC';
-  font-style: normal;
-  font-weight: 400;
-  font-display: optional;
-  src: url('/static/fonts/anton-sc-latin-400-normal.woff2?v=1') format('woff2');
+  font-display: swap;
+  src: url('/static/fonts/anton-sc-latin-400-normal.woff2') format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
+
+/* Metric-matched stand-in for Anton SC, drawn from whatever grotesque the
+   device already has so no extra request is made.
+
+   The hero is font-display, i.e. Anton SC, with Inter as the intended
+   fallback. Inter's metrics differ sharply from Anton's: Anton has a 73.24%
+   x-height and a 117.63% ascent against Inter's 54.59% and 96.88%, so an
+   unmatched fallback reflows the headline when the swap lands.
+
+   Values measured from the shipped woff2 files with fontTools, not taken from
+   published specs. size-adjust matches x-heights; the overrides are divided by
+   that ratio because size-adjust scales the em, overrides included, so
+   87.67% x 1.34168 = 117.63%. The override family is capped at 100% by the
+   spec, which is why the ratios come out below the target's own percentages.
+
+   local() is listed first so a device with Anton SC installed skips the
+   network entirely. */
+@font-face {
+  font-family: 'AntonFallback';
+  font-style: normal;
+  font-weight: 400;
+  src: local('Anton SC'), local('Anton'), local('Arial Narrow Bold');
+  size-adjust: 134.168%;
+  ascent-override: 87.67%;
+  descent-override: 24.53%;
+  line-gap-override: 0%;
+}
+
+/* The -latin-ext subsets (83 KB and 34 KB) were removed. Their unicode-ranges
+   cover accented Latin, Vietnamese and Turkish; this catalogue is English and
+   Amharic, and Amharic (U+1200-137F) is in neither subset, so both were
+   downloaded and never matched a glyph. Re-add them if that copy appears. */
 
 @layer base {
   *, *::before, *::after { box-sizing: border-box; }

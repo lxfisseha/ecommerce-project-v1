@@ -6,5 +6,24 @@ xcollections.duckdns.org {
     @media path /media/*
     header @media Cache-Control "public, max-age=31536000, immutable"
 
+    # Self-hosted woff2 needs an explicit content type. Starlette does not map
+    # .woff2 in its mimetypes table, so these were served as
+    # application/octet-stream. Browsers that enforce the strict font MIME policy
+    # reject a font under that type and fall back to a system face permanently,
+    # which is indistinguishable from a font that failed to download.
+    #
+    # Fonts are served immutable. The content type is set by the app
+    # (CachedStaticFiles in src/main.py) because the origin is what decides it:
+    # Starlette derives it from a mimetypes database that is empty in the slim
+    # container, so woff2 came back as application/octet-stream and browsers
+    # enforcing the strict font MIME policy rejected the font outright.
+    #
+    # An earlier attempt to force the type here did nothing, twice over: the
+    # header block needed `defer` to be applied after reverse_proxy, and even
+    # then the upstream value was already committed to the response. Fixing it
+    # at the origin is both simpler and correct.
+    @fonts path *.woff2
+    header @fonts Cache-Control "public, max-age=31536000, immutable"
+
     reverse_proxy app:8000
 }
