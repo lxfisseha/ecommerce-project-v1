@@ -13,6 +13,7 @@ from src.utils.crypto import decrypt_data
 from src.utils.datetime import utc_now
 from src.utils.phone import validate_ethiopian_phone, normalize_phone
 from src.utils.storage import LocalStorage
+from src.scripts.process_images import store_banner_variant
 from src.constants import MAX_IMAGE_SIZE
 from sqlmodel import select, func, desc
 from sqlalchemy.orm import selectinload
@@ -342,6 +343,14 @@ async def update_profile(
                     folder=f"sellers/{seller.id}/featured",
                 )
                 seller.featured_image = object_name
+                # Generate the banner variant inline. featured_image is a bare
+                # object key rather than a ProductImage, so there is no row to
+                # enqueue and nothing else would ever resize it: the homepage
+                # served the untouched original at 304 KB. One image on a rarely
+                # hit form does not justify a queue round trip.
+                seller.featured_image_variants = store_banner_variant(
+                    content, object_name, storage
+                ) or None
             except Exception as e:
                 decrypted_phone = f"+251{_safe_decrypt(seller.phone)}"
                 return templates.TemplateResponse(

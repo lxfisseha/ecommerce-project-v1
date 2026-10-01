@@ -87,7 +87,7 @@
                     {% if seller.featured_image %}
                     <div class="mb-4">
                         <label class="text-sm font-medium text-text-main block mb-2">Current Image</label>
-                        <img src="{{ seller.featured_image | media_url(800) }}" alt="Featured Image" class="w-full max-w-md h-auto rounded-lg border border-border-main shadow-sm">
+                        <img src="{{ seller | seller_banner_url }}" alt="Featured Image" width="800" height="533" class="w-full max-w-md h-auto rounded-lg border border-border-main shadow-sm">
                     </div>
                     {% endif %}
                     

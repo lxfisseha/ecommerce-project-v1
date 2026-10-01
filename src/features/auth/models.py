@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional
+from sqlalchemy import Column, JSON
 from sqlmodel import Field, SQLModel
 from src.utils.datetime import utc_now
 
@@ -18,6 +19,13 @@ class Seller(SQLModel, table=True):
     telegram_username: Optional[str] = Field(default=None, max_length=100)
     business_contact_number: Optional[str] = Field(default=None, max_length=10)
     featured_image: Optional[str] = Field(default=None)
+    # Generated WebP variant of featured_image, shaped like
+    # product_images.processed_urls ({"banner": "<object key>"}). featured_image
+    # is a bare object key rather than a ProductImage row, so nothing queued a
+    # resize for it and the page served the untouched original. Nullable because
+    # sellers created before this column have no variant yet; templates fall
+    # back to featured_image until one is generated.
+    featured_image_variants: Optional[dict] = Field(default=None, sa_column=Column(JSON))
     created_at: datetime = Field(default_factory=utc_now)
     updated_at: datetime = Field(default_factory=utc_now)
 

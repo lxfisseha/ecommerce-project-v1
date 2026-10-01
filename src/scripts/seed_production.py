@@ -2,45 +2,10 @@ import asyncio
 import argparse
 from src.database import async_session_maker
 from src.features.auth.models import Seller
+from src.scripts.sample_banner import store_sample_featured_image
 from src.utils.crypto import encrypt_phone, hash_phone
 from src.utils.phone import normalize_phone, validate_ethiopian_phone
 from sqlmodel import select
-
-
-SAMPLE_FEATURED_IMAGE_URL = (
-    "https://images.unsplash.com/photo-1547949003-9792a18a2601"
-    "?auto=format&fit=crop&q=80&w=1600"
-)
-
-
-def _store_featured_image() -> str:
-    """
-    Put the sample hero image into local storage and return its object key.
-
-    featured_image holds an object key, not a URL, so storing the remote
-    address directly would render a broken image. Falls back to an empty key
-    if the download fails.
-    """
-    import logging
-    import urllib.request
-
-    logger = logging.getLogger(__name__)
-    try:
-        request = urllib.request.Request(
-            SAMPLE_FEATURED_IMAGE_URL, headers={"User-Agent": "xcollections-seed/1.0"}
-        )
-        with urllib.request.urlopen(request, timeout=30) as response:
-            data = response.read()
-    except Exception as exc:
-        logger.warning("Could not fetch sample featured image: %s", exc)
-        return ""
-
-    if not data:
-        return ""
-
-    from src.utils.storage import LocalStorage
-
-    return LocalStorage().save(data, "featured.jpg", folder="sellers/sample/featured")
 
 
 async def create_initial_store(
@@ -60,6 +25,9 @@ async def create_initial_store(
         raise ValueError(f"Invalid phone number: {phone}")
 
     phone_h = hash_phone(phone_normalized)
+    sample_image, sample_variants = store_sample_featured_image(
+        folder=f"sellers/{store_prefix.lower()}/featured"
+    )
 
     async with async_session_maker() as session:
         # Check if store already exists
@@ -74,7 +42,8 @@ async def create_initial_store(
             seller.first_name = first_name
             seller.last_name = last_name
             seller.store_prefix = store_prefix
-            seller.featured_image = _store_featured_image()
+            seller.featured_image = sample_image
+            seller.featured_image_variants = sample_variants
             seller.business_contact_number = phone_normalized
             session.add(seller)
             await session.commit()
@@ -88,7 +57,8 @@ async def create_initial_store(
                 store_prefix=store_prefix,
                 phone=encrypt_phone(phone_normalized),
                 phone_hash=phone_h,
-                featured_image=_store_featured_image(),
+                featured_image=sample_image,
+                featured_image_variants=sample_variants,
                 business_contact_number=phone_normalized,
             )
             session.add(seller)

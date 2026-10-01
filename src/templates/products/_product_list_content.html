@@ -20,15 +20,11 @@
                 {% endif %}
 
                 {% if display_image %}
-                <picture>
-                    <source srcset="
-                        {{ display_image | media_url(160) }} 160w,
-                        {{ display_image | media_url(256) }} 256w,
-                        {{ display_image | media_url(400) }} 400w,
-                        {{ display_image | media_url(800) }} 800w
-                      " sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 300px"
+                    <picture>
+                    <source srcset="{{ display_image | grid_srcset }}"
+                      sizes="(max-width: 640px) 90vw, (max-width: 1024px) 45vw, 300px"
                       type="image/webp">
-                    <img src="{{ display_image | media_url(400) }}" alt="{{ product.name }}" class="w-full h-full object-cover">
+                    <img src="{{ display_image | media_url(256) }}" alt="{{ product.name }}" width="256" height="256" loading="lazy" decoding="async" class="w-full h-full object-cover">
                 </picture>
                 {% else %}
                 <div class="w-full h-full flex items-center justify-center">

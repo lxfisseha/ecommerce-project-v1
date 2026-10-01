@@ -27,27 +27,46 @@ from src.utils.storage import LocalStorage
 logger = logging.getLogger(__name__)
 
 
+async def collect_referenced(session) -> set[str]:
+    """
+    Every object key the database still points at.
+
+    Takes a session rather than opening one so tests can pass their own. Missing
+    a key here is not a no-op: prune deletes the file.
+    """
+    referenced: set[str] = set()
+
+    # Each result is bound to a variable before reading it. Chaining .scalars()
+    # directly onto session.execute() raised "ChunkedIteratorResult has no
+    # attribute 'scalars'" in this script even though the identical chained form
+    # worked outside it.
+    image_result = await session.execute(select(ProductImage))
+    for image in image_result.scalars().all():
+        if image.object_name:
+            referenced.add(image.object_name)
+        for key in (image.processed_urls or {}).values():
+            referenced.add(key)
+
+    seller_result = await session.execute(select(Seller))
+    for seller in seller_result.scalars().all():
+        if seller.featured_image:
+            referenced.add(seller.featured_image)
+        # Banner variants live under processed/sellers and are not product
+        # images, so they are tracked here rather than by the ProductImage loop
+        # above. Without this the generated banner reads as an orphan and is
+        # deleted on the next prune.
+        for key in (seller.featured_image_variants or {}).values():
+            referenced.add(key)
+
+    return referenced
+
+
 async def collect_orphans() -> tuple[list[str], int]:
     storage = LocalStorage()
     root = storage.base_path
 
-    referenced: set[str] = set()
     async with async_session_maker() as session:
-        # Each result is bound to a variable before reading it. Chaining
-        # .scalars() directly onto session.execute() raised
-        # "ChunkedIteratorResult has no attribute 'scalars'" in this script
-        # even though the identical chained form worked outside it.
-        image_result = await session.execute(select(ProductImage))
-        for image in image_result.scalars().all():
-            if image.object_name:
-                referenced.add(image.object_name)
-            for key in (image.processed_urls or {}).values():
-                referenced.add(key)
-
-        seller_result = await session.execute(select(Seller))
-        for seller in seller_result.scalars().all():
-            if seller.featured_image:
-                referenced.add(seller.featured_image)
+        referenced = await collect_referenced(session)
 
     on_disk = {
         p.relative_to(root).as_posix() for p in root.rglob("*") if p.is_file()

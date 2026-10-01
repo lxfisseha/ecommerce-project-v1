@@ -18,7 +18,14 @@ import re
 import pytest
 
 from src.scripts.process_images import SIZES, VARIANT_QUALITY
-from src.templates_config import _VARIANT_BY_WIDTH
+from src.templates_config import (
+    GRID_MAX_WIDTH,
+    GRID_WIDTHS,
+    HERO_MAX_WIDTH,
+    HERO_MIN_WIDTH,
+    HERO_WIDTHS,
+    _VARIANT_BY_WIDTH,
+)
 
 TEMPLATES = pathlib.Path(__file__).resolve().parents[1] / "templates"
 
@@ -91,15 +98,26 @@ class TestTierSet:
         assert max(SIZES.values()) >= 800
 
 
-class TestTemplateWidths:
+def offered_widths(rel: str) -> set[int]:
+    """
+    Widths a template advertises, from either authoring style.
 
-    def _offered_widths(self, rel: str) -> set[int]:
-        body = read(rel)
-        # `{{ x | media_url(400) }} 400w` pairs a request with its descriptor.
-        return {
-            int(descriptor)
-            for descriptor in re.findall(r"media_url\(\d+\)\s*\}\}\s*(\d+)w", body)
-        }
+    Inline:  `{{ x | media_url(400) }} 400w`
+    Filter:  `{{ x | grid_srcset }}`, whose widths come from GRID_WIDTHS.
+    """
+    body = read(rel)
+    widths = {
+        int(descriptor)
+        for descriptor in re.findall(r"media_url\(\d+\)\s*\}\}\s*(\d+)w", body)
+    }
+    if "grid_srcset" in body:
+        widths |= set(GRID_WIDTHS)
+    if "hero_srcset" in body:
+        widths |= set(HERO_WIDTHS)
+    return widths
+
+
+class TestTemplateWidths:
 
     @pytest.mark.parametrize("rel", SRCSET_TEMPLATES)
     def test_srcset_widths_are_generatable(self, rel):
@@ -108,7 +126,7 @@ class TestTemplateWidths:
         descriptor advertises a file the worker never writes, and the browser
         picks a candidate that is really a different, smaller image.
         """
-        offered = self._offered_widths(rel)
+        offered = offered_widths(rel)
         assert offered, f"{rel} offers no media_url width descriptors"
         unknown = offered - set(SIZES.values())
         assert not unknown, f"{rel} advertises widths the worker cannot generate: {unknown}"
@@ -124,7 +142,182 @@ class TestTemplateWidths:
 
     def test_cart_thumbnail_does_not_offer_800w(self):
         """A 96px box has no use for the 800w variant."""
-        assert 800 not in self._offered_widths("buyer/_cart_content.html")
+        assert 800 not in offered_widths("buyer/_cart_content.html")
+
+
+class TestGridCap:
+    """
+    Grid cards are capped below the largest tier.
+
+    A card renders at 158-347 CSS px, but the browser multiplies `sizes` by
+    device pixel ratio, so a 3x phone requests ~528 device px. Without a cap
+    it selects the 800w file and a 12-card page costs ~626 KB.
+    """
+
+    GRIDS = ["buyer/_product_grid.html", "products/_product_list_content.html"]
+
+    def test_cap_excludes_the_hero_tier(self):
+        assert GRID_MAX_WIDTH < max(SIZES.values()), (
+            "the cap must actually exclude the largest tier to have any effect"
+        )
+
+    def test_cap_keeps_at_least_two_candidates(self):
+        """Below two candidates there is no srcset to choose between."""
+        assert len(GRID_WIDTHS) >= 2
+
+    def test_cap_widths_are_generatable(self):
+        assert set(GRID_WIDTHS) <= set(SIZES.values())
+
+    @pytest.mark.parametrize("rel", GRIDS)
+    def test_grids_use_the_shared_cap(self, rel):
+        """Both grids must go through grid_srcset so the cap cannot drift."""
+        assert "| grid_srcset" in read(rel), f"{rel} should use the shared grid_srcset filter"
+        assert 800 not in offered_widths(rel)
+
+    @pytest.mark.parametrize("rel", GRIDS)
+    def test_grid_fallback_stays_on_the_cap(self, rel):
+        """The <img> fallback must not point at a file the srcset withholds."""
+        import re as _re
+
+        fallback = _re.search(r'<img[^>]*src="\{\{[^}]*media_url\((\d+)\)', read(rel))
+        assert fallback, f"{rel} should have an <img> fallback"
+        assert int(fallback.group(1)) <= GRID_MAX_WIDTH, (
+            f"{rel} fallback requests {fallback.group(1)}w, above the {GRID_MAX_WIDTH}w cap"
+        )
+
+    def test_product_detail_hero_still_gets_800w(self):
+        """
+        The cap is for cards, not the hero. The hero renders at 596-720px and
+        is the one context that genuinely needs the large tier.
+        """
+        assert 800 in offered_widths("buyer_product_detail.html")
+
+
+class TestHeroCap:
+    """
+    The hero is pinned at 800w explicitly.
+
+    It happens to equal the largest tier today, but pinning it means adding a
+    larger variant later will not quietly inflate every product page. It also
+    keeps the gallery JS and the <picture> element on one source of truth.
+    """
+
+    HERO = "buyer_product_detail.html"
+
+    def test_hero_cap_is_the_largest_tier_today(self):
+        """If this fails, a larger tier was added and the hero ceiling needs a decision."""
+        assert HERO_MAX_WIDTH == max(SIZES.values())
+
+    def test_hero_floor_is_a_generatable_width(self):
+        assert HERO_MIN_WIDTH in SIZES.values()
+
+    def test_hero_widths_are_generatable(self):
+        assert set(HERO_WIDTHS) <= set(SIZES.values())
+
+    def _hero_img_tag(self) -> str:
+        import re as _re
+
+        match = _re.search(r"<img[^>]*id=\"main-product-image\"[^>]*>", read(self.HERO), _re.S)
+        assert match, "hero <img> should be findable"
+        return match.group(0)
+
+    def test_hero_fallback_stays_on_the_cap(self):
+        """The <img> fallback must not name a width above the cap."""
+        import re as _re
+
+        widths = _re.findall(r"media_url\((\d+)\)", self._hero_img_tag())
+        assert widths, "hero <img> fallback should use media_url"
+        assert int(widths[0]) <= HERO_MAX_WIDTH, (
+            f"hero fallback requests {widths[0]}w, above the {HERO_MAX_WIDTH}w cap"
+        )
+
+    def test_hero_fallback_declares_matching_dimensions(self):
+        """A fallback whose width/height disagree with its file reserves the wrong box."""
+        import re as _re
+
+        tag = self._hero_img_tag()
+        requested = _re.search(r"media_url\((\d+)\)", tag)
+        width = _re.search(r'width="(\d+)"', tag)
+        height = _re.search(r'height="(\d+)"', tag)
+        assert requested and width and height, (
+            "hero <img> should declare width, height and a media_url request"
+        )
+        assert int(width.group(1)) == int(height.group(1)) == int(requested.group(1))
+        assert int(requested.group(1)) == HERO_MAX_WIDTH
+
+    def test_hero_cap_is_at_least_the_grid_cap(self):
+        assert HERO_MAX_WIDTH >= GRID_MAX_WIDTH
+
+    def test_hero_does_not_offer_card_only_tiers(self):
+        """
+        The hero's `sizes` floor is 390px, so 160/256 are never a valid pick.
+        Offering them costs parse time and invites a future editor to wonder
+        which one applies.
+        """
+        assert min(HERO_WIDTHS) >= 400
+        assert not ({160, 256} & set(HERO_WIDTHS))
+
+    def _hero_fixed_sizes_clauses(self) -> list[int]:
+        """Fixed-width clauses from the hero's `sizes`, excluding breakpoints."""
+        import re as _re
+
+        attr = _re.search(r'sizes="([^"]*)"', read(self.HERO))
+        assert attr, "hero should declare a sizes attribute"
+        # Drop any "(max-width: NNNpx)" prefixes; only the widths remain.
+        stripped = _re.sub(r"\([^)]*\)", " ", attr.group(1))
+        return [int(float(w)) for w in _re.findall(r"([\d.]+)px", stripped)]
+
+    def test_hero_cap_covers_its_widest_sizes_clause(self):
+        """
+        The browser picks the *smallest candidate that covers* its target, so
+        the binding constraint is on the ceiling, not the floor: the widest
+        fixed `sizes` clause is the 610px desktop box and the cap must reach it.
+
+        `100vw` is deliberately not checked. At DPR 1 a 1024px viewport wants
+        1024px, which no tier can serve; that upscale is inherent to the hero
+        and bounded by the largest tier, not something the cap controls.
+        """
+        widest = max(self._hero_fixed_sizes_clauses())
+        assert max(HERO_WIDTHS) >= widest, (
+            f"hero cap {max(HERO_WIDTHS)}w cannot cover its widest sizes "
+            f"clause of {widest}px"
+        )
+
+    def test_hero_floor_is_not_needlessly_large(self):
+        """
+        A 320px phone at DPR 1 wants 320px. If the floor were 800w that phone
+        would be served the hero ceiling, paying 52 KB for a 320px slot. One
+        step of slack above a small viewport is acceptable; the cap is not.
+        """
+        assert min(HERO_WIDTHS) <= 400
+
+    def test_hero_uses_the_shared_filter(self):
+        assert "| hero_srcset" in read(self.HERO)
+
+    def test_gallery_js_has_no_hardcoded_widths(self):
+        """
+        The gallery rewrites the srcset on a thumbnail click. A width literal in
+        the <script> would drift from the config, so none may appear there.
+
+        The <img> fallback and the width/height attributes outside the script
+        are allowed to name 800: they are not srcset descriptors, and the
+        fallback is checked against HERO_MAX_WIDTH separately.
+        """
+        import re as _re
+
+        script = "\n".join(
+            _re.findall(r"<script\b[^>]*>(.*?)</script>", read(self.HERO), _re.S)
+        )
+        assert script, "hero template should contain a script block"
+        assert not _re.search(r"\b(?:160|256|400|800)w\b", script), (
+            "gallery script still hardcodes a srcset width descriptor"
+        )
+        assert not _re.search(r"media_url\(\d+\)", script), (
+            "gallery script should take URLs from the gallery array, not media_url"
+        )
+
+    def test_gallery_js_reads_widths_from_config(self):
+        assert "hero_widths" in read(self.HERO)
 
 
 class TestSizesAttributes:

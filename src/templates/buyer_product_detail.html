@@ -22,12 +22,8 @@
                 {% if product_images %}
                     <div class="aspect-square sm:aspect-auto sm:h-[450px] lg:h-[550px] w-full">
                         <picture>
-                            <source id="main-product-image-source" srcset="
-                                {{ product_images[0] | media_url(400) }} 400w,
-                                {{ product_images[0] | media_url(800) }} 800w
-                              " sizes="(max-width: 1024px) 100vw, 610px"
-                              type="image/webp">
-                            <img src="{{ product_images[0] | media_url(800) }}" id="main-product-image" alt="{{ product.name }}" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
+                            <source id="main-product-image-source" srcset="{{ product_images[0] | hero_srcset }}" sizes="(max-width: 1024px) 100vw, 610px" type="image/webp">
+                            <img src="{{ product_images[0] | media_url(800) }}" id="main-product-image" alt="{{ product.name }}" width="800" height="800" class="w-full h-full object-cover transition-transform duration-500 hover:scale-105">
                         </picture>
                     </div>
                     
@@ -251,11 +247,14 @@
 </div>
 
 <script>
-    // Both widths per image: swapping the img's src alone would not change the
-    // rendered picture, because the source element's srcset takes precedence.
+    // One URL per hero width, per image: swapping the img's src alone would not
+    // change the rendered picture, because the source element's srcset takes
+    // precedence. Widths come from hero_widths so this cannot drift from the
+    // <picture> above, which is why they are not hardcoded here.
+    const heroWidths = {{ hero_widths | tojson }};
     const gallery = [
         {% for img in product.images %}
-        { small: "{{ img | media_url(400) }}", large: "{{ img | media_url(800) }}" }{{ "," if not loop.last else "" }}
+        { srcset: "{{ img | hero_srcset }}", fallback: "{{ img | media_url(hero_widths[-1]) }}" }{{ "," if not loop.last else "" }}
         {% endfor %}
     ];
     let currentIdx = 0;
@@ -267,8 +266,8 @@
         if (entry) {
             const source = document.getElementById('main-product-image-source');
             const mainImg = document.getElementById('main-product-image');
-            if (source) source.srcset = `${entry.small} 400w, ${entry.large} 800w`;
-            if (mainImg) mainImg.src = entry.large;
+            if (source) source.srcset = entry.srcset;
+            if (mainImg) mainImg.src = entry.fallback;
         }
 
         // Update thumbnails
