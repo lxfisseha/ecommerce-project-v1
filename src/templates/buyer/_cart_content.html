@@ -11,11 +11,10 @@
                     <picture>
                         <source srcset="
                             {{ img_obj | media_url(160) }} 160w,
-                            {{ img_obj | media_url(400) }} 400w,
-                            {{ img_obj | media_url(800) }} 800w
-                          " sizes="(max-width: 480px) 160px, (max-width: 768px) 400px, 800px"
+                            {{ img_obj | media_url(400) }} 400w
+                          " sizes="96px"
                           type="image/webp">
-                        <img src="{{ img_obj | media_url(400) }}" alt="{{ item.product.name }}" width="160" height="160" loading="lazy" decoding="async" class="w-full h-full object-cover">
+                        <img src="{{ img_obj | media_url(160) }}" alt="{{ item.product.name }}" width="96" height="96" loading="lazy" decoding="async" class="w-full h-full object-cover">
                     </picture>
                     {% else %}
                         <div class="w-full h-full flex items-center justify-center text-border-main">

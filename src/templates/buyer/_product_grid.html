@@ -18,7 +18,7 @@
                     {{ display_image | media_url(160) }} 160w,
                     {{ display_image | media_url(400) }} 400w,
                     {{ display_image | media_url(800) }} 800w
-                  " sizes="(max-width: 480px) 160px, (max-width: 768px) 400px, 800px"
+                  " sizes="(max-width: 767px) 45vw, (max-width: 1280px) 22vw, 286px"
                   type="image/webp">
                 <img src="{{ display_image | media_url(400) }}" alt="{{ product.name }}" width="400" height="400" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
             </picture>

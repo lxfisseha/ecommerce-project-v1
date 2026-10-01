@@ -44,13 +44,25 @@ def _flatten_to_rgb(img: Image.Image) -> Image.Image:
 
 
 def generate_variants(image_data: bytes, stem: str, storage: LocalStorage) -> dict:
-    """Resize image_data to every width in SIZES and store the WebP variants."""
+    """
+    Resize to every width in SIZES that the source can actually support.
+
+    Widths above the source are skipped rather than interpolated: an upscaled
+    variant costs bytes and adds no detail, so it is strictly worse than the
+    stored original. Templates fall back to the original for those widths.
+    """
     img = Image.open(io.BytesIO(image_data))
     img.load()
     img = _flatten_to_rgb(img)
 
     variants = {}
     for name, width in SIZES.items():
+        if width > img.width:
+            logger.info(
+                "Skipping %s variant for %s: source is %dpx wide", name, stem, img.width
+            )
+            continue
+
         height = max(1, round(width * img.height / img.width))
         resized = img.resize((width, height), Image.Resampling.LANCZOS)
 
@@ -110,10 +122,18 @@ def process_image_task(image_id: int) -> dict:
 
             try:
                 storage = LocalStorage()
+                stem = Path(image.object_name).stem
+
+                # Clear variants from a previous run before regenerating. A
+                # changed SIZES table or the no-upscale rule can leave files
+                # that processed_urls no longer references. Delete the known
+                # keys rather than a prefix: delete_prefix matches directories,
+                # and this prefix is a filename stem.
+                for stale_width in SIZES.values():
+                    storage.delete(f"{VARIANT_PREFIX}/{stem}_{stale_width}w.webp")
+
                 variants = generate_variants(
-                    storage.read(image.object_name),
-                    Path(image.object_name).stem,
-                    storage,
+                    storage.read(image.object_name), stem, storage
                 )
             except Exception as exc:
                 logger.exception("Failed to process image %s", image_id)
@@ -122,7 +142,7 @@ def process_image_task(image_id: int) -> dict:
                 await session.commit()
                 return {"status": "error", "message": str(exc)}
 
-            image.processed_urls = variants
+            image.processed_urls = variants or None
             image.processing_status = "completed"
             image.processing_error = None
             from src.utils.datetime import utc_now
