@@ -68,11 +68,22 @@ def process_image_task(image_id: int) -> dict:
     """RQ job entry point. Must be importable at module level for unpickling."""
     import asyncio
 
-    from sqlalchemy.ext.asyncio import AsyncSession
+    # SQLModel needs every model class registered before the ORM can configure
+    # relationships, otherwise Product.seller fails to resolve 'Seller'. The
+    # app gets this for free via src.main's router imports; the worker has to
+    # do it explicitly because it only ever touches ProductImage.
     from sqlmodel import select
 
     from src.database import async_session_maker
-    from src.features.products.models import ProductImage
+    from src.features.auth.models import Seller, OtpCode  # noqa: F401
+    from src.features.orders.models import Order, OrderStatusLog  # noqa: F401
+    from src.features.products.models import (  # noqa: F401
+        Product,
+        ProductAttribute,
+        ProductImage,
+        ProductTagLink,
+        Tag,
+    )
 
     async def process() -> dict:
         async with async_session_maker() as session:

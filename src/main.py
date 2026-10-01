@@ -4,6 +4,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.responses import FileResponse
 from src.middleware.csrf import CustomCSRFMiddleware
 from src.middleware.rate_limit import RateLimitMiddleware
 from src.config import settings
@@ -94,8 +95,44 @@ class CachedStaticFiles(StaticFiles):
         return response
 
 
+class MediaFiles(StaticFiles):
+    """
+    Serve stored images, forcing a content type for the formats we generate.
+
+    Content type is derived from mimetypes, whose database is empty in slim
+    containers, so it returns None for .webp and the response falls back to
+    application/octet-stream. Register the types explicitly instead of
+    depending on the host's mime.types.
+    """
+
+    MEDIA_TYPES = {
+        ".webp": "image/webp",
+        ".avif": "image/avif",
+        ".heic": "image/heic",
+        ".heif": "image/heif",
+        ".jpe": "image/jpeg",
+        ".tif": "image/tiff",
+        ".tiff": "image/tiff",
+    }
+
+    def file_response(self, full_path, stat_result, scope, status_code=200):
+        suffix = os.path.splitext(full_path)[1].lower()
+        media_type = self.MEDIA_TYPES.get(suffix)
+        if media_type is None:
+            return super().file_response(full_path, stat_result, scope, status_code)
+
+        response = FileResponse(
+            full_path,
+            status_code=status_code,
+            media_type=media_type,
+            stat_result=stat_result,
+        )
+        response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+        return response
+
+
 app.mount("/static", CachedStaticFiles(directory=static_dir), name="static")
-app.mount("/media", CachedStaticFiles(directory=media_dir, check_dir=False), name="media")
+app.mount("/media", MediaFiles(directory=media_dir, check_dir=False), name="media")
 
 
 # Middleware stack (applied in reverse order — last added runs first)
