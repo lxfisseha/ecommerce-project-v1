@@ -1,23 +1,59 @@
 import asyncio
 from sqlmodel import select
 
-# Import all models to register them in SQLModel/SQLAlchemy metadata registry
-from src.features.auth.models import Seller, OtpCode
-from src.features.products.models import Product, ProductImage, ProductAttribute, Tag, ProductTagLink
-from src.features.orders.models import Order, OrderStatusLog
+# Import every model so SQLModel's metadata registry is populated. Without the
+# ones this script does not touch directly, relationships like Product.tags fail
+# to resolve when the ORM configures itself.
+from src.features.auth.models import Seller, OtpCode  # noqa: F401
+from src.features.products.models import (  # noqa: F401
+    Product,
+    ProductAttribute,
+    ProductImage,
+    ProductTagLink,
+    Tag,
+)
+from src.features.orders.models import Order, OrderStatusLog  # noqa: F401
 
 from src.database import async_session_maker
 from src.features.products.services import ProductService
 
-# Define mapping from keywords in product name to tags list
+# Map keywords found in a product name to the tags it should carry.
+#
+# The keys are ordered and matched with a substring test, so a longer, more
+# specific keyword must come before a shorter one it contains: "gym bag" has to
+# be tested before "bag", or every gym bag would also be tagged as a handbag.
+# The old taxonomy had the same latent problem with "top" inside "gown-adjacent"
+# names and no ordering to protect it.
 TAG_MAPPING = {
-    ("dress", "kemis", "gown", "skirt", "blouse", "top", "shirt", "jacket"): ["dresses", "apparel", "clothing"],
-    ("shoe", "heels", "pumps", "sandals", "flats", "sneakers", "boots"): ["shoes", "footwear"],
-    ("handbag", "bag", "tote", "crossbody", "clutch", "shoulder", "wallet"): ["bags", "accessories"],
-    ("scarf", "netela", "belt", "jewelry", "necklace", "pendant"): ["accessories", "jewelry"],
-    ("habesha", "kemis", "netela"): ["traditional", "ethiopian"],
-    ("leather", "silk"): ["premium", "leather"]
+    # Team wear first: "jersey" is specific enough to stand alone.
+    ("football jersey", "jersey"): ["football", "jerseys"],
+
+    # Gym-specific before the general apparel terms they contain.
+    # "gym" on its own is deliberately not a keyword: it appears in "Gym
+    # Gloves", "Gym Tank Top" and "Gym T-Shirt", none of which are bags, and
+    # matching it here tagged all three with "bags".
+    ("gym fit",): ["apparel", "activewear", "women"],
+    ("gym bag",): ["bags", "accessories"],
+    ("gym glove", "glove"): ["accessories", "strength"],
+    ("gym t-shirt", "t-shirt", "tee"): ["apparel", "activewear", "tops"],
+
+    # Support and training gear.
+    ("hand grip", "grip"): ["strength", "accessories"],
+    ("knee support", "knee"): ["support", "accessories"],
+
+    # General categories, matched last.
+    ("tank top", "tank"): ["apparel", "activewear", "tops"],
+    ("underwear", "boxer", "brief"): ["apparel", "underwear"],
+    ("short", "legging", "hoodie", "tracksuit", "jacket", "shirt", "top"):
+        ["apparel", "activewear"],
+    ("shoe", "sneaker", "boot", "trainer"): ["footwear"],
+    ("bag", "backpack", "duffel"): ["bags", "accessories"],
+    ("leather",): ["premium"],
 }
+
+# Applied to every product regardless of the above, so the shop always has
+# something to filter on and the grid is never tagless.
+ALWAYS_TAGS = ["sportwear"]
 
 async def main():
     async with async_session_maker() as session:
@@ -30,17 +66,21 @@ async def main():
         seeded_count = 0
         for p in products:
             product_name_lower = p.name.lower()
-            tags_to_add = []
-            
-            # Find matching tags
+            tags_to_add = list(ALWAYS_TAGS)
+
+            # Find matching tags. dict preserves insertion order, so the
+            # ordering note on TAG_MAPPING is load-bearing.
             for keywords, tags in TAG_MAPPING.items():
                 if any(kw in product_name_lower for kw in keywords):
                     tags_to_add.extend(tags)
-            
-            # Default tags if nothing matched
-            if not tags_to_add:
-                tags_to_add = ["general", "featured"]
-                
+
+            # De-duplicate while keeping first-seen order, so a name matching
+            # two rules does not create the same tag twice.
+            seen = set()
+            tags_to_add = [
+                t for t in tags_to_add if not (t in seen or seen.add(t))
+            ]
+
             tags_string = ", ".join(tags_to_add)
             print(f"- Seeding '{p.name}' with tags: {tags_string}")
             

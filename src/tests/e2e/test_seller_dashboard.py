@@ -70,7 +70,7 @@ def test_order_status_workflow(page: Page, seller_page: Page, base_url: str):
     expect(seller_page).to_have_url(re.compile(r"/dashboard/orders/\d+"))
 
     expect(seller_page.locator("body")).to_contain_text("Seller Flow Buyer")
-    expect(seller_page.locator("body")).to_contain_text("Elegant Maxi Dress")
+    expect(seller_page.locator("body")).to_contain_text("Pro Training Shorts")
     expect(seller_page.locator("button[type='submit'][value='shipped']")).to_be_visible()
 
     # pending -> shipped

@@ -1,7 +1,7 @@
 import asyncio
 from src.database import async_session_maker
 from src.features.auth.models import Seller
-from src.scripts.sample_banner import store_sample_featured_image
+from src.scripts.sample_banner import DEMO_STORE_NAME, store_sample_featured_image
 from src.utils.crypto import encrypt_phone
 from sqlmodel import select
 
@@ -25,7 +25,7 @@ async def add_sample_seller():
         )
 
         # Check if already exists by store_name
-        statement = select(Seller).where(Seller.store_name == "XCollections Demo Store")
+        statement = select(Seller).where(Seller.store_name == DEMO_STORE_NAME)
         result = await session.execute(statement)
         seller = result.scalar_one_or_none()
 
@@ -43,7 +43,7 @@ async def add_sample_seller():
             seller = Seller(
                 first_name="Fanuel",
                 last_name="Alemu",
-                store_name="XCollections Demo Store",
+                store_name=DEMO_STORE_NAME,
                 store_prefix="DEMO",
                 phone=encrypt_phone(phone_normalized),
                 phone_hash=phone_h,
@@ -54,7 +54,7 @@ async def add_sample_seller():
             session.add(seller)
         
         await session.commit()
-        print(f"Sample seller 'XCollections Demo Store' handled successfully with phone {phone_normalized}.")
+        print(f"Sample seller '{DEMO_STORE_NAME}' handled successfully with phone {phone_normalized}.")
 
 if __name__ == "__main__":
     asyncio.run(add_sample_seller())

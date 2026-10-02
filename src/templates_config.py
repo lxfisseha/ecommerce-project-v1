@@ -176,3 +176,13 @@ templates.env.globals["hero_widths"] = HERO_WIDTHS
 from src.constants import BANNER_WIDTH as _BANNER_WIDTH
 
 templates.env.globals["banner_width"] = _BANNER_WIDTH
+
+# Storefront identity, injected rather than written into ~20 templates. The
+# brand used to be a literal in every page title, both header wordmarks, the
+# packing slip and the SMS bodies, which made a rename a 26-site find-replace
+# where a single miss left a live page on the old brand.
+from src.constants import SITE_NAME, SITE_SUPPORT_EMAIL, SITE_TELEGRAM_HANDLE
+
+templates.env.globals["site_name"] = SITE_NAME
+templates.env.globals["site_support_email"] = SITE_SUPPORT_EMAIL
+templates.env.globals["site_telegram_handle"] = SITE_TELEGRAM_HANDLE

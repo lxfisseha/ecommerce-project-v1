@@ -8,11 +8,17 @@ generation live here so the two scripts cannot drift apart again.
 import logging
 import urllib.request
 
-from src.constants import BANNER_VARIANT_NAME
+from src.constants import BANNER_VARIANT_NAME, SITE_NAME
 from src.scripts.process_images import store_banner_variant
 from src.utils.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
+
+# Store name used by add_seller.py for the demo seller. Declared here because
+# that script looks the seller up by this exact string before deciding whether to
+# create or update it, so a rename that missed one of the two would silently
+# create a duplicate store.
+DEMO_STORE_NAME = f"{SITE_NAME} Demo Store"
 
 SAMPLE_FEATURED_IMAGE_URL = (
     "https://images.unsplash.com/photo-1547949003-9792a18a2601"
@@ -33,7 +39,8 @@ def store_sample_featured_image(folder: str) -> tuple[str, dict | None]:
     """
     try:
         request = urllib.request.Request(
-            SAMPLE_FEATURED_IMAGE_URL, headers={"User-Agent": "xcollections-seed/1.0"}
+            SAMPLE_FEATURED_IMAGE_URL,
+            headers={"User-Agent": f"{SITE_NAME}-seed/1.0"},
         )
         with urllib.request.urlopen(request, timeout=30) as response:
             data = response.read()

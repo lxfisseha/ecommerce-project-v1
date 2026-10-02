@@ -4,6 +4,7 @@ E2E tests for customer browsing, searching, filtering, and sorting.
 
 import pytest
 from playwright.sync_api import Page, expect
+from src.constants import SITE_NAME
 from src.tests.e2e.pages.home_page import HomePage
 from src.tests.e2e.pages.shop_page import ShopPage
 from src.tests.e2e.pages.product_page import ProductPage
@@ -15,8 +16,8 @@ def test_homepage_loads_with_products(page: Page, base_url: str):
     home = HomePage(page, base_url)
     home.navigate()
 
-    expect(page).to_have_title("Welcome to XCollections")
-    expect(page.locator("h1")).to_contain_text("Discover women's fashion")
+    expect(page).to_have_title(f"Welcome to {SITE_NAME}")
+    expect(page.locator("h1")).to_contain_text("Built for the training")
 
     # Check navigation links
     nav_links = home.get_nav_links()
@@ -35,11 +36,11 @@ def test_homepage_search_navigates_to_shop(page: Page, base_url: str):
     home = HomePage(page, base_url)
     home.navigate()
 
-    home.search("Dress")
+    home.search("Shorts")
 
     assert "/shop" in page.url
-    assert "q=Dress" in page.url
-    expect(page.locator("div#product-grid-container")).to_contain_text("Dress")
+    assert "q=Shorts" in page.url
+    expect(page.locator("div#product-grid-container")).to_contain_text("Shorts")
 
 
 @pytest.mark.e2e
@@ -53,8 +54,8 @@ def test_shop_page_displays_grid_and_search(page: Page, base_url: str):
     assert initial_count > 0
 
     # Perform HTMX search
-    shop.search("Dress")
-    expect(page.locator("div#product-grid-container")).to_contain_text("Dress")
+    shop.search("Shorts")
+    expect(page.locator("div#product-grid-container")).to_contain_text("Shorts")
 
 
 @pytest.mark.e2e
@@ -63,8 +64,8 @@ def test_shop_tag_filtering(page: Page, base_url: str):
     shop = ShopPage(page, base_url)
     shop.navigate()
 
-    shop.filter_by_tag("shoes")
-    expect(page.locator("div#product-grid-container")).to_contain_text("Shoes")
+    shop.filter_by_tag("football")
+    expect(page.locator("div#product-grid-container")).to_contain_text("Football")
 
 
 @pytest.mark.e2e

@@ -118,9 +118,9 @@ async def _seed_database():
         # --- Tags ---
         tags = {}
         for tag_name, tag_slug in [
-            ("Dresses", "dresses"),
-            ("Shoes", "shoes"),
-            ("Handbags", "handbags"),
+            ("Apparel", "apparel"),
+            ("Football", "football"),
+            ("Bags", "bags"),
             ("Accessories", "accessories"),
         ]:
             tag = Tag(name=tag_name, slug=tag_slug)
@@ -129,32 +129,34 @@ async def _seed_database():
             tags[tag_slug] = tag
 
         # --- Products (15 in-stock + 2 out-of-stock) ---
+        # Sportwear range. Names are referenced by id in assertions below, so
+        # the ordering here is load-bearing: product 1 is the newest.
         products_data = [
-            ("Elegant Maxi Dress", Decimal("2500.00"), True, "dresses", "Flowing maxi dress with a modern silhouette"),
-            ("Modern Habesha Dress", Decimal("3200.00"), True, "dresses", "Handwoven traditional Ethiopian dress"),
-            ("Printed Floral Dress", Decimal("1800.00"), True, "dresses", "Lightweight floral print summer dress"),
-            ("Silk Evening Gown", Decimal("4500.00"), True, "dresses", "Elegant silk gown for special occasions"),
-            ("Chiffon Blouse", Decimal("1200.00"), True, "dresses", "Sheer chiffon blouse, office ready"),
-            ("Elegant High Heel Shoes", Decimal("2200.00"), True, "shoes", "Statement high heels for evenings out"),
-            ("Comfortable Ballet Flats", Decimal("1500.00"), True, "shoes", "Classic ballet flats, all-day comfort"),
-            ("Trendy Sneaker Shoes", Decimal("1600.00"), True, "shoes", "Casual sneakers for everyday wear"),
-            ("Fashion Sandal Shoes", Decimal("1200.00"), True, "shoes", "Strappy fashion sandals for warm days"),
-            ("Leather Ankle Boots", Decimal("2800.00"), True, "shoes", "Genuine leather ankle boots"),
-            ("Leather Handbag", Decimal("3000.00"), True, "handbags", "Spacious genuine leather handbag"),
-            ("Elegant Clutch Bag", Decimal("1500.00"), True, "handbags", "Sleek clutch for nights out"),
-            ("Canvas Tote Bag", Decimal("800.00"), True, "handbags", "Everyday canvas tote, roomy and light"),
-            ("Silk Fashion Scarf", Decimal("600.00"), True, "accessories", "Soft silk scarf with a classic print"),
-            ("Pearl Necklace", Decimal("900.00"), True, "accessories", "Timeless pearl necklace"),
+            ("Pro Training Shorts", Decimal("900.00"), True, "apparel", "Lightweight training shorts with a liner"),
+            ("Gym Tank Top", Decimal("800.00"), True, "apparel", "Loose armhole so the shoulder lifts cleanly"),
+            ("2-Piece Women Gym Fit", Decimal("2200.00"), True, "apparel", "Matching sports bra and leggings set"),
+            ("Gym T-Shirt", Decimal("650.00"), True, "apparel", "Mid-weight cotton training tee, straight cut"),
+            ("Leather Gym Gloves", Decimal("1100.00"), True, "accessories", "Padded lifting gloves with wrist wrap"),
+            ("Arsenal Football Jersey", Decimal("2600.00"), True, "football", "Home replica shirt in red and white"),
+            ("Manchester United Football Jersey", Decimal("2600.00"), True, "football", "Home replica shirt in club red"),
+            ("Manchester City Football Jersey", Decimal("2600.00"), True, "football", "Home replica shirt in sky blue"),
+            ("Contour Gym Bag", Decimal("1700.00"), True, "bags", "Structured bag with a wet compartment"),
+            ("Pro Running Shoes", Decimal("2400.00"), True, "apparel", "Neutral trainers for daily mileage"),
+            ("Hand Grip Strengthener", Decimal("400.00"), True, "accessories", "Spring-loaded gripper, resistance steps up"),
+            ("Knee Support Sleeve", Decimal("750.00"), True, "accessories", "Compression sleeve for squats and running"),
+            ("Premium Modal Underwear", Decimal("900.00"), True, "apparel", "Modal blend with a flat seam, sold in packs"),
+            ("Football Training Cones", Decimal("500.00"), True, "football", "Set of marker cones for drills"),
+            ("Speed Ladder", Decimal("700.00"), True, "football", "Portable ladder for footwork drills"),
             # Out-of-stock products
-            ("Sold Out Evening Dress", Decimal("9999.00"), False, "dresses", "This product is out of stock"),
-            ("Unavailable High Heels", Decimal("5000.00"), False, "shoes", "These shoes are unavailable"),
+            ("Sold Out Pro Training Shorts", Decimal("9999.00"), False, "apparel", "This product is out of stock"),
+            ("Unavailable Pro Running Shoes", Decimal("5000.00"), False, "apparel", "These shoes are unavailable"),
         ]
 
         from src.utils.datetime import utc_now
         from datetime import timedelta
 
         # Assign staggered created_at timestamps so the product list's
-        # created_at DESC ordering is deterministic: Elegant Maxi Dress
+        # created_at DESC ordering is deterministic: Pro Training Shorts
         # (id 1) is the newest and appears on page 1, older products fall
         # onto later pages.
         base_time = utc_now() - timedelta(hours=len(products_data))

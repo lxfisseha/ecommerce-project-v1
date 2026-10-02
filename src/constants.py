@@ -4,6 +4,27 @@ MAX_IMAGE_SIZE = 5 * 1024 * 1024
 
 DELIVERY_FEE = Decimal("150.0")
 
+# Storefront name. Defined once because it appears in ~26 places: every page
+# title, both header wordmarks, the packing slip, SMS bodies and the FastAPI
+# app title. It was previously a literal in each of them, so a rename was a
+# find-and-replace across 21 files and any miss showed up as a live page still
+# carrying the old brand.
+#
+# Exposed to templates as the `site_name` global by templates_config.
+SITE_NAME = "MAHI`S Sportwear"
+
+# Support contact addresses shown on /support. Kept next to SITE_NAME so a
+# rebrand updates them in the same place; both must be real, deliverable
+# addresses or the page is worse than having none.
+SITE_SUPPORT_EMAIL = "support@mahis-sportwear.et"
+SITE_TELEGRAM_HANDLE = "@MahisSportwear"
+
+# Fallback SMS sender ID. Deliberately NOT SITE_NAME: the brand contains a
+# backtick and a space, and AfroMessage sender IDs must be the short
+# alphanumeric string registered with them. Production sets
+# AFROMESSAGES_SENDER in .env, which takes precedence over this.
+SITE_SMS_SENDER = "MahisSportwear"
+
 # Where the background worker stores generated WebP variants, relative to
 # MEDIA_ROOT. Originals live under products/originals/<uuid>.<ext>.
 VARIANT_PREFIX = "processed/products"

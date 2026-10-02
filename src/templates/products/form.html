@@ -1,6 +1,6 @@
 {% extends "seller_base.html" %}
 
-{% block title %}{% if product %}Edit Product{% else %}Add New Product{% endif %} - XCollections{% endblock %}
+{% block title %}{% if product %}Edit Product{% else %}Add New Product{% endif %} - {{ site_name }}{% endblock %}
 
 {% block seller_content %}
 <div class="max-w-4xl mx-auto">
@@ -9,7 +9,7 @@
                 {% if product %}Edit Product{% else %}Add New Product{% endif %}
             </h1>
             <p class="text-text-muted text-sm sm:text-base leading-6 mt-1">
-                {% if product %}Update your product details and availability.{% else %}Fill in the details to list a new item on XCollections.{% endif %}
+                {% if product %}Update your product details and availability.{% else %}Fill in the details to list a new item on {{ site_name }}.{% endif %}
             </p>
             {% if error %}
             <div class="mt-4 p-4 bg-red-50 text-red-700 rounded-lg border border-red-200">
@@ -166,12 +166,12 @@
 
                 <div class="space-y-2">
                     <label class="text-sm font-medium text-text-main">Product Name</label>
-                    <input type="text" name="name" value="{{ product.name if product else '' }}" required placeholder="e.g. Traditional Hand-Woven Dress" class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                    <input type="text" name="name" value="{{ product.name if product else '' }}" required placeholder="e.g. Pro Training Shorts" class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                 </div>
 
                 <div class="space-y-2">
                     <label class="text-sm font-medium text-text-main">Description</label>
-                    <textarea name="description" rows="5" placeholder="Tell customers about the materials, origin, and unique features..." class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ product.description if product else '' }}</textarea>
+                    <textarea name="description" rows="5" placeholder="Tell customers about the fabric, fit, and what it is good for..." class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">{{ product.description if product else '' }}</textarea>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -186,7 +186,7 @@
                     </div>
                     <div class="space-y-2">
                         <label class="text-sm font-medium text-text-main">Tags (comma-separated)</label>
-                        <input type="text" name="tags" value="{{ tags_string if tags_string else '' }}" placeholder="e.g. streetwear, hot, summer" class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
+                        <input type="text" name="tags" value="{{ tags_string if tags_string else '' }}" placeholder="e.g. running, gym, football" class="w-full px-4 py-2.5 bg-bg-alt border border-border-main rounded-lg text-base focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
                     </div>
                 </div>
             </div>
@@ -204,7 +204,7 @@
                     </button>
                 </div>
 
-                <p class="text-xs text-text-muted -mt-4 mb-4">Add options like Size, Color, or Material. You can also specify an extra price for specific variations.</p>
+                <p class="text-xs text-text-muted -mt-4 mb-4">Add options like Size, Color, or Fit. You can also specify an extra price for specific variations.</p>
 
                 <div id="attributes-container" class="space-y-3">
                     {% if product and product.attributes %}
@@ -216,7 +216,7 @@
                             </div>
                             <div class="flex-1">
                                 <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Value</label>
-                                <input type="text" name="attr_value[]" value="{{ attr.attribute_value }}" placeholder="e.g. S, M, L" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
+                                <input type="text" name="attr_value[]" value="{{ attr.attribute_value }}" placeholder="e.g. S, M, L, XL" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                             </div>
                             <div class="w-full sm:w-32">
                                 <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Extra Price</label>
@@ -253,7 +253,7 @@
                             </div>
                             <div class="flex-1">
                                 <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Value</label>
-                                <input type="text" name="attr_value[]" placeholder="e.g. S, M, L" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
+                                <input type="text" name="attr_value[]" placeholder="e.g. S, M, L, XL" class="w-full px-3 py-2 bg-white border border-border-main rounded-lg text-sm focus:ring-2 focus:ring-primary/20 outline-none">
                             </div>
                             <div class="w-full sm:w-32">
                                 <label class="block text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1">Extra Price</label>

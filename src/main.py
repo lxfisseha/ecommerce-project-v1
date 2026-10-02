@@ -8,6 +8,7 @@ from starlette.responses import FileResponse
 from src.middleware.csrf import CustomCSRFMiddleware
 from src.middleware.rate_limit import RateLimitMiddleware
 from src.config import settings
+from src.constants import SITE_NAME
 from src.utils.crypto import derive_key
 from src.templates_config import templates
 from src.features.auth.routes import router as auth_router
@@ -72,7 +73,7 @@ def _validate_startup_config() -> None:
 
 
 app = FastAPI(
-    title="XCollections Merchant Solution Center",
+    title=f"{SITE_NAME} Seller Hub",
     docs_url=None,  # Disable Swagger UI
     redoc_url=None,  # Disable ReDoc
     openapi_url=None,

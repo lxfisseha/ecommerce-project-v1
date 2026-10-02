@@ -2,6 +2,11 @@ import asyncio
 import logging
 import httpx
 from src.config import settings
+from src.constants import SITE_NAME, SITE_SMS_SENDER
+
+# SMS drops the backtick from the brand: it is the escape character in some
+# SMS gateway pipelines. The storefront wordmark still shows the real brand.
+SMS_EFFECTIVE_BRAND = SITE_NAME.replace("`", "")
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +38,7 @@ class AfroMessageService:
         recipient_label: str,
     ) -> bool:
         """Internal low-level dispatcher to send an SMS payload via a shared client session."""
-        sender = getattr(settings, "AFROMESSAGES_SENDER", "XCollections")
+        sender = getattr(settings, "AFROMESSAGES_SENDER", SITE_SMS_SENDER)
         from_id = getattr(settings, "AFROMESSAGES_FROM", "")
         callback = getattr(settings, "AFROMESSAGES_CALLBACK", "")
 
@@ -94,7 +99,7 @@ class AfroMessageService:
         """
         api_key = settings.AFROMESSAGES_API_KEY
         message = (
-            f"Your XCollections login verification code is: {otp_code}. Valid for 5 minutes."
+            f"Your {SMS_EFFECTIVE_BRAND} login verification code is: {otp_code}. Valid for 5 minutes."
         )
 
         if not api_key:
@@ -126,8 +131,8 @@ class AfroMessageService:
         """
         api_key = settings.AFROMESSAGES_API_KEY
 
-        buyer_message = f"Thank you for your order at XCollections! Your Order #{order_id} has been placed successfully. Total: {total_amount:.2f}."
-        seller_message = f"XCollections Alert: You have a new order #{order_id}. Items: {item_summary}. Total payout: {total_amount:.2f}."
+        buyer_message = f"Thank you for your order at {SMS_EFFECTIVE_BRAND}! Your Order #{order_id} has been placed successfully. Total: {total_amount:.2f} ETB."
+        seller_message = f"{SMS_EFFECTIVE_BRAND} Alert: You have a new order #{order_id}. Items: {item_summary}. Total payout: {total_amount:.2f} ETB."
 
         if not api_key:
             logger.warning(

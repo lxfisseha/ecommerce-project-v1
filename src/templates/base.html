@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}XCollections{% endblock %}</title>
+    <title>{% block title %}{{ site_name }}{% endblock %}</title>
     
     {% set inline_style = 'src/static/css/output.css' | inline_css %}
     {% if inline_style %}
