@@ -62,7 +62,7 @@ def test_variant_keys_are_predictable(jpeg_bytes):
     variants = generate_variants(jpeg_bytes, "abc", storage)
 
     assert variants["icon"] == "processed/products/abc_160w.webp"
-    assert variants["small"] == "processed/products/abc_256w.webp"
+    assert variants["small"] == "processed/products/abc_320w.webp"
     assert variants["medium"] == "processed/products/abc_400w.webp"
     assert variants["large"] == "processed/products/abc_800w.webp"
 
@@ -148,7 +148,7 @@ class TestNoUpscaling:
         assert not any("800w" in key for key in storage.written)
 
     def test_mid_tier_is_skipped_for_a_200px_source(self):
-        """256w must be skipped too, not just the largest tier."""
+        """320w must be skipped too, not just the largest tier."""
         buf = io.BytesIO()
         Image.new("RGB", (200, 150)).save(buf, format="JPEG", quality=90)
         storage = _FakeStorage()

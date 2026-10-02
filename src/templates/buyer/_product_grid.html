@@ -17,7 +17,7 @@
                 <source srcset="{{ display_image | grid_srcset }}"
                   sizes="(max-width: 767px) 45vw, (max-width: 1280px) 22vw, 286px"
                   type="image/webp">
-                <img src="{{ display_image | media_url(256) }}" alt="{{ product.name }}" width="256" height="256" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                <img src="{{ display_image | media_url(320) }}" alt="{{ product.name }}" width="320" height="320" loading="lazy" decoding="async" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
             </picture>
             {% else %}
             <div class="w-full h-full flex items-center justify-center">

@@ -2,7 +2,7 @@
 Background image processing worker.
 
 On upload the app stores the original and enqueues a job here. The job
-resizes the original to 4 WebP variants (160/256/400/800) with Pillow, writes
+resizes the original to 4 WebP variants (160/320/400/800) with Pillow, writes
 them next to it, and records their keys on the ProductImage row. Templates
 read those keys, so the browser never waits on a resize.
 """
@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 # the original. test_image_sizes.py asserts the two match.
 SIZES = {
     "icon": 160,
-    "small": 256,
+    "small": 320,
     "medium": 400,
     "large": 800,
 }

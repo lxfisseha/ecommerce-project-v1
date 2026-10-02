@@ -9,7 +9,7 @@ def _image(object_name, processed_urls=None):
 
 VARIANTS = {
     "icon": "processed/products/abc_160w.webp",
-    "small": "processed/products/abc_256w.webp",
+    "small": "processed/products/abc_320w.webp",
     "medium": "processed/products/abc_400w.webp",
     "large": "processed/products/abc_800w.webp",
 }
@@ -20,14 +20,14 @@ class TestMediaUrl:
     def test_exact_variant_widths(self):
         img = _image("products/originals/abc.jpg", VARIANTS)
         assert media_url(img, 160) == "/media/processed/products/abc_160w.webp"
-        assert media_url(img, 256) == "/media/processed/products/abc_256w.webp"
+        assert media_url(img, 320) == "/media/processed/products/abc_320w.webp"
         assert media_url(img, 400) == "/media/processed/products/abc_400w.webp"
         assert media_url(img, 800) == "/media/processed/products/abc_800w.webp"
 
     def test_width_snaps_up_to_next_variant(self):
         img = _image("products/originals/abc.jpg", VARIANTS)
-        assert media_url(img, 200) == "/media/processed/products/abc_256w.webp"
-        assert media_url(img, 300) == "/media/processed/products/abc_400w.webp"
+        assert media_url(img, 200) == "/media/processed/products/abc_320w.webp"
+        assert media_url(img, 321) == "/media/processed/products/abc_400w.webp"
         assert media_url(img, 401) == "/media/processed/products/abc_800w.webp"
 
     def test_width_above_largest_snaps_down(self):

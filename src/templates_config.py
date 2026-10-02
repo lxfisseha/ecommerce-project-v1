@@ -28,21 +28,25 @@ from src.constants import BANNER_VARIANT_NAME
 # Variant name -> pixel width, mirroring SIZES in src.scripts.process_images.
 # If the two drift apart, media_url falls through to the stored original with
 # no error, so test_image_sizes.py asserts they match exactly.
-_VARIANT_BY_WIDTH = {160: "icon", 256: "small", 400: "medium", 800: "large"}
+_VARIANT_BY_WIDTH = {160: "icon", 320: "small", 400: "medium", 800: "large"}
 _VARIANT_WIDTHS = sorted(_VARIANT_BY_WIDTH)
 
 # Largest variant offered by product grid cards. A grid cell renders at
-# 158-347 CSS px, but the browser multiplies `sizes` by device pixel ratio,
-# so a 3x phone asks for ~528 device px and would otherwise pull the 800w
-# file at ~52 KB. Capping the srcset at 256 keeps a 12-card page near 80 KB
-# on every screen. Raising this to 400 trades ~90 KB for a softer 2x upscale
-# on high-DPR phones; the 800w tier stays available for the product hero,
-# which is the one context that genuinely needs it.
-GRID_MAX_WIDTH = 256
+# 158-347 CSS px, but the browser multiplies `sizes` by device pixel ratio, so a
+# 2x phone asks for ~352 device px and would otherwise pull the 800w file at
+# ~52 KB per card.
+#
+# 320 is what makes the 320w tier reachable: uncapped, GRID_WIDTHS would drop to
+# a single 160w candidate with no srcset at all, so the cap and the tier table
+# have to move together or the change is invisible. At 320 a 2x phone is a 1.10x
+# upscale instead of 1.38x, and a 12-card page costs ~114 KB against ~80 KB at
+# the old 256w cap. The 800w tier stays for the product hero, the one context
+# that genuinely needs it.
+GRID_MAX_WIDTH = 320
 GRID_WIDTHS = [w for w in _VARIANT_WIDTHS if w <= GRID_MAX_WIDTH]
 
 # Range the product hero offers. The hero renders at 596-720 CSS px and its
-# `sizes` never drops below 390px, so it has no use for the 160/256 card
+# `sizes` never drops below 390px, so it has no use for the 160/320 card
 # tiers, while it is the one context that legitimately wants the big file.
 #
 # Both bounds are pinned explicitly rather than implied by "the whole tier

@@ -168,6 +168,21 @@ class TestGridCap:
     def test_cap_widths_are_generatable(self):
         assert set(GRID_WIDTHS) <= set(SIZES.values())
 
+    def test_cap_is_itself_a_generatable_width(self):
+        """
+        The cap and the tier table are separate declarations, and a cap that
+        matches no tier makes the tier above it unreachable.
+
+        That is exactly what happened when the cap stayed at 256 while the tier
+        moved to 320: GRID_WIDTHS collapsed to [160], leaving a single candidate
+        with no srcset to choose between, while the 320w files were generated on
+        every upload and never fetched.
+        """
+        assert GRID_MAX_WIDTH in SIZES.values(), (
+            f"cap {GRID_MAX_WIDTH} matches no tier in {sorted(SIZES.values())}; "
+            "the grid would not offer the next tier up"
+        )
+
     @pytest.mark.parametrize("rel", GRIDS)
     def test_grids_use_the_shared_cap(self, rel):
         """Both grids must go through grid_srcset so the cap cannot drift."""
@@ -250,12 +265,18 @@ class TestHeroCap:
 
     def test_hero_does_not_offer_card_only_tiers(self):
         """
-        The hero's `sizes` floor is 390px, so 160/256 are never a valid pick.
+        The hero's `sizes` floor is 390px, so 160/320 are never a valid pick.
         Offering them costs parse time and invites a future editor to wonder
         which one applies.
+
+        Written as a set difference rather than listing 160 and 256 so this
+        survives a future change to the card tiers.
         """
-        assert min(HERO_WIDTHS) >= 400
-        assert not ({160, 256} & set(HERO_WIDTHS))
+        card_widths = {w for w in SIZES.values() if w < HERO_MIN_WIDTH}
+        assert min(HERO_WIDTHS) >= HERO_MIN_WIDTH
+        assert not (card_widths & set(HERO_WIDTHS)), (
+            f"hero offers card-only tiers: {card_widths & set(HERO_WIDTHS)}"
+        )
 
     def _hero_fixed_sizes_clauses(self) -> list[int]:
         """Fixed-width clauses from the hero's `sizes`, excluding breakpoints."""
@@ -309,8 +330,11 @@ class TestHeroCap:
             _re.findall(r"<script\b[^>]*>(.*?)</script>", read(self.HERO), _re.S)
         )
         assert script, "hero template should contain a script block"
-        assert not _re.search(r"\b(?:160|256|400|800)w\b", script), (
-            "gallery script still hardcodes a srcset width descriptor"
+        # Built from the tier table rather than written out, so the guard keeps
+        # working after a width is added or renamed.
+        pattern = r"\b(?:" + "|".join(str(w) for w in sorted(SIZES.values())) + r")w\b"
+        assert not _re.search(pattern, script), (
+            f"gallery script still hardcodes a srcset width descriptor: {pattern}"
         )
         assert not _re.search(r"media_url\(\d+\)", script), (
             "gallery script should take URLs from the gallery array, not media_url"
