@@ -118,22 +118,8 @@
                     </div>
                     {% endfor %}
                 </div>
-                {% endif %}
-
-                <!-- Bento-style Info Cards (Figma 4:3101) -->
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-bg-alt border border-border-main rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path></svg>
-                        <span class="text-[9px] sm:text-[10px] text-text-muted font-medium uppercase tracking-wider">Delivery</span>
-                        <span class="text-xs sm:text-sm font-bold text-text-main">2-3 Days</span>
-                    </div>
-                    <div class="bg-bg-alt border border-border-main rounded-2xl p-3 sm:p-4 flex flex-col gap-0.5 sm:gap-1">
-                        <svg class="w-4 h-4 sm:w-5 sm:h-5 text-primary mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path></svg>
-                        <span class="text-[9px] sm:text-[10px] text-text-muted font-medium uppercase tracking-wider">Warranty</span>
-                        <span class="text-xs sm:text-sm font-bold text-text-main">1 Year</span>
-                    </div>
-                </div>
-
+{% endif %}
+ 
                 <!-- Quantity Selector & Main Action -->
                 <div>
                     <label class="block text-text-main text-sm font-semibold mb-3">Quantity</label>
@@ -179,20 +165,20 @@
         <!-- Terms and Conditions Content -->
         <div id="content-terms" class="max-w-3xl space-y-6 text-text-main leading-relaxed break-words mb-12">
             <p>
-                Every item in our sportwear range is checked before it is listed, so what arrives is what the listing described. Training kit, football jerseys and gym gear for men and women, stocked locally and ready to deliver across Addis Ababa.
+                Shop with confidence and enjoy a simple, convenient ordering experience with flexible payment and delivery options.
             </p>
             <ul class="space-y-4">
                 <li class="flex gap-4">
                     <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <span class="break-words">Performance fabrics that hold up to repeated washing</span>
+                    <span class="break-words">Payment on delivery: Pay after your order arrives by bank transfer, Telebirr, or cash.</span>
                 </li>
                 <li class="flex gap-4">
                     <div class="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <svg class="w-4 h-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                     </div>
-                    <span class="break-words">Fit and sizing checked against the measurements listed</span>
+                    <span class="break-words">Addis Ababa delivery: We deliver anywhere in Addis Ababa.</span>
                 </li>
             </ul>
         </div>
@@ -240,9 +226,9 @@
             </svg>
             <svg class="btn-checkmark absolute inset-0 m-auto w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
         </button>
-        <button onclick="goToCheckout()" class="h-14 flex-1 bg-accent text-white font-bold rounded-xl flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all">
-            Buy Now
-        </button>
+        <a href="/product/{{ product.id }}" class="h-14 flex-1 bg-primary text-white font-bold rounded-xl flex items-center justify-center hover:bg-primary-hover active:scale-[0.98] transition-all">
+            View Details
+        </a>
     </div>
 </div>
 

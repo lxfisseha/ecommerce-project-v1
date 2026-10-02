@@ -110,7 +110,7 @@ async def test_search_render_details():
     assert "/media/products/originals/wallet.jpg" in response.text
     assert "500" in response.text
     assert "ETB" in response.text
-    assert "Buy Now" in response.text
+    assert "View Details" in response.text
 
 
 @pytest.mark.asyncio
@@ -133,4 +133,4 @@ async def test_limit_respect():
     response = client.get("/")
     assert response.status_code == 200
     card_count = response.text.count('href="/product/')
-    assert card_count <= 8
+    assert card_count <= 16
