@@ -6,11 +6,7 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        // AntonFallback is a metric-matched local() stand-in for Anton SC, declared
-      // in input.css. It sits ahead of Inter so the swap to the real webfont
-      // does not reflow the text, and it costs no request because it resolves
-      // from a font the device already has.
-      display: ['Anton SC', 'AntonFallback', 'Inter', 'sans-serif'],
+        display: ['Anton SC', 'Inter', 'sans-serif'],
       },
       colors: {
         primary: {
