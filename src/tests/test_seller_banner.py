@@ -14,6 +14,7 @@ from src.scripts.process_images import (
     BANNER_MAX_BYTES,
     BANNER_QUALITY_LADDER,
     BANNER_WIDTH,
+    BANNER_WIDTH_FALLBACKS,
     generate_banner,
     store_banner_variant,
 )
@@ -140,13 +141,54 @@ class TestBannerBudget:
 
     def test_prefers_full_width_for_a_photograph(self):
         """
-        A real photograph fits the budget at 800w, and the banner spans the
+        A real photograph fits the budget at full width, and the banner spans the
         viewport, so it must not be shrunk to satisfy a budget it already meets.
         """
         storage = FakeStorage()
         key = generate_banner(photo_jpeg(), "stem", storage)[BANNER_VARIANT_NAME]
         assert f"_{BANNER_WIDTH}w.webp" in key
         assert Image.open(io.BytesIO(storage.files[key])).width == BANNER_WIDTH
+
+    def test_reaches_the_top_quality_rung_for_an_easy_image(self):
+        """
+        A photograph should land on the ladder's best rung, not merely fit.
+
+        Worth pinning because the ceiling and the budget are independent: a
+        ceiling of 75 satisfies every byte-budget test while quietly capping
+        quality far below what the budget allows.
+
+        Identified by re-encoding from the source, never from the stored WebP.
+        WebP is lossy, so a second encode of an already-compressed file comes out
+        smaller than the first and would make any rung look like the winner.
+        """
+        source = photo_jpeg()
+        storage = FakeStorage()
+        key = generate_banner(source, "stem", storage)[BANNER_VARIANT_NAME]
+        payload = storage.files[key]
+
+        img = Image.open(io.BytesIO(source)).convert("RGB")
+        width = BANNER_WIDTH
+        resized = img.resize(
+            (width, round(width * img.height / img.width)),
+            Image.Resampling.LANCZOS,
+        )
+
+        expected_rung = None
+        for quality in BANNER_QUALITY_LADDER:
+            candidate = io.BytesIO()
+            resized.save(candidate, format="WEBP", quality=quality, method=6)
+            if len(candidate.getvalue()) <= BANNER_MAX_BYTES:
+                expected_rung = quality
+                expected_bytes = candidate.getvalue()
+                break
+
+        assert expected_rung == BANNER_QUALITY_LADDER[0], (
+            "fixture no longer reaches the top rung, so this test would pass "
+            "for the wrong reason"
+        )
+        assert payload == expected_bytes, (
+            f"banner did not encode at the top rung q{expected_rung}"
+        )
 
 
 class TestBannerNoUpscale:
@@ -193,6 +235,72 @@ class TestStoreBannerVariant:
         key = store_banner_variant(photo_jpeg(400, 300), "sellers/1/featured/abc.jpg", storage)
         assert key == {}
         assert storage.deleted
+
+
+class TestWidthAndQualityConfig:
+    """
+    Guards on the shape of the generation settings.
+
+    These are invariants rather than assertions about current numbers, so they
+    survive someone retuning the banner without becoming noise.
+    """
+
+    def test_no_fallback_width_exceeds_the_primary(self):
+        """
+        The fallback list is the set of widths the ladder may settle on, so a
+        value above BANNER_WIDTH would let a banner ship larger than the cap.
+        Appending to that tuple is the easy mistake, and it fails silently.
+        """
+        assert BANNER_WIDTH_FALLBACKS[0] == BANNER_WIDTH
+        too_wide = [w for w in BANNER_WIDTH_FALLBACKS if w > BANNER_WIDTH]
+        assert not too_wide, (
+            f"fallback widths exceed the primary {BANNER_WIDTH}w: {too_wide}"
+        )
+
+    def test_fallback_widths_decrease(self):
+        """Monotonic order is what makes the ladder a ladder."""
+        assert list(BANNER_WIDTH_FALLBACKS) == sorted(
+            BANNER_WIDTH_FALLBACKS, reverse=True
+        )
+
+    def test_quality_ladder_starts_at_its_ceiling(self):
+        """
+        The loop stops at the first rung that fits, so the ladder's first entry
+        is the best quality any image can receive and it only ever walks down.
+
+        Capping this low makes the byte budget unreachable: a larger budget then
+        buys nothing, because no rung above the cap is ever attempted. That is
+        what made a 64 KB budget unusable while the ceiling sat at 75.
+        """
+        assert BANNER_QUALITY_LADDER[0] == max(BANNER_QUALITY_LADDER)
+
+    def test_quality_ladder_descends(self):
+        assert list(BANNER_QUALITY_LADDER) == sorted(
+            BANNER_QUALITY_LADDER, reverse=True
+        )
+
+    def test_quality_rungs_are_valid_webp_qualities(self):
+        for quality in BANNER_QUALITY_LADDER:
+            assert 1 <= quality <= 100, f"{quality} is out of range for libwebp"
+
+    def test_widths_are_positive(self):
+        for width in BANNER_WIDTH_FALLBACKS:
+            assert width > 0, f"{width} is not a usable width"
+
+    def test_worker_and_template_agree_on_the_banner_width(self):
+        """
+        src.constants feeds both the worker and the template's intrinsic width.
+
+        They are separate declarations on purpose, so they can drift, and a
+        mismatch reserves the wrong box before the banner loads without breaking
+        anything visibly.
+        """
+        from src.constants import BANNER_WIDTH as declared
+
+        assert declared == BANNER_WIDTH
+        from src.templates_config import templates as tpl
+
+        assert tpl.env.globals["banner_width"] == BANNER_WIDTH
 
 
 class TestVariantName:

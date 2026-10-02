@@ -13,9 +13,15 @@
         {% if seller and seller.featured_image %}
         <!-- Background Image -->
         <div class="absolute inset-0 overflow-hidden opacity-60">
+            <!-- width comes from BANNER_WIDTH rather than being written here, so a
+                 change to the generated size cannot leave a stale intrinsic size
+                 behind. No height is declared: the aspect ratio is whatever the
+                 seller uploaded, and this element is absolutely positioned with
+                 inset-0 plus object-cover, so the box comes from CSS and a
+                 fabricated height would only misdescribe the file. -->
             <img src="{{ seller | seller_banner_url }}"
                  alt="{{ seller.store_name }} Featured Image"
-                 width="800" height="533"
+                 width="{{ banner_width }}"
                  fetchpriority="high"
                  class="w-full h-full object-cover">
         </div>

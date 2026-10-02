@@ -14,7 +14,12 @@ from pathlib import Path
 from PIL import Image
 
 from src.config import settings
-from src.constants import BANNER_PREFIX, BANNER_VARIANT_NAME, VARIANT_PREFIX
+from src.constants import (
+    BANNER_PREFIX,
+    BANNER_VARIANT_NAME,
+    BANNER_WIDTH,
+    VARIANT_PREFIX,
+)
 from src.utils.storage import LocalStorage
 
 logger = logging.getLogger(__name__)
@@ -43,28 +48,49 @@ VARIANT_QUALITY = {
 OUTPUT_FORMAT = "WEBP"
 
 # Seller banner image. Unlike product images this is a single variant, not a
-# tier set: the homepage banner is decorative, rendered at 60% opacity behind a
-# gradient scrim, so extra widths would buy nothing visible.
+# tier set: the banner is decorative and sits behind a gradient scrim, so a
+# second width would buy nothing visible.
 #
-# 800w was chosen over a smaller width because the banner spans the full
-# viewport width and is the first thing on the homepage. Quality is pinned to 75
-# rather than the 80 used for the product hero, which is the difference between
-# ~50 KB and ~155 KB on dense photographic fabric. BANNER_MAX_BYTES enforces the
-# budget at generation time, because a hardcoded quality is only an average:
-# a busy image can blow past it at any quality setting.
-BANNER_WIDTH = 800
-BANNER_QUALITY = 75
-BANNER_MAX_BYTES = 50 * 1024
+# The banner is full-bleed object-cover, so it stretches to the viewport width.
+# At 800w that was a 1.8x upscale on a 1440px screen and read as soft; 1200w is
+# 1.2x there. Real seller uploads are much wider than 800px, so a smaller cap has
+# nothing to do with sharpness and only discards the source.
+#
+# BANNER_WIDTH comes from src.constants so the template can declare a matching
+# intrinsic size without importing this module.
+#
+# BANNER_MAX_BYTES is enforced at generation time rather than trusted to a fixed
+# quality, because the cost of a given quality depends entirely on the image: a
+# busy photo can blow past it at any setting. Measured on the demo banner
+# (1983x793 source): 1200w comes to 20 KB at q75 and 41 KB at q90.
+BANNER_MAX_BYTES = 64 * 1024
 
-# Quality steps tried in order, lowest effort last. The loop stops at the first
-# encoding that fits the budget, so a simple photo keeps the higher quality and
-# only a genuinely busy one gets pushed down.
-BANNER_QUALITY_LADDER = (75, 70, 65, 60, 55, 50, 45, 40)
+# Quality steps tried from best to worst. The loop stops at the first encoding
+# that fits BANNER_MAX_BYTES, so the ladder's first rung is the quality an easy
+# image gets and only a busy one is pushed down.
+#
+# The ceiling is 90 rather than 75 because the ladder can only walk downward: a
+# top rung of 75 made the budget unreachable, since nothing would ever try a
+# higher quality however much headroom was available. Note that raising this
+# number does not raise quality for every image, it only raises the ceiling.
+BANNER_QUALITY_LADDER = (90, 85, 80, 75, 70, 65, 60, 55, 50, 45, 40)
 
-# Widths tried if the whole quality ladder misses at BANNER_WIDTH. The banner
-# spans the viewport so full width is preferred, but a budget that can be
-# exceeded is not a budget, hence the fallback rather than a warning.
-BANNER_WIDTH_FALLBACKS = (800, 640, 480, 400)
+# Widths tried, in order, if the whole quality ladder misses the budget at
+# BANNER_WIDTH. The banner spans the viewport so full width is preferred, but a
+# budget that can be exceeded is not a budget, hence the fallback rather than a
+# warning. Every entry must be <= BANNER_WIDTH; test_seller_banner.py asserts it,
+# because appending a wider value here would let a banner ship larger than
+# intended and quietly undo the cap.
+#
+# 480 is here so genuinely incompressible sources can still reach the budget:
+# at q40 a per-pixel-noise image runs 71 KB at 640w and 43 KB at 480w. Without
+# it the ladder has nowhere to go and falls through to the last-resort path,
+# which ships over budget. Real photographs never get this far.
+#
+# BANNER_WIDTH itself is imported from src.constants, which also feeds the
+# template's intrinsic width. test_seller_banner.py asserts the two agree, since
+# a mismatch reserves the wrong box before the image loads.
+BANNER_WIDTH_FALLBACKS = (BANNER_WIDTH, 960, 800, 640, 480)
 
 
 def _flatten_to_rgb(img: Image.Image) -> Image.Image:

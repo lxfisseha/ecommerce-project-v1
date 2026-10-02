@@ -18,3 +18,10 @@ BANNER_PREFIX = "processed/sellers"
 # and the template reader (templates_config) share one definition; a mismatch
 # would silently fall back to the 304 KB original.
 BANNER_VARIANT_NAME = "banner"
+
+# Width of the generated seller banner, in pixels. Declared here rather than
+# read from src.scripts.process_images so templates can declare a matching
+# intrinsic size without importing Pillow on the request path. process_images
+# defines the same number for generation; the two must agree or the browser
+# reserves the wrong box before the banner loads.
+BANNER_WIDTH = 1200

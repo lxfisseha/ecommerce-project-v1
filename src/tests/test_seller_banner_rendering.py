@@ -152,21 +152,44 @@ class TestBannerTemplates:
 
     def test_home_banner_declares_its_intrinsic_size(self):
         """
-        The attributes must match the generated width, otherwise the browser
-        reserves the wrong box before the image loads.
+        The width attribute must follow the generated size.
+
+        It reads a template global rather than repeating the number, so this
+        checks the wiring rather than a literal: a hardcoded width would go stale
+        the next time BANNER_WIDTH changes, and the browser would reserve the
+        wrong box before the banner loads.
         """
-        from src.templates_config import _PROJECT_ROOT
-        import os
-
         from src.scripts.process_images import BANNER_WIDTH
+        from test_fonts_support import SellerStub, make_request
+        from src.templates_config import templates
 
-        body = open(
-            os.path.join(_PROJECT_ROOT, "src/templates/buyer_home.html"), encoding="utf-8"
-        ).read()
-        tag = re.search(r"<img[^>]*Featured Image[^>]*>", body, re.S).group(0)
-        assert f'width="{BANNER_WIDTH}"' in tag
+        html = templates.env.get_template("buyer_home.html").render(
+            csrf_token="t", request=make_request("/"), seller=SellerStub()
+        )
+        tag = _banner_tag(html)
+        assert f'width="{BANNER_WIDTH}"' in tag, (
+            f"rendered banner width should be {BANNER_WIDTH}"
+        )
         assert 'fetchpriority="high"' in tag, (
             "the banner is the LCP element; it should be fetched eagerly"
+        )
+
+    def test_home_banner_declares_no_baked_height(self):
+        """
+        The aspect ratio is whatever the seller uploaded, and the element is
+        absolutely positioned with inset-0 plus object-cover, so the box comes
+        from CSS. A literal height would misdescribe the file for every banner
+        except the one it was copied from.
+        """
+        from test_fonts_support import SellerStub, make_request
+        from src.templates_config import templates
+
+        html = templates.env.get_template("buyer_home.html").render(
+            csrf_token="t", request=make_request("/"), seller=SellerStub()
+        )
+        tag = _banner_tag(html)
+        assert "height=" not in tag, (
+            "banner should not declare a height; the uploaded aspect ratio varies"
         )
 
 

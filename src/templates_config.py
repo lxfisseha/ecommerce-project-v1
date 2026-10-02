@@ -164,3 +164,11 @@ templates.env.filters["grid_srcset"] = grid_srcset
 templates.env.filters["hero_srcset"] = hero_srcset
 templates.env.filters["inline_css"] = inline_css
 templates.env.globals["hero_widths"] = HERO_WIDTHS
+
+# The banner's generated width, so the template's intrinsic size follows the
+# worker instead of being a literal that goes stale when BANNER_WIDTH changes.
+# Imported from src.constants rather than src.scripts.process_images to keep
+# Pillow and the storage layer out of the request path.
+from src.constants import BANNER_WIDTH as _BANNER_WIDTH
+
+templates.env.globals["banner_width"] = _BANNER_WIDTH
